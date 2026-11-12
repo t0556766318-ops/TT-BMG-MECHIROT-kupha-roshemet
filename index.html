@@ -213,7 +213,7 @@
 
         .cart-section {
             flex: 1;
-            min-width: 310px;
+            min-width: 340px;
             background: var(--panel-bg);
             border-radius: 8px;
             padding: 12px;
@@ -243,19 +243,54 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
-            padding-bottom: 5px;
+            padding-bottom: 6px;
             border-bottom: 1px solid #f0f0f0;
             font-size: 0.95em;
+            gap: 6px;
+        }
+
+        .cart-item-name {
+            flex: 1;
+            font-weight: bold;
+            word-break: break-word;
+        }
+
+        .cart-controls {
+            display: flex;
+            align-items: center;
+            gap: 3px;
         }
 
         .cart-controls button {
             width: 24px;
-            height: 24px;
+            height: 26px;
             border: 1px solid #ccc;
             background: #fff;
             cursor: pointer;
             border-radius: 3px;
             font-weight: bold;
+        }
+
+        .cart-qty-input {
+            width: 44px;
+            height: 26px;
+            text-align: center;
+            border: 1px solid #bbb;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+
+        .cart-remove-btn {
+            width: 24px;
+            height: 26px;
+            border: none;
+            background: var(--danger);
+            color: white;
+            cursor: pointer;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-right: 4px;
         }
 
         .total-area {
@@ -380,7 +415,6 @@
             align-items: center;
         }
 
-        /* עיצוב קבלה למדפסת תרמית */
         .receipt-box {
             background: #fff;
             padding: 8px;
@@ -455,7 +489,7 @@
             <p style="margin-bottom: 15px; color: #555;">הזן קוד גישה לאתר</p>
             <input type="password" id="sitePassInput" placeholder="••••" onkeyup="if(event.key==='Enter') verifySiteAccess()">
             <div id="siteLockError" class="lock-error">קוד שגוי, נסה שנית</div>
-            <button class="btn btn-success" style="width: 100%; padding: 12px;" onclick="verifySiteAccess()">כניסה לקופה</button>
+            <button type="button" class="btn btn-success" style="width: 100%; padding: 12px;" onclick="verifySiteAccess()">כניסה לקופה</button>
         </div>
     </div>
 
@@ -467,8 +501,8 @@
             <input type="password" id="adminPassInput" placeholder="••••" onkeyup="if(event.key==='Enter') verifyAdminAccess()">
             <div id="adminLockError" class="lock-error">סיסמת מנהל שגויה</div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn btn-success" style="flex: 1;" onclick="verifyAdminAccess()">אישור</button>
-                <button class="btn btn-danger" style="flex: 1;" onclick="closeAdminLock()">ביטול</button>
+                <button type="button" class="btn btn-success" style="flex: 1;" onclick="verifyAdminAccess()">אישור</button>
+                <button type="button" class="btn btn-danger" style="flex: 1;" onclick="closeAdminLock()">ביטול</button>
             </div>
         </div>
     </div>
@@ -479,9 +513,9 @@
             <h2 id="storeTitleDisplay">קופה רושמת</h2>
         </div>
         <div class="header-actions">
-            <button class="btn btn-warning" onclick="openPartialReturnModal()">החזרת פריט (זיכוי)</button>
-            <button class="btn btn-info" onclick="syncCloudData()">רענן נתונים</button>
-            <button class="btn btn-secondary" onclick="openAdminLock()">אזור מנהל</button>
+            <button type="button" class="btn btn-warning" onclick="openPartialReturnModal()">החזרת פריט (זיכוי)</button>
+            <button type="button" class="btn btn-info" onclick="syncCloudData()">רענן נתונים</button>
+            <button type="button" class="btn btn-secondary" onclick="openAdminLock()">אזור מנהל</button>
         </div>
     </header>
 
@@ -490,14 +524,14 @@
         <div class="catalog-section">
             <div id="lowStockBanner" class="alert-banner">
                 <span id="lowStockBannerText">התראה: ישנם מוצרים במלאי נמוך!</span>
-                <button class="btn btn-danger btn-small" onclick="filterLowStockOnly()">הצג מוצרים חסרים</button>
+                <button type="button" class="btn btn-danger btn-small" onclick="filterLowStockOnly()">הצג מוצרים חסרים</button>
             </div>
 
             <div class="search-bars-row">
                 <div class="search-box">
                     <label for="barcodeScannerInput" style="font-weight: bold; white-space: nowrap;">ברקוד:</label>
                     <input type="text" id="barcodeScannerInput" placeholder="סרוק ברקוד + Enter" onkeyup="if(event.key==='Enter') handleBarcodeScan()">
-                    <button class="btn btn-success btn-small" onclick="handleBarcodeScan()">הוסף</button>
+                    <button type="button" class="btn btn-success btn-small" onclick="handleBarcodeScan()">הוסף</button>
                 </div>
                 <div class="search-box">
                     <label for="productNameSearch" style="font-weight: bold; white-space: nowrap;">חיפוש שם:</label>
@@ -513,13 +547,13 @@
         <div class="cart-section">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h3>עגלת קניות</h3>
-                <span id="heldCartsBadge" style="font-size: 0.85em; color: #2980b9; font-weight: bold;"></span>
+                <button type="button" class="btn btn-danger btn-small" onclick="clearCart()">רוקן עגלה</button>
             </div>
             
             <div class="cart-top-tools">
-                <button class="btn btn-secondary btn-small" onclick="openFreeItemModal()">+ פריט חופשי</button>
-                <button class="btn btn-warning btn-small" onclick="holdCurrentCart()">השהה עגלה</button>
-                <button class="btn btn-info btn-small" onclick="openHeldCartsModal()">עגלות מושהות (<span id="heldCount">0</span>)</button>
+                <button type="button" class="btn btn-secondary btn-small" onclick="openFreeItemModal()">+ פריט חופשי</button>
+                <button type="button" class="btn btn-warning btn-small" onclick="holdCurrentCart()">השהה עגלה</button>
+                <button type="button" class="btn btn-info btn-small" onclick="openHeldCartsModal()">עגלות מושהות (<span id="heldCount">0</span>)</button>
             </div>
 
             <div class="cart-items" id="cartItems"></div>
@@ -529,9 +563,9 @@
             </div>
             
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button class="btn btn-success" style="flex:1" onclick="startCheckout('cash')">מזומן</button>
-                <button class="btn btn-info" style="flex:1" onclick="startCheckout('credit')">אשראי</button>
-                <button class="btn btn-warning" style="flex:1" onclick="startCheckout('debt')">הקפה / חוב</button>
+                <button type="button" class="btn btn-success" style="flex:1" onclick="startCheckout('cash')">מזומן</button>
+                <button type="button" class="btn btn-info" style="flex:1" onclick="startCheckout('credit')">אשראי</button>
+                <button type="button" class="btn btn-warning" style="flex:1" onclick="startCheckout('debt')">הקפה / חוב</button>
             </div>
         </div>
     </div>
@@ -549,8 +583,8 @@
                 <input type="number" id="freeItemPrice" step="0.1" placeholder="0.00">
             </div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn btn-success" style="flex:1" onclick="addFreeItemToCart()">הוסף לעגלה</button>
-                <button class="btn btn-danger" style="flex:1" onclick="closeModal('freeItemModal')">ביטול</button>
+                <button type="button" class="btn btn-success" style="flex:1" onclick="addFreeItemToCart()">הוסף לעגלה</button>
+                <button type="button" class="btn btn-danger" style="flex:1" onclick="closeModal('freeItemModal')">ביטול</button>
             </div>
         </div>
     </div>
@@ -560,7 +594,7 @@
         <div class="modal-content" style="width: 450px;">
             <h3>עגלות קניות בהמתנה</h3>
             <div id="heldCartsList" style="margin: 15px 0; max-height: 300px; overflow-y: auto;"></div>
-            <button class="btn btn-danger" onclick="closeModal('heldCartsModal')">סגור</button>
+            <button type="button" class="btn btn-danger" onclick="closeModal('heldCartsModal')">סגור</button>
         </div>
     </div>
 
@@ -574,7 +608,7 @@
             </div>
             <div id="returnReceiptsContainer" style="max-height: 350px; overflow-y: auto;"></div>
             <br>
-            <button class="btn btn-danger" onclick="closeModal('partialReturnModal')">סגור</button>
+            <button type="button" class="btn btn-danger" onclick="closeModal('partialReturnModal')">סגור</button>
         </div>
     </div>
 
@@ -620,8 +654,8 @@
             </div>
 
             <div style="display: flex; gap: 10px;">
-                <button class="btn btn-success" style="flex:1" onclick="proceedToPayment()">אישור וסיום עסקה</button>
-                <button class="btn btn-danger" style="flex:1" onclick="closeModal('customerModal')">ביטול</button>
+                <button type="button" class="btn btn-success" style="flex:1" onclick="proceedToPayment()">אישור וסיום עסקה</button>
+                <button type="button" class="btn btn-danger" style="flex:1" onclick="closeModal('customerModal')">ביטול</button>
             </div>
         </div>
     </div>
@@ -632,8 +666,8 @@
             <h3>תשלום באשראי (נדרים פלוס)</h3>
             <iframe id="creditIframe" src="" style="width: 100%; flex: 1; border: 1px solid #ccc; margin: 10px 0;"></iframe>
             <div style="display: flex; justify-content: space-between;">
-                <button class="btn btn-success" onclick="completeCreditTransaction()">אישור סיום תשלום</button>
-                <button class="btn btn-danger" onclick="closeModal('creditIframeModal')">ביטול עסקה</button>
+                <button type="button" class="btn btn-success" onclick="completeCreditTransaction()">אישור סיום תשלום</button>
+                <button type="button" class="btn btn-danger" onclick="closeModal('creditIframeModal')">ביטול עסקה</button>
             </div>
         </div>
     </div>
@@ -643,18 +677,18 @@
         <div class="modal-content" style="width: 880px;">
             <h3>אזור מנהל והגדרות מערכת</h3>
             <div class="tab-buttons">
-                <button class="tab-btn active" onclick="switchTab('reports', this)">דוחות וסיכום יומי</button>
-                <button class="tab-btn" onclick="switchTab('customers', this)">כרטיס לקוח וחובות</button>
-                <button class="tab-btn" onclick="switchTab('products', this)">מוצרים, ברקודים ומדבקות</button>
-                <button class="tab-btn" onclick="switchTab('suppliers', this)">ספקים והזמנות רכש</button>
-                <button class="tab-btn" onclick="switchTab('settings', this)">הגדרות וסיסמאות</button>
+                <button type="button" class="tab-btn active" onclick="switchTab('reports', this)">דוחות וסיכום יומי</button>
+                <button type="button" class="tab-btn" onclick="switchTab('customers', this)">כרטיס לקוח וחובות</button>
+                <button type="button" class="tab-btn" onclick="switchTab('products', this)">מוצרים, ברקודים ומדבקות</button>
+                <button type="button" class="tab-btn" onclick="switchTab('suppliers', this)">ספקים והזמנות רכש</button>
+                <button type="button" class="tab-btn" onclick="switchTab('settings', this)">הגדרות וסיסמאות</button>
             </div>
 
             <!-- 1. לשונית דוחות וסיכום יומי -->
             <div id="tab-reports" class="tab-content">
                 <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
-                    <button class="btn btn-success" onclick="exportSoldExcel()">ייצוא מכירות ורווח לאקסל (CSV)</button>
-                    <button class="btn btn-info" onclick="exportStockExcel()">ייצוא יתרות מלאי לאקסל (CSV)</button>
+                    <button type="button" class="btn btn-success" onclick="exportSoldExcel()">ייצוא מכירות ורווח לאקסל (CSV)</button>
+                    <button type="button" class="btn btn-info" onclick="exportStockExcel()">ייצוא יתרות מלאי לאקסל (CSV)</button>
                 </div>
 
                 <!-- סיכום קופה יומי -->
@@ -663,7 +697,7 @@
                     <div style="display: flex; gap: 10px; align-items: center; margin: 8px 0;">
                         <label>בחר תאריך:</label>
                         <input type="date" id="dailySummaryDate" style="width: auto;" onchange="renderDailySummary()">
-                        <button class="btn btn-small" onclick="setTodaySummary()">היום</button>
+                        <button type="button" class="btn btn-small" onclick="setTodaySummary()">היום</button>
                     </div>
                     <div id="dailySummaryBox" style="display: flex; gap: 15px; flex-wrap: wrap; font-weight: bold; margin-top: 8px;"></div>
                 </div>
@@ -676,8 +710,8 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h4>ניהול קבלות (מחיקה / ביטול מרובה):</h4>
                     <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-secondary btn-small" onclick="toggleSelectAllReceipts()">סמן / בטל הכל</button>
-                        <button class="btn btn-danger btn-small" onclick="bulkCancelReceipts()">בטל ומחק קבלות מסומנות</button>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="toggleSelectAllReceipts()">סמן / בטל הכל</button>
+                        <button type="button" class="btn btn-danger btn-small" onclick="bulkCancelReceipts()">בטל ומחק קבלות מסומנות</button>
                     </div>
                 </div>
                 <div id="receiptsListAdmin" style="max-height: 220px; overflow-y: auto; border: 1px solid #ddd; padding: 6px;"></div>
@@ -738,8 +772,8 @@
                     <input type="text" id="prodBarcodes" placeholder="לדוגמה: 729000111, 729000222">
                 </div>
 
-                <button class="btn btn-success" onclick="saveProduct()">שמור מוצר</button>
-                <button class="btn btn-secondary" onclick="resetProdForm()">איפוס טופס</button>
+                <button type="button" class="btn btn-success" onclick="saveProduct()">שמור מוצר</button>
+                <button type="button" class="btn btn-secondary" onclick="resetProdForm()">איפוס טופס</button>
                 <hr style="margin: 12px 0;">
                 <h4>רשימת מוצרים קיימים (כולל הדפסת מדבקות ברקוד)</h4>
                 <div id="adminProductsList" style="max-height: 220px; overflow-y: auto;"></div>
@@ -751,14 +785,14 @@
                 <div style="display: flex; gap: 8px; margin: 10px 0;">
                     <input type="text" id="newSupplierName" placeholder="שם הספק החדש">
                     <input type="text" id="newSupplierPhone" placeholder="טלפון ספק">
-                    <button class="btn btn-success" onclick="addSupplier()">הוסף ספק</button>
+                    <button type="button" class="btn btn-success" onclick="addSupplier()">הוסף ספק</button>
                 </div>
                 <div id="suppliersListContainer" style="margin-bottom: 15px;"></div>
                 <hr>
                 <h4 style="margin-top: 10px;">הפקת רשימת הזמנה לפי ספק (מוצרים במלאי נמוך):</h4>
                 <div style="display: flex; gap: 10px; margin: 8px 0;">
                     <select id="orderSupplierFilter" onchange="renderPurchaseOrder()"></select>
-                    <button class="btn btn-info" onclick="printPurchaseOrder()">הדפס הזמנת רכש</button>
+                    <button type="button" class="btn btn-info" onclick="printPurchaseOrder()">הדפס הזמנת רכש</button>
                 </div>
                 <div id="purchaseOrderPreview" style="background: #f8f9fa; padding: 10px; border: 1px solid #ddd;"></div>
             </div>
@@ -823,11 +857,11 @@
                     <label>הודעת סיום בקבלה (תחתית):</label>
                     <input type="text" id="settingReceiptFooter">
                 </div>
-                <button class="btn btn-success" onclick="saveSettings()">שמור הגדרות</button>
+                <button type="button" class="btn btn-success" onclick="saveSettings()">שמור הגדרות</button>
             </div>
 
             <br>
-            <button class="btn btn-danger" onclick="closeModal('adminModal')">סגור</button>
+            <button type="button" class="btn btn-danger" onclick="closeModal('adminModal')">סגור</button>
         </div>
     </div>
 
@@ -863,8 +897,8 @@
             </div>
             <br>
             <div style="display: flex; gap: 8px;">
-                <button class="btn btn-success" style="flex:1" onclick="window.print()">הדפס קבלה</button>
-                <button class="btn btn-danger" style="flex:1" onclick="closeModal('receiptViewModal')">סגור</button>
+                <button type="button" class="btn btn-success" style="flex:1" onclick="window.print()">הדפס קבלה</button>
+                <button type="button" class="btn btn-danger" style="flex:1" onclick="closeModal('receiptViewModal')">סגור</button>
             </div>
         </div>
     </div>
@@ -932,7 +966,6 @@
                     if (!appData.categories) appData.categories = ['כללי'];
                     if (!appData.suppliers) appData.suppliers = [];
                     
-                    // סנכרון קטגוריות קיימות ממוצרים
                     (appData.products || []).forEach(p => {
                         if (p.category && !appData.categories.includes(p.category)) {
                             appData.categories.push(p.category);
@@ -977,8 +1010,8 @@
 
         /* נעילת מסכים */
         function verifySiteAccess() {
-            const input = document.getElementById('sitePassInput').value;
-            const correctPass = appData.settings.sitePass || '1111';
+            const input = document.getElementById('sitePassInput').value.trim();
+            const correctPass = String((appData.settings && appData.settings.sitePass) ? appData.settings.sitePass : '1111');
             if (input === correctPass) {
                 document.getElementById('siteLockScreen').style.display = 'none';
                 document.getElementById('siteLockError').style.display = 'none';
@@ -1000,8 +1033,8 @@
         }
 
         function verifyAdminAccess() {
-            const input = document.getElementById('adminPassInput').value;
-            const correctPass = appData.settings.adminPass || '1234';
+            const input = document.getElementById('adminPassInput').value.trim();
+            const correctPass = String((appData.settings && appData.settings.adminPass) ? appData.settings.adminPass : '1234');
             if (input === correctPass) {
                 document.getElementById('adminLockScreen').style.display = 'none';
                 loadAdminData();
@@ -1137,7 +1170,7 @@
             const bar = document.getElementById('categoriesBar');
             const cats = ['הכל', ...(appData.categories || ['כללי'])];
             bar.innerHTML = cats.map(c => `
-                <button class="category-btn ${c === activeCategory ? 'active' : ''}" onclick="setCategory('${c}')">${c}</button>
+                <button type="button" class="category-btn ${c === activeCategory ? 'active' : ''}" onclick="setCategory('${c}')">${c}</button>
             `).join('');
         }
 
@@ -1180,7 +1213,7 @@
             });
         }
 
-        /* עגלת קניות, פריט חופשי והשהיית עגלה */
+        /* עגלת קניות, הקלדת כמות ישירה, מחיקת מוצר והשהיית עגלה */
         function addToCart(id) {
             const prod = appData.products.find(p => p.id === id);
             if (!prod) return;
@@ -1246,7 +1279,7 @@
                                 <strong>עגלה #${idx + 1}</strong> (שעה ${hc.time})<br>
                                 <span style="font-size: 0.9em; color: #555;">${hc.items.length} פריטים | סה"כ: ₪${sum.toFixed(2)}</span>
                             </div>
-                            <button class="btn btn-success btn-small" onclick="restoreHeldCart(${hc.id})">החזר לקופה</button>
+                            <button type="button" class="btn btn-success btn-small" onclick="restoreHeldCart(${hc.id})">החזר לקופה</button>
                         </div>
                     `;
                 }).join('');
@@ -1266,13 +1299,38 @@
         }
 
         function updateCartQty(id, change) {
-            const item = cart.find(i => i.id == id);
+            const item = cart.find(i => String(i.id) === String(id));
             if (!item) return;
             item.qty += change;
             if (item.qty <= 0) {
-                cart = cart.filter(i => i.id != id);
+                cart = cart.filter(i => String(i.id) !== String(id));
             }
             renderCart();
+        }
+
+        function setCartQtyDirect(id, newVal) {
+            const item = cart.find(i => String(i.id) === String(id));
+            if (!item) return;
+            const parsedQty = parseInt(newVal);
+            if (isNaN(parsedQty) || parsedQty <= 0) {
+                cart = cart.filter(i => String(i.id) !== String(id));
+            } else {
+                item.qty = parsedQty;
+            }
+            renderCart();
+        }
+
+        function removeCartItem(id) {
+            cart = cart.filter(i => String(i.id) !== String(id));
+            renderCart();
+        }
+
+        function clearCart() {
+            if (cart.length === 0) return;
+            if (confirm('האם לרוקן את כל העגלה?')) {
+                cart = [];
+                renderCart();
+            }
         }
 
         function renderCart() {
@@ -1283,13 +1341,14 @@
                 total += item.price * item.qty;
                 container.innerHTML += `
                     <div class="cart-item">
-                        <div>${item.name}</div>
+                        <div class="cart-item-name">${item.name}</div>
                         <div class="cart-controls">
-                            <button onclick="updateCartQty('${item.id}', -1)">-</button>
-                            <span style="margin:0 5px;">${item.qty}</span>
-                            <button onclick="updateCartQty('${item.id}', 1)">+</button>
+                            <button type="button" onclick="updateCartQty('${item.id}', -1)">-</button>
+                            <input type="number" class="cart-qty-input" min="1" value="${item.qty}" onchange="setCartQtyDirect('${item.id}', this.value)">
+                            <button type="button" onclick="updateCartQty('${item.id}', 1)">+</button>
                         </div>
-                        <div>₪${(item.price * item.qty).toFixed(2)}</div>
+                        <div style="min-width: 55px; text-align: left; font-weight: bold;">₪${(item.price * item.qty).toFixed(2)}</div>
+                        <button type="button" class="cart-remove-btn" title="הסר מוצר" onclick="removeCartItem('${item.id}')">×</button>
                     </div>
                 `;
             });
@@ -1493,7 +1552,7 @@
                     ${r.items.map((item, idx) => `
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-top: 1px dashed #eee;">
                             <span>${item.name} (כמות: ${item.qty} | ₪${item.price})</span>
-                            <button class="btn btn-warning btn-small" onclick="processSingleItemReturn(${r.id}, ${idx})">זכה 1 יח' והחזר למלאי</button>
+                            <button type="button" class="btn btn-warning btn-small" onclick="processSingleItemReturn(${r.id}, ${idx})">זכה 1 יח' והחזר למלאי</button>
                         </div>
                     `).join('')}
                 </div>
@@ -1507,13 +1566,11 @@
 
             if (!confirm(`האם לזכות יחידה אחת של "${item.name}" על סך ₪${item.price} ולהחזיר למלאי?`)) return;
 
-            // החזרה למלאי
             if (!item.isFreeItem) {
                 const prod = appData.products.find(p => p.id === item.id);
                 if (prod) prod.stock += 1;
             }
 
-            // עדכון קבלה
             item.qty -= 1;
             r.total = Math.max(0, r.total - item.price);
             if (item.qty <= 0) {
@@ -1622,7 +1679,7 @@
                         <span>#${r.id} | ${r.date} | ${r.customer} | ₪${r.total.toFixed(2)} (${r.type}) ${r.active ? '' : '<strong style="color:red;">(מבוטלת)</strong>'}</span>
                     </label>
                     <div>
-                        <button class="btn btn-small" onclick='showReceiptModal(${JSON.stringify(r)})'>הצג</button>
+                        <button type="button" class="btn btn-small" onclick='showReceiptModal(${JSON.stringify(r)})'>הצג</button>
                     </div>
                 </div>
             `).join('');
@@ -1688,7 +1745,7 @@
                             <strong>${r.customer}</strong> (${info}) | ${r.date}<br>
                             <span>סכום: ₪${r.total.toFixed(2)} | אמצעי תשלום: <strong>${r.type}</strong> ${r.type === 'חוב / הקפה' ? (r.isDebtPaid ? '(שולם)' : '(פתוח לגבייה)') : ''}</span>
                         </div>
-                        ${isUnpaidDebt ? `<button class="btn btn-success btn-small" onclick="markDebtAsPaid(${r.id})">סמן חוב כשולם</button>` : ''}
+                        ${isUnpaidDebt ? `<button type="button" class="btn btn-success btn-small" onclick="markDebtAsPaid(${r.id})">סמן חוב כשולם</button>` : ''}
                     </div>
                 `;
             }).join('');
@@ -1743,7 +1800,6 @@
 
             if (!name || isNaN(price) || isNaN(stock)) return alert('נא למלא שם מוצר, מחיר ומלאי בצורה תקינה');
 
-            // בדיקת אי-כפילות ברקודים מול מוצרים אחרים
             for (const code of barcodesArray) {
                 const duplicateProd = (appData.products || []).find(p => {
                     if (id && String(p.id) === String(id)) return false;
@@ -1782,4 +1838,185 @@
             await saveCloudData();
             resetProdForm();
             renderAdminProductsList();
-            checkLow
+            checkLowStockAlert();
+            renderCategories();
+            renderProducts();
+        }
+
+        function renderAdminProductsList() {
+            const prodListHtml = (appData.products || []).map(p => {
+                const bText = Array.isArray(p.barcodes) ? p.barcodes.join(', ') : (p.barcodes || '');
+                const firstBarcode = Array.isArray(p.barcodes) && p.barcodes.length > 0 ? p.barcodes[0] : p.id;
+                return `
+                    <div style="padding: 6px; border-bottom: 1px solid #ccc; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                        <span><strong>${p.name}</strong> | עלות: ₪${p.cost || 0} | מכירה: ₪${p.price} | מלאי: ${p.stock} | ברקודים: ${bText || 'אין'}</span>
+                        <div style="display:flex; gap:4px;">
+                            <button type="button" class="btn btn-info btn-small" onclick="printBarcodeLabel('${p.name.replace(/'/g, "\\'")}', ${p.price}, '${firstBarcode}')">הדפס מדבקה</button>
+                            <button type="button" class="btn btn-small" onclick="editProduct(${p.id})">ערוך</button>
+                            <button type="button" class="btn btn-danger btn-small" onclick="deleteProduct(${p.id})">מחק</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('adminProductsList').innerHTML = prodListHtml;
+        }
+
+        function printBarcodeLabel(name, price, code) {
+            const win = window.open('', '_blank', 'width=350,height=250');
+            win.document.write('<html dir="rtl"><body style="text-align:center; font-family:Arial; padding:15px;">');
+            win.document.write('<div style="border:2px solid #000; padding:10px; display:inline-block; width:220px;">');
+            win.document.write('<div style="font-weight:bold; font-size:16px;">' + name + '</div>');
+            win.document.write('<div style="font-size:18px; font-weight:bold; margin:5px 0;">₪' + Number(price).toFixed(2) + '</div>');
+            win.document.write('<div style="font-family:monospace; letter-spacing:3px; font-size:14px; border-top:1px solid #000; padding-top:4px;">*' + code + '*</div>');
+            win.document.write('</div>');
+            win.document.write('<script>window.onload = function(){ window.print(); window.close(); };<' + '/script>');
+            win.document.write('</body></html>');
+            win.document.close();
+        }
+
+        function editProduct(id) {
+            const p = appData.products.find(item => item.id == id);
+            if (!p) return;
+            document.getElementById('editProductId').value = p.id;
+            document.getElementById('prodName').value = p.name;
+            document.getElementById('prodCost').value = p.cost || 0;
+            document.getElementById('prodPrice').value = p.price;
+            document.getElementById('prodStock').value = p.stock;
+            document.getElementById('prodCategorySelect').value = p.category || 'כללי';
+            document.getElementById('prodSupplierSelect').value = p.supplier || '';
+            document.getElementById('prodBarcodes').value = Array.isArray(p.barcodes) ? p.barcodes.join(', ') : (p.barcodes || '');
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('האם למחוק מוצר זה?')) return;
+            appData.products = appData.products.filter(p => p.id != id);
+            await saveCloudData();
+            renderAdminProductsList();
+            checkLowStockAlert();
+            renderProducts();
+        }
+
+        function resetProdForm() {
+            document.getElementById('editProductId').value = '';
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodCost').value = '';
+            document.getElementById('prodPrice').value = '';
+            document.getElementById('prodStock').value = '';
+            document.getElementById('prodBarcodes').value = '';
+        }
+
+        /* ספקים והזמנות רכש */
+        function renderSuppliersTab() {
+            const listEl = document.getElementById('suppliersListContainer');
+            listEl.innerHTML = (appData.suppliers || []).map((s, idx) => `
+                <span style="display:inline-block; background:#e2e8f0; padding:4px 10px; border-radius:15px; margin:3px;">
+                    ${s.name} (${s.phone || 'ללא טלפון'}) 
+                    <strong style="color:red; cursor:pointer; margin-right:5px;" onclick="deleteSupplier(${idx})">×</strong>
+                </span>
+            `).join('');
+
+            const filterEl = document.getElementById('orderSupplierFilter');
+            filterEl.innerHTML = `<option value="ALL">כל הספקים (מוצרים במלאי נמוך)</option>` + 
+                (appData.suppliers || []).map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+            renderPurchaseOrder();
+        }
+
+        async function addSupplier() {
+            const name = document.getElementById('newSupplierName').value.trim();
+            const phone = document.getElementById('newSupplierPhone').value.trim();
+            if (!name) return alert('נא להזין שם ספק');
+            appData.suppliers.push({ name, phone });
+            document.getElementById('newSupplierName').value = '';
+            document.getElementById('newSupplierPhone').value = '';
+            await saveCloudData();
+            populateProductDropdowns();
+            renderSuppliersTab();
+        }
+
+        async function deleteSupplier(idx) {
+            appData.suppliers.splice(idx, 1);
+            await saveCloudData();
+            populateProductDropdowns();
+            renderSuppliersTab();
+        }
+
+        function renderPurchaseOrder() {
+            const sup = document.getElementById('orderSupplierFilter').value;
+            const threshold = parseInt(appData.settings.lowStockThreshold) || 5;
+            let items = (appData.products || []).filter(p => p.stock <= threshold);
+            if (sup !== 'ALL') {
+                items = items.filter(p => p.supplier === sup);
+            }
+
+            const preview = document.getElementById('purchaseOrderPreview');
+            if (items.length === 0) {
+                preview.innerHTML = 'אין מוצרים מתחת לרף המלאי עבור ספק זה.';
+                return;
+            }
+            preview.innerHTML = `<strong>רשימת הזמנה (${sup === 'ALL' ? 'כל הספקים' : sup}):</strong><ul>` +
+                items.map(i => `<li>${i.name} - יתרה נוכחית: ${i.stock} יח' (ספק: ${i.supplier || 'כללי'})</li>`).join('') + '</ul>';
+        }
+
+        function printPurchaseOrder() {
+            const content = document.getElementById('purchaseOrderPreview').innerHTML;
+            const win = window.open('', '_blank', 'width=500,height=600');
+            win.document.write('<html dir="rtl"><body style="font-family:Arial; padding:20px;">');
+            win.document.write('<h2>הזמנת רכש - ' + appData.settings.storeName + '</h2>' + content);
+            win.document.write('<script>window.onload=function(){window.print();};<' + '/script></body></html>');
+            win.document.close();
+        }
+
+        /* ייצוא לאקסל */
+        function downloadCSV(filename, rows) {
+            const csvContent = "\uFEFF" + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportSoldExcel() {
+            const soldMap = {};
+            (appData.receipts || []).filter(r => r.active).forEach(r => {
+                r.items.forEach(i => {
+                    if (!soldMap[i.name]) soldMap[i.name] = { qty: 0, totalSum: 0, profit: 0 };
+                    const prod = (appData.products || []).find(p => p.id === i.id);
+                    const unitCost = prod && prod.cost ? prod.cost : (i.cost || 0);
+                    soldMap[i.name].qty += i.qty;
+                    soldMap[i.name].totalSum += (i.price * i.qty);
+                    soldMap[i.name].profit += (i.price - unitCost) * i.qty;
+                });
+            });
+
+            const rows = [["שם מוצר", "כמות שנמכרה", "סך הכנסות (₪)", "רווח גולמי (₪)"]];
+            for (const [name, data] of Object.entries(soldMap)) {
+                rows.push([name, data.qty, data.totalSum.toFixed(2), data.profit.toFixed(2)]);
+            }
+
+            if (rows.length === 1) return alert('אין נתוני מכירות פעילים לייצוא');
+            downloadCSV("sold_products_profit_report.csv", rows);
+        }
+
+        function exportStockExcel() {
+            const rows = [["מזהה מוצר", "שם מוצר", "קטגוריה", "ספק", "מחיר עלות (₪)", "מחיר מכירה (₪)", "יתרת מלאי", "ברקודים"]];
+            (appData.products || []).forEach(p => {
+                const bText = Array.isArray(p.barcodes) ? p.barcodes.join(', ') : (p.barcodes || '');
+                rows.push([p.id, p.name, p.category || 'כללי', p.supplier || '', (p.cost || 0).toFixed(2), p.price.toFixed(2), p.stock, bText]);
+            });
+
+            if (rows.length === 1) return alert('אין מוצרים ברשימה לייצוא');
+            downloadCSV("remaining_stock_report.csv", rows);
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        syncCloudData();
+    </script>
+</body>
+</html>
