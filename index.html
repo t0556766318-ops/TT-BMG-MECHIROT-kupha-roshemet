@@ -27,6 +27,51 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            overflow: hidden;
+        }
+
+        /* מסכי נעילה פנימיים ללא חלונות קופצים */
+        .lock-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .lock-box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 340px;
+            max-width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .lock-box h2 {
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .lock-box input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.2em;
+            text-align: center;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            letter-spacing: 3px;
+        }
+
+        .lock-error {
+            color: var(--danger);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: none;
         }
 
         header {
@@ -65,7 +110,25 @@
             flex: 2;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
+        }
+
+        .barcode-bar {
+            display: flex;
+            gap: 8px;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            align-items: center;
+        }
+
+        .barcode-bar input {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 1.05em;
+            border: 1px solid #bbb;
+            border-radius: 4px;
         }
 
         .categories-bar {
@@ -95,7 +158,7 @@
             grid-template-columns: repeat(auto-fill, minmax(var(--card-size), 1fr));
             gap: 10px;
             overflow-y: auto;
-            max-height: calc(100vh - 180px);
+            max-height: calc(100vh - 230px);
             align-content: start;
         }
 
@@ -190,6 +253,7 @@
 
         .btn-success { background-color: var(--accent); }
         .btn-danger { background-color: var(--danger); }
+        .btn-info { background-color: #2980b9; }
         .btn-small { padding: 4px 8px; font-size: 0.85em; }
 
         .modal {
@@ -282,10 +346,10 @@
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.85);
             justify-content: center;
             align-items: center;
-            z-index: 2000;
+            z-index: 4000;
             font-size: 1.5em;
             font-weight: bold;
             color: var(--primary);
@@ -302,20 +366,50 @@
 
     <div id="loadingOverlay">מסנכרן נתונים...</div>
 
+    <!-- מסך נעילה ראשי לכניסה לאתר -->
+    <div id="siteLockScreen" class="lock-screen">
+        <div class="lock-box">
+            <h2>כניסה למערכת הקופה</h2>
+            <p style="margin-bottom: 15px; color: #555;">הזן קוד גישה לאתר</p>
+            <input type="password" id="sitePassInput" placeholder="••••" onkeyup="if(event.key==='Enter') verifySiteAccess()">
+            <div id="siteLockError" class="lock-error">קוד שגוי, נסה שנית</div>
+            <button class="btn btn-success" style="width: 100%; padding: 12px;" onclick="verifySiteAccess()">כניסה לקופה</button>
+        </div>
+    </div>
+
+    <!-- מסך נעילה פנימי לאזור מנהל -->
+    <div id="adminLockScreen" class="lock-screen" style="display: none; background-color: rgba(44, 62, 80, 0.95); z-index: 2500;">
+        <div class="lock-box">
+            <h2>כניסה לאזור מנהל</h2>
+            <p style="margin-bottom: 15px; color: #555;">הזן סיסמת מנהל</p>
+            <input type="password" id="adminPassInput" placeholder="••••" onkeyup="if(event.key==='Enter') verifyAdminAccess()">
+            <div id="adminLockError" class="lock-error">סיסמת מנהל שגויה</div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-success" style="flex: 1;" onclick="verifyAdminAccess()">אישור</button>
+                <button class="btn btn-danger" style="flex: 1;" onclick="closeAdminLock()">ביטול</button>
+            </div>
+        </div>
+    </div>
+
     <header>
         <div class="header-logo-container">
             <img id="headerLogo" src="" alt="לוגו" class="header-logo" style="display:none;">
             <h2 id="storeTitleDisplay">קופה רושמת</h2>
         </div>
         <div>
-            <button class="btn" onclick="syncCloudData()" style="margin-left: 10px; background-color: #3498db;">רענן נתונים</button>
-            <button class="btn" onclick="openAdminModal()">אזור מנהל</button>
+            <button class="btn btn-info" onclick="syncCloudData()" style="margin-left: 10px;">רענן נתונים</button>
+            <button class="btn" onclick="openAdminLock()">אזור מנהל</button>
         </div>
     </header>
 
     <div class="main-container">
         <!-- קטלוג -->
         <div class="catalog-section">
+            <div class="barcode-bar">
+                <label for="barcodeScannerInput" style="font-weight: bold; white-space: nowrap;">סריקת ברקוד:</label>
+                <input type="text" id="barcodeScannerInput" placeholder="סרוק או הקלד ברקוד ולחץ Enter..." onkeyup="if(event.key==='Enter') handleBarcodeScan()">
+                <button class="btn btn-success" onclick="handleBarcodeScan()">הוסף</button>
+            </div>
             <div class="categories-bar" id="categoriesBar"></div>
             <div class="products-grid" id="productsGrid"></div>
         </div>
@@ -329,7 +423,7 @@
             </div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-success" style="flex:1" onclick="startCheckout('cash')">תשלום מזומן</button>
-                <button class="btn" style="flex:1; background-color: #2980b9;" onclick="startCheckout('credit')">תשלום אשראי</button>
+                <button class="btn btn-info" style="flex:1" onclick="startCheckout('credit')">תשלום אשראי</button>
             </div>
         </div>
     </div>
@@ -372,16 +466,20 @@
 
     <!-- מודאל מנהל -->
     <div class="modal" id="adminModal">
-        <div class="modal-content" style="width: 750px;">
+        <div class="modal-content" style="width: 780px;">
             <h3>אזור מנהל והגדרות</h3>
             <div class="tab-buttons">
-                <button class="tab-btn active" onclick="switchTab('reports')">דוחות</button>
-                <button class="tab-btn" onclick="switchTab('products')">ניהול מוצרים</button>
-                <button class="tab-btn" onclick="switchTab('settings')">הגדרות קופה וקבלה</button>
+                <button class="tab-btn active" onclick="switchTab('reports', this)">דוחות וייצוא לאקסל</button>
+                <button class="tab-btn" onclick="switchTab('products', this)">ניהול מוצרים וברקודים</button>
+                <button class="tab-btn" onclick="switchTab('settings', this)">הגדרות וקודים</button>
             </div>
 
             <!-- לשונית דוחות -->
             <div id="tab-reports" class="tab-content">
+                <div style="display: flex; gap: 10px; margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px;">
+                    <button class="btn btn-success" onclick="exportSoldExcel()">ייצוא מוצרים שנמכרו לאקסל (CSV)</button>
+                    <button class="btn btn-info" onclick="exportStockExcel()">ייצוא יתרות מלאי לאקסל (CSV)</button>
+                </div>
                 <h4>כמויות שנמכרו (מכירות פעילות):</h4>
                 <div id="salesSummaryReport" style="margin: 10px 0;"></div>
                 <hr style="margin: 15px 0;">
@@ -411,6 +509,10 @@
                     <label>קטגוריה:</label>
                     <input type="text" id="prodCategory" placeholder="כללי">
                 </div>
+                <div class="form-group">
+                    <label>ברקודים (ניתן להזין כמה ברקודים שונים מופרדים בפסיק):</label>
+                    <input type="text" id="prodBarcodes" placeholder="לדוגמה: 729000111, 729000222">
+                </div>
                 <button class="btn btn-success" onclick="saveProduct()">שמור מוצר</button>
                 <button class="btn" onclick="resetProdForm()">איפוס טופס</button>
                 <hr style="margin: 15px 0;">
@@ -420,6 +522,16 @@
 
             <!-- לשונית הגדרות -->
             <div id="tab-settings" class="tab-content" style="display:none;">
+                <div style="display: flex; gap: 10px; background: #fff3cd; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
+                    <div class="form-group" style="flex:1; margin-bottom: 0;">
+                        <label>קוד כניסה לאתר (ראשי):</label>
+                        <input type="text" id="settingSitePass" placeholder="1111">
+                    </div>
+                    <div class="form-group" style="flex:1; margin-bottom: 0;">
+                        <label>קוד כניסה לאזור מנהל:</label>
+                        <input type="text" id="settingAdminPass" placeholder="1234">
+                    </div>
+                </div>
                 <div class="form-group">
                     <label>שם העסק / האתר:</label>
                     <input type="text" id="settingStoreName">
@@ -491,14 +603,16 @@
     </div>
 
     <script>
-        const BIN_ID = '6af37d14ac6210605a7dff55';
-        const MASTER_KEY = '$2a$10$cybtg3PoipTjXjFR3oX98.nPvLBzrkxb4EKErPyFiFIC6AIoP0Uaq';
+        const BIN_ID = '6af57961ac6210605a81ba47';
+        const MASTER_KEY = '$2a$10$NH8w6pYKr/TeG.gKDf1MRuj1UoiT.L8veH0oRG/QQxnheXI0FtiO2';
         const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
         let appData = {
             products: [],
             receipts: [],
             settings: {
+                sitePass: '1111',
+                adminPass: '1234',
                 storeName: 'קופה רושמת',
                 logoUrl: '',
                 cardSize: '140px',
@@ -527,7 +641,10 @@
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    appData = data.record;
+                    appData = data.record || appData;
+                    if (!appData.settings) appData.settings = {};
+                    if (!appData.settings.sitePass) appData.settings.sitePass = '1111';
+                    if (!appData.settings.adminPass) appData.settings.adminPass = '1234';
                     applySettings();
                     renderCategories();
                     renderProducts();
@@ -564,6 +681,66 @@
             }
         }
 
+        /* ניהול מסכי נעילה פנימיים */
+        function verifySiteAccess() {
+            const input = document.getElementById('sitePassInput').value;
+            const correctPass = (appData.settings && appData.settings.sitePass) ? appData.settings.sitePass : '1111';
+            if (input === correctPass) {
+                document.getElementById('siteLockScreen').style.display = 'none';
+                document.getElementById('siteLockError').style.display = 'none';
+                document.getElementById('barcodeScannerInput').focus();
+            } else {
+                document.getElementById('siteLockError').style.display = 'block';
+            }
+        }
+
+        function openAdminLock() {
+            document.getElementById('adminPassInput').value = '';
+            document.getElementById('adminLockError').style.display = 'none';
+            document.getElementById('adminLockScreen').style.display = 'flex';
+            document.getElementById('adminPassInput').focus();
+        }
+
+        function closeAdminLock() {
+            document.getElementById('adminLockScreen').style.display = 'none';
+        }
+
+        function verifyAdminAccess() {
+            const input = document.getElementById('adminPassInput').value;
+            const correctPass = (appData.settings && appData.settings.adminPass) ? appData.settings.adminPass : '1234';
+            if (input === correctPass) {
+                document.getElementById('adminLockScreen').style.display = 'none';
+                loadAdminData();
+                document.getElementById('adminModal').style.display = 'flex';
+            } else {
+                document.getElementById('adminLockError').style.display = 'block';
+            }
+        }
+
+        /* סריקת ברקודים מרובה */
+        function handleBarcodeScan() {
+            const inputEl = document.getElementById('barcodeScannerInput');
+            const code = inputEl.value.trim();
+            if (!code) return;
+
+            const foundProd = (appData.products || []).find(p => {
+                if (!p.barcodes) return false;
+                const codeList = Array.isArray(p.barcodes) 
+                    ? p.barcodes 
+                    : String(p.barcodes).split(',').map(b => b.trim());
+                return codeList.includes(code);
+            });
+
+            if (foundProd) {
+                addToCart(foundProd.id);
+                inputEl.value = '';
+                inputEl.focus();
+            } else {
+                alert('ברקוד לא נמצא במערכת: ' + code);
+                inputEl.select();
+            }
+        }
+
         function applySettings() {
             const s = appData.settings || {};
             document.getElementById('storeTitleDisplay').innerText = s.storeName || 'קופה רושמת';
@@ -580,6 +757,8 @@
         }
 
         async function saveSettings() {
+            appData.settings.sitePass = document.getElementById('settingSitePass').value || '1111';
+            appData.settings.adminPass = document.getElementById('settingAdminPass').value || '1234';
             appData.settings.storeName = document.getElementById('settingStoreName').value;
             appData.settings.logoUrl = document.getElementById('settingLogoUrl').value;
             appData.settings.cardSize = document.getElementById('settingCardSize').value;
@@ -589,7 +768,7 @@
 
             applySettings();
             await saveCloudData();
-            alert('ההגדרות נשמרו בהצלחה בענן!');
+            alert('ההגדרות והקודים נשמרו בהצלחה בענן!');
         }
 
         function renderCategories() {
@@ -771,25 +950,19 @@
             document.getElementById('receiptViewModal').style.display = 'flex';
         }
 
-        function openAdminModal() {
-            const pass = prompt('הכנס סיסמת מנהל:');
-            if (pass !== '1234') return alert('סיסמה שגויה');
-
-            loadAdminData();
-            document.getElementById('adminModal').style.display = 'flex';
-        }
-
-        function switchTab(tabName) {
+        function switchTab(tabName, btnEl) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + tabName).style.display = 'block';
-            if (event && event.target) {
-                event.target.classList.add('active');
+            if (btnEl) {
+                btnEl.classList.add('active');
             }
         }
 
         function loadAdminData() {
             const s = appData.settings || {};
+            document.getElementById('settingSitePass').value = s.sitePass || '1111';
+            document.getElementById('settingAdminPass').value = s.adminPass || '1234';
             document.getElementById('settingStoreName').value = s.storeName || '';
             document.getElementById('settingLogoUrl').value = s.logoUrl || '';
             document.getElementById('settingCardSize').value = s.cardSize || '140px';
@@ -822,16 +995,64 @@
             `).join('');
             document.getElementById('receiptsListAdmin').innerHTML = receiptsHtml;
 
-            const prodListHtml = (appData.products || []).map(p => `
-                <div style="padding: 5px; border-bottom: 1px solid #ccc; display: flex; justify-content: space-between;">
-                    <span><strong>${p.name}</strong> - ₪${p.price} | מלאי: ${p.stock} | קטגוריה: ${p.category || 'כללי'}</span>
-                    <div>
-                        <button class="btn btn-small" onclick="editProduct(${p.id})">ערוך</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteProduct(${p.id})">מחק</button>
+            const prodListHtml = (appData.products || []).map(p => {
+                const bText = Array.isArray(p.barcodes) ? p.barcodes.join(', ') : (p.barcodes || '');
+                return `
+                    <div style="padding: 5px; border-bottom: 1px solid #ccc; display: flex; justify-content: space-between; align-items: center;">
+                        <span><strong>${p.name}</strong> - ₪${p.price} | מלאי: ${p.stock} | ברקודים: ${bText || 'אין'}</span>
+                        <div>
+                            <button class="btn btn-small" onclick="editProduct(${p.id})">ערוך</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteProduct(${p.id})">מחק</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
             document.getElementById('adminProductsList').innerHTML = prodListHtml;
+        }
+
+        /* ייצוא נתונים לאקסל (CSV) */
+        function downloadCSV(filename, rows) {
+            const csvContent = "\uFEFF" + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportSoldExcel() {
+            const soldMap = {};
+            (appData.receipts || []).filter(r => r.active).forEach(r => {
+                r.items.forEach(i => {
+                    if (!soldMap[i.name]) {
+                        soldMap[i.name] = { qty: 0, totalSum: 0 };
+                    }
+                    soldMap[i.name].qty += i.qty;
+                    soldMap[i.name].totalSum += (i.price * i.qty);
+                });
+            });
+
+            const rows = [["שם מוצר", "כמות שנמכרה", "סך הכנסות (₪)"]];
+            for (const [name, data] of Object.entries(soldMap)) {
+                rows.push([name, data.qty, data.totalSum.toFixed(2)]);
+            }
+
+            if (rows.length === 1) return alert('אין נתוני מכירות פעילים לייצוא');
+            downloadCSV("sold_products_report.csv", rows);
+        }
+
+        function exportStockExcel() {
+            const rows = [["מזהה מוצר", "שם מוצר", "קטגוריה", "מחיר (₪)", "יתרת מלאי", "ברקודים"]];
+            (appData.products || []).forEach(p => {
+                const bText = Array.isArray(p.barcodes) ? p.barcodes.join(', ') : (p.barcodes || '');
+                rows.push([p.id, p.name, p.category || 'כללי', p.price.toFixed(2), p.stock, bText]);
+            });
+
+            if (rows.length === 1) return alert('אין מוצרים ברשימה לייצוא');
+            downloadCSV("remaining_stock_report.csv", rows);
         }
 
         async function saveProduct() {
@@ -840,8 +1061,12 @@
             const price = parseFloat(document.getElementById('prodPrice').value);
             const stock = parseInt(document.getElementById('prodStock').value);
             const category = document.getElementById('prodCategory').value || 'כללי';
+            const rawBarcodes = document.getElementById('prodBarcodes').value;
+            const barcodesArray = rawBarcodes
+                ? rawBarcodes.split(',').map(b => b.trim()).filter(b => b !== '')
+                : [];
 
-            if (!name || isNaN(price) || isNaN(stock)) return alert('נא למלא את כל השדות בצורה תקינה');
+            if (!name || isNaN(price) || isNaN(stock)) return alert('נא למלא שם, מחיר ומלאי בצורה תקינה');
 
             if (!appData.products) appData.products = [];
 
@@ -852,6 +1077,7 @@
                     p.price = price;
                     p.stock = stock;
                     p.category = category;
+                    p.barcodes = barcodesArray;
                 }
             } else {
                 appData.products.push({
@@ -859,7 +1085,8 @@
                     name: name,
                     price: price,
                     stock: stock,
-                    category: category
+                    category: category,
+                    barcodes: barcodesArray
                 });
             }
 
@@ -878,6 +1105,7 @@
             document.getElementById('prodPrice').value = p.price;
             document.getElementById('prodStock').value = p.stock;
             document.getElementById('prodCategory').value = p.category || 'כללי';
+            document.getElementById('prodBarcodes').value = Array.isArray(p.barcodes) ? p.barcodes.join(', ') : (p.barcodes || '');
         }
 
         async function deleteProduct(id) {
@@ -895,6 +1123,7 @@
             document.getElementById('prodPrice').value = '';
             document.getElementById('prodStock').value = '';
             document.getElementById('prodCategory').value = '';
+            document.getElementById('prodBarcodes').value = '';
         }
 
         async function cancelReceipt(id) {
