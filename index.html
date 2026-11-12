@@ -19,8 +19,8 @@
             --text-main: #0f172a;
             --text-muted: #64748b;
             --card-size: 145px;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.06);
+            --shadow-md: 0 6px 16px rgba(0,0,0,0.1);
         }
 
         * {
@@ -39,6 +39,43 @@
             overflow: hidden;
         }
 
+        /* התראות צפות ללא צורך באישור (Toast) */
+        #toastContainer {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+            width: 90%;
+            max-width: 480px;
+        }
+
+        .toast-msg {
+            padding: 14px 20px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            font-size: 1.05em;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            text-align: center;
+            animation: slideDownFade 0.25s ease-out;
+            pointer-events: auto;
+        }
+
+        .toast-success { background: linear-gradient(135deg, #10b981, #059669); }
+        .toast-error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .toast-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .toast-info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+        @keyframes slideDownFade {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* מסכי נעילה */
         .lock-screen {
             position: fixed;
@@ -52,25 +89,25 @@
 
         .lock-box {
             background: white;
-            padding: 35px 30px;
-            border-radius: 16px;
-            width: 360px;
-            max-width: 92%;
+            padding: 36px 32px;
+            border-radius: 18px;
+            width: 390px;
+            max-width: 94%;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
         }
 
-        .lock-box h2 { margin-bottom: 8px; color: var(--primary); font-size: 1.5em; }
-        .lock-box p { margin-bottom: 20px; color: var(--text-muted); font-size: 0.95em; }
+        .lock-box h2 { margin-bottom: 8px; color: var(--primary); font-size: 1.55em; }
+        .lock-box p { margin-bottom: 18px; color: var(--text-muted); font-size: 0.98em; }
         .lock-box input {
             width: 100%;
-            padding: 14px;
-            font-size: 1.3em;
+            padding: 15px;
+            font-size: 1.4em;
             text-align: center;
             border: 2px solid var(--border-color);
-            border-radius: 10px;
-            margin-bottom: 16px;
-            letter-spacing: 4px;
+            border-radius: 12px;
+            margin-bottom: 14px;
+            letter-spacing: 5px;
             transition: border-color 0.2s;
         }
         .lock-box input:focus {
@@ -81,9 +118,25 @@
         .lock-error {
             color: var(--danger);
             font-weight: bold;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
             display: none;
-            font-size: 0.9em;
+            font-size: 0.95em;
+            background: #fef2f2;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #fecaca;
+        }
+
+        .lockout-timer-box {
+            display: none;
+            background: #fef2f2;
+            border: 2px solid var(--danger);
+            color: #991b1b;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: bold;
+            margin-bottom: 14px;
+            font-size: 1.05em;
         }
 
         /* סרגל עליון */
@@ -151,10 +204,10 @@
 
         .unified-search-bar input {
             flex: 1;
-            padding: 10px 14px;
-            font-size: 1.05em;
+            padding: 11px 14px;
+            font-size: 1.08em;
             border: 1px solid #cbd5e1;
-            border-radius: 8px;
+            border-radius: 10px;
             background: #f8fafc;
             transition: all 0.2s;
         }
@@ -173,15 +226,15 @@
         }
 
         .category-btn {
-            padding: 8px 16px;
+            padding: 9px 18px;
             background: #e2e8f0;
             color: var(--text-main);
             border: none;
-            border-radius: 20px;
+            border-radius: 22px;
             cursor: pointer;
             white-space: nowrap;
-            font-weight: 600;
-            font-size: 0.92em;
+            font-weight: 700;
+            font-size: 0.95em;
             transition: all 0.2s;
         }
 
@@ -205,7 +258,7 @@
         .product-card {
             background: var(--panel-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 14px;
             padding: 14px 10px;
             text-align: center;
             cursor: pointer;
@@ -213,9 +266,8 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: calc(var(--card-size) * 0.9);
+            min-height: calc(var(--card-size) * 0.92);
             box-shadow: var(--shadow-sm);
-            position: relative;
         }
 
         .product-card:hover {
@@ -225,7 +277,7 @@
         }
 
         .product-card:active {
-            transform: scale(0.98);
+            transform: scale(0.97);
         }
 
         .product-card.low-stock-card {
@@ -236,31 +288,31 @@
         .promo-badge {
             background: #dbeafe;
             color: #1d4ed8;
-            font-size: 0.75em;
+            font-size: 0.78em;
             font-weight: bold;
-            padding: 2px 6px;
+            padding: 3px 7px;
             border-radius: 6px;
-            margin-top: 4px;
+            margin-top: 5px;
             display: inline-block;
         }
 
         .product-card .price {
             font-weight: 800;
             color: var(--accent-hover);
-            font-size: 1.15em;
+            font-size: 1.2em;
             margin-top: 6px;
         }
 
-        .stock-tag { font-size: 0.8em; color: var(--text-muted); margin-top: 4px; }
+        .stock-tag { font-size: 0.82em; color: var(--text-muted); margin-top: 4px; }
         .stock-low { color: var(--warning); font-weight: bold; }
         .stock-out { color: var(--danger); font-weight: bold; }
 
         /* עגלת קניות */
         .cart-section {
             flex: 1;
-            min-width: 360px;
+            min-width: 370px;
             background: var(--panel-bg);
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 16px;
             display: flex;
             flex-direction: column;
@@ -270,7 +322,7 @@
 
         .cart-top-tools {
             display: flex;
-            gap: 6px;
+            gap: 8px;
             margin-top: 10px;
             flex-wrap: wrap;
         }
@@ -289,11 +341,11 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
-            padding: 8px;
+            padding: 9px;
             background: #f8fafc;
-            border-radius: 8px;
-            border: 1px solid #f1f5f9;
-            font-size: 0.95em;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.96em;
             gap: 6px;
         }
 
@@ -308,7 +360,7 @@
         }
 
         .cart-promo-applied {
-            font-size: 0.78em;
+            font-size: 0.8em;
             color: var(--info);
             font-weight: bold;
         }
@@ -320,35 +372,36 @@
         }
 
         .cart-controls button {
-            width: 26px;
-            height: 28px;
+            width: 30px;
+            height: 32px;
             border: 1px solid #cbd5e1;
             background: #fff;
             cursor: pointer;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: bold;
+            font-size: 1.05em;
             transition: background 0.15s;
         }
         .cart-controls button:hover { background: #e2e8f0; }
 
         .cart-qty-input {
-            width: 46px;
-            height: 28px;
+            width: 50px;
+            height: 32px;
             text-align: center;
             border: 1px solid #cbd5e1;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: bold;
-            font-size: 0.95em;
+            font-size: 1em;
         }
 
         .cart-remove-btn {
-            width: 26px;
-            height: 28px;
+            width: 30px;
+            height: 32px;
             border: none;
             background: #fee2e2;
             color: var(--danger);
             cursor: pointer;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: bold;
             margin-right: 4px;
             transition: all 0.15s;
@@ -356,47 +409,73 @@
         .cart-remove-btn:hover { background: var(--danger); color: white; }
 
         .total-area {
-            font-size: 1.35em;
+            font-size: 1.4em;
             font-weight: 800;
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: #f1f5f9;
-            padding: 12px 14px;
-            border-radius: 10px;
+            padding: 13px 16px;
+            border-radius: 12px;
             color: var(--primary);
         }
 
-        /* כפתורים */
+        /* כפתורים מוגדלים ומודרניים */
         .btn {
-            padding: 10px 14px;
+            padding: 12px 18px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
             color: white;
             background-color: var(--primary);
             transition: all 0.15s;
-            font-size: 0.95em;
+            font-size: 1em;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .btn:hover { opacity: 0.92; transform: translateY(-1px); }
+        .btn:hover { opacity: 0.94; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
         .btn:active { transform: translateY(0); }
 
-        .btn-success { background-color: var(--accent); }
-        .btn-danger { background-color: var(--danger); }
-        .btn-warning { background-color: var(--warning); }
-        .btn-info { background-color: var(--info); }
-        .btn-secondary { background-color: #64748b; }
-        .btn-small { padding: 5px 10px; font-size: 0.85em; border-radius: 6px; }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .btn-secondary { background: linear-gradient(135deg, #64748b, #475569); }
+        .btn-small { padding: 8px 13px; font-size: 0.92em; border-radius: 8px; }
+        .btn-large-action { padding: 14px 22px; font-size: 1.08em; border-radius: 12px; }
+
+        /* כפתורי שטרות מהירים למזומן */
+        .quick-cash-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .quick-cash-btn {
+            padding: 12px 8px;
+            background: #ffffff;
+            border: 2px solid #10b981;
+            color: #065f46;
+            font-weight: 800;
+            font-size: 1.08em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .quick-cash-btn:hover {
+            background: #10b981;
+            color: white;
+        }
 
         /* חלונות מודאליים */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.65);
-            backdrop-filter: blur(2px);
+            background: rgba(15, 23, 42, 0.68);
+            backdrop-filter: blur(3px);
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -404,24 +483,25 @@
 
         .modal-content {
             background: white;
-            padding: 24px;
-            border-radius: 14px;
-            width: 560px;
+            padding: 26px;
+            border-radius: 16px;
+            width: 580px;
             max-width: 96%;
             max-height: 92vh;
             overflow-y: auto;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+            box-shadow: 0 20px 45px rgba(0,0,0,0.3);
         }
 
         .modal-content h3 {
-            margin-bottom: 14px;
+            margin-bottom: 16px;
             color: var(--primary);
             border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 8px;
+            padding-bottom: 10px;
+            font-size: 1.3em;
         }
 
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.92em; color: #334155; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.95em; color: #334155; }
         .form-group input[type="text"],
         .form-group input[type="number"],
         .form-group input[type="password"],
@@ -430,10 +510,10 @@
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 9px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 0.95em;
+            padding: 11px 14px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 1em;
         }
 
         .checkbox-row {
@@ -441,50 +521,55 @@
             align-items: center;
             gap: 8px;
             margin: 8px 0;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
         }
 
         .checkbox-row input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             cursor: pointer;
         }
 
         .yeshiva-grades-box {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 14px;
             background: #f8fafc;
-            padding: 10px 12px;
-            border-radius: 8px;
+            padding: 12px 14px;
+            border-radius: 10px;
             border: 1px solid #cbd5e1;
             margin-top: 6px;
         }
 
+        /* לשוניות מנהל מוגדלות ומודרניות */
         .tab-buttons {
             display: flex;
-            gap: 6px;
+            gap: 8px;
             border-bottom: 2px solid var(--border-color);
-            margin-bottom: 16px;
+            margin-bottom: 18px;
             flex-wrap: wrap;
+            padding-bottom: 8px;
         }
 
         .tab-btn {
-            padding: 9px 14px;
-            background: none;
-            border: none;
+            padding: 12px 18px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 0.98em;
             color: var(--text-muted);
-            border-bottom: 3px solid transparent;
             transition: all 0.2s;
         }
 
-        .tab-btn:hover { color: var(--primary); }
+        .tab-btn:hover { background: #e2e8f0; color: var(--primary); }
         .tab-btn.active {
-            color: var(--primary);
-            border-bottom: 3px solid var(--primary);
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 3px 8px rgba(30, 41, 59, 0.25);
         }
 
         .alert-banner {
@@ -493,10 +578,31 @@
             border: 1px solid #fecaca;
             padding: 10px 14px;
             border-radius: 10px;
-            font-weight: 600;
+            font-weight: 700;
             display: none;
             justify-content: space-between;
             align-items: center;
+        }
+
+        /* שורת הוספת מלאי מהירה במוצרים */
+        .quick-add-stock-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #ecfdf5;
+            padding: 4px 6px;
+            border-radius: 8px;
+            border: 1px solid #a7f3d0;
+        }
+
+        .quick-add-stock-input {
+            width: 65px;
+            padding: 6px;
+            border: 1px solid #10b981;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.95em;
         }
 
         /* קבלה למדפסת תרמית */
@@ -504,13 +610,13 @@
             background: #fff;
             padding: 10px;
             border: 1px dashed #94a3b8;
-            width: 275px;
+            width: 280px;
             margin: auto;
             font-family: 'Courier New', Courier, monospace;
             text-align: center;
             color: #000;
             font-size: 13px;
-            line-height: 1.4;
+            line-height: 1.45;
         }
 
         .receipt-box img {
@@ -565,6 +671,7 @@
 </head>
 <body>
 
+    <div id="toastContainer"></div>
     <div id="loadingOverlay">מסנכרן נתונים...</div>
 
     <!-- מסך נעילה ראשי לכניסה לאתר -->
@@ -572,9 +679,10 @@
         <div class="lock-box">
             <h2>כניסה למערכת הקופה</h2>
             <p>הזן קוד גישה לאתר</p>
+            <div id="siteLockoutTimer" class="lockout-timer-box"></div>
             <input type="password" id="sitePassInput" placeholder="••••" onkeyup="if(event.key==='Enter') verifySiteAccess()">
             <div id="siteLockError" class="lock-error">קוד שגוי, נסה שנית</div>
-            <button type="button" class="btn btn-success" style="width: 100%; padding: 13px; font-size: 1.05em;" onclick="verifySiteAccess()">כניסה לקופה</button>
+            <button type="button" id="siteUnlockBtn" class="btn btn-success btn-large-action" style="width: 100%;" onclick="verifySiteAccess()">כניסה לקופה</button>
         </div>
     </div>
 
@@ -583,11 +691,12 @@
         <div class="lock-box">
             <h2 id="adminLockTitle">כניסה לאזור מנהל</h2>
             <p id="adminLockSubtitle">הזן סיסמת מנהל</p>
+            <div id="adminLockoutTimer" class="lockout-timer-box"></div>
             <input type="password" id="adminPassInput" placeholder="••••" onkeyup="if(event.key==='Enter') verifyAdminAccess()">
             <div id="adminLockError" class="lock-error">סיסמת מנהל שגויה</div>
             <div style="display: flex; gap: 10px;">
-                <button type="button" class="btn btn-success" style="flex: 1;" onclick="verifyAdminAccess()">אישור</button>
-                <button type="button" class="btn btn-danger" style="flex: 1;" onclick="closeAdminLock()">ביטול</button>
+                <button type="button" id="adminUnlockBtn" class="btn btn-success btn-large-action" style="flex: 1;" onclick="verifyAdminAccess()">אישור</button>
+                <button type="button" class="btn btn-danger btn-large-action" style="flex: 1;" onclick="closeAdminLock()">ביטול</button>
             </div>
         </div>
     </div>
@@ -599,7 +708,7 @@
         </div>
         <div class="header-actions">
             <button type="button" class="btn btn-warning" onclick="openPartialReturnModal()">החזרת פריט (זיכוי)</button>
-            <button type="button" class="btn btn-info" onclick="syncCloudData()">רענן נתונים</button>
+            <button type="button" class="btn btn-info" onclick="syncCloudData(true)">רענן נתונים</button>
             <button type="button" class="btn btn-secondary" onclick="openAdminLock('admin')">אזור מנהל</button>
         </div>
     </header>
@@ -644,31 +753,31 @@
             </div>
             
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button type="button" class="btn btn-success" style="flex:1; padding: 12px;" onclick="startCheckout('cash')">מזומן</button>
-                <button type="button" class="btn btn-info" style="flex:1; padding: 12px;" onclick="startCheckout('credit')">אשראי</button>
-                <button type="button" class="btn btn-warning" style="flex:1; padding: 12px;" onclick="startCheckout('debt')">הקפה / חוב</button>
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1;" onclick="startCheckout('cash')">מזומן</button>
+                <button type="button" class="btn btn-info btn-large-action" style="flex:1;" onclick="startCheckout('credit')">אשראי</button>
+                <button type="button" class="btn btn-warning btn-large-action" style="flex:1;" onclick="startCheckout('debt')">הקפה / חוב</button>
             </div>
         </div>
     </div>
 
     <!-- מודאל שם לקוח להשהיית עגלה -->
     <div class="modal" id="holdCartNameModal">
-        <div class="modal-content" style="width: 380px;">
+        <div class="modal-content" style="width: 400px;">
             <h3>השהיית עגלת קניות</h3>
             <div class="form-group">
                 <label>שם הקונה שעבורו מושהית העגלה:</label>
                 <input type="text" id="holdCustomerNameInput" placeholder="הקלד שם קונה..." onkeyup="if(event.key==='Enter') confirmHoldCurrentCart()">
             </div>
             <div style="display: flex; gap: 10px;">
-                <button type="button" class="btn btn-warning" style="flex:1" onclick="confirmHoldCurrentCart()">שמור בהמתנה</button>
-                <button type="button" class="btn btn-danger" style="flex:1" onclick="closeModal('holdCartNameModal')">ביטול</button>
+                <button type="button" class="btn btn-warning btn-large-action" style="flex:1" onclick="confirmHoldCurrentCart()">שמור בהמתנה</button>
+                <button type="button" class="btn btn-danger btn-large-action" style="flex:1" onclick="closeModal('holdCartNameModal')">ביטול</button>
             </div>
         </div>
     </div>
 
     <!-- מודאל פריט חופשי -->
     <div class="modal" id="freeItemModal">
-        <div class="modal-content" style="width: 380px;">
+        <div class="modal-content" style="width: 400px;">
             <h3>הוספת פריט כללי / סכום חופשי</h3>
             <div class="form-group">
                 <label>תיאור הפריט:</label>
@@ -679,32 +788,32 @@
                 <input type="number" id="freeItemPrice" step="0.1" placeholder="0.00" onkeyup="if(event.key==='Enter') addFreeItemToCart()">
             </div>
             <div style="display: flex; gap: 10px;">
-                <button type="button" class="btn btn-success" style="flex:1" onclick="addFreeItemToCart()">הוסף לעגלה</button>
-                <button type="button" class="btn btn-danger" style="flex:1" onclick="closeModal('freeItemModal')">ביטול</button>
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1" onclick="addFreeItemToCart()">הוסף לעגלה</button>
+                <button type="button" class="btn btn-danger btn-large-action" style="flex:1" onclick="closeModal('freeItemModal')">ביטול</button>
             </div>
         </div>
     </div>
 
     <!-- מודאל עגלות מושהות -->
     <div class="modal" id="heldCartsModal">
-        <div class="modal-content" style="width: 450px;">
+        <div class="modal-content" style="width: 460px;">
             <h3>עגלות קניות בהמתנה</h3>
             <div id="heldCartsList" style="margin: 15px 0; max-height: 300px; overflow-y: auto;"></div>
-            <button type="button" class="btn btn-danger" onclick="closeModal('heldCartsModal')">סגור</button>
+            <button type="button" class="btn btn-danger btn-large-action" style="width: 100%;" onclick="closeModal('heldCartsModal')">סגור</button>
         </div>
     </div>
 
     <!-- מודאל החזרת פריט בודד (זיכוי חלקי) -->
     <div class="modal" id="partialReturnModal">
-        <div class="modal-content" style="width: 560px;">
+        <div class="modal-content" style="width: 580px;">
             <h3>החזרת פריט בודד / זיכוי חלקי</h3>
-            <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 10px;">בחר קבלה פעילה וסמן את הפריט להחזרה למלאי וזיכוי כספי:</p>
+            <p style="font-size: 0.92em; color: var(--text-muted); margin-bottom: 10px;">בחר קבלה פעילה ולחץ על הפריט להחזרה למלאי וזיכוי כספי:</p>
             <div class="form-group">
                 <input type="text" id="returnSearchInput" placeholder="חפש לפי שם לקוח או מספר קבלה..." oninput="renderReturnReceipts()">
             </div>
             <div id="returnReceiptsContainer" style="max-height: 350px; overflow-y: auto;"></div>
             <br>
-            <button type="button" class="btn btn-danger" onclick="closeModal('partialReturnModal')">סגור</button>
+            <button type="button" class="btn btn-danger btn-large-action" style="width: 100%;" onclick="closeModal('partialReturnModal')">סגור</button>
         </div>
     </div>
 
@@ -738,39 +847,47 @@
                 <input type="tel" id="custPhone" placeholder="050-0000000">
             </div>
 
-            <!-- מחשבון עודף למזומן -->
-            <div id="cashChangeCalculator" style="display:none; background: #ecfdf5; padding: 12px; border-radius: 8px; border: 1px solid #a7f3d0; margin-bottom: 14px;">
-                <div style="font-weight: bold; margin-bottom: 8px;">מחשבון עודף במזומן (לתשלום: ₪<span id="calcTotalDue">0.00</span>)</div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="number" id="cashReceivedInput" placeholder="סכום שהתקבל מהלקוח" oninput="calculateCashChange()">
-                    <div style="white-space: nowrap; font-weight: bold; font-size: 1.1em;">
-                        עודף להחזרה: <span id="cashChangeResult" style="color: var(--accent-hover);">₪0.00</span>
+            <!-- מחשבון עודף למזומן עם כפתורי שטרות גדולים -->
+            <div id="cashChangeCalculator" style="display:none; background: #ecfdf5; padding: 14px; border-radius: 12px; border: 1.5px solid #a7f3d0; margin-bottom: 16px;">
+                <div style="font-weight: 800; font-size: 1.05em; margin-bottom: 8px;">מחשבון עודף במזומן (לתשלום: ₪<span id="calcTotalDue">0.00</span>)</div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <input type="number" id="cashReceivedInput" style="font-size: 1.25em; font-weight: bold; padding: 12px; border-radius: 10px; border: 2px solid #10b981; flex: 1;" placeholder="סכום שהתקבל" oninput="calculateCashChange()">
+                    <div style="white-space: nowrap; font-weight: 800; font-size: 1.2em; background: white; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1;">
+                        עודף: <span id="cashChangeResult" style="color: var(--accent-hover);">₪0.00</span>
                     </div>
+                </div>
+                <div class="quick-cash-grid">
+                    <button type="button" class="quick-cash-btn" onclick="setExactCash()">סכום מדויק</button>
+                    <button type="button" class="quick-cash-btn" onclick="addCashAmount(10)">+ ₪10</button>
+                    <button type="button" class="quick-cash-btn" onclick="addCashAmount(20)">+ ₪20</button>
+                    <button type="button" class="quick-cash-btn" onclick="addCashAmount(50)">+ ₪50</button>
+                    <button type="button" class="quick-cash-btn" onclick="addCashAmount(100)">+ ₪100</button>
+                    <button type="button" class="quick-cash-btn" onclick="addCashAmount(200)">+ ₪200</button>
                 </div>
             </div>
 
             <div style="display: flex; gap: 10px;">
-                <button type="button" class="btn btn-success" style="flex:1" onclick="proceedToPayment()">אישור וסיום עסקה</button>
-                <button type="button" class="btn btn-danger" style="flex:1" onclick="closeModal('customerModal')">ביטול</button>
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1" onclick="proceedToPayment()">אישור וסיום עסקה</button>
+                <button type="button" class="btn btn-danger btn-large-action" style="flex:1" onclick="closeModal('customerModal')">ביטול</button>
             </div>
         </div>
     </div>
 
     <!-- מודאל תשלום אשראי מרחף -->
     <div class="modal" id="creditIframeModal">
-        <div class="modal-content" style="width: 700px; height: 600px; display: flex; flex-direction: column;">
+        <div class="modal-content" style="width: 720px; height: 620px; display: flex; flex-direction: column;">
             <h3>תשלום באשראי (נדרים פלוס)</h3>
-            <iframe id="creditIframe" src="" style="width: 100%; flex: 1; border: 1px solid #cbd5e1; border-radius: 8px; margin: 10px 0;"></iframe>
-            <div style="display: flex; justify-content: space-between; gap: 10px;">
-                <button type="button" class="btn btn-success" style="flex:1" onclick="completeCreditTransaction()">אישור סיום תשלום</button>
-                <button type="button" class="btn btn-danger" style="flex:1" onclick="closeModal('creditIframeModal')">ביטול עסקה</button>
+            <iframe id="creditIframe" src="" style="width: 100%; flex: 1; border: 1px solid #cbd5e1; border-radius: 10px; margin: 10px 0;"></iframe>
+            <div style="display: flex; justify-content: space-between; gap: 12px;">
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1" onclick="completeCreditTransaction()">אישור סיום תשלום</button>
+                <button type="button" class="btn btn-danger btn-large-action" style="flex:1" onclick="closeModal('creditIframeModal')">ביטול עסקה</button>
             </div>
         </div>
     </div>
 
     <!-- מודאל מנהל -->
     <div class="modal" id="adminModal">
-        <div class="modal-content" style="width: 920px;">
+        <div class="modal-content" style="width: 960px;">
             <h3>אזור מנהל והגדרות מערכת</h3>
             <div class="tab-buttons">
                 <button type="button" class="tab-btn active" onclick="switchTab('reports', this)">דוחות וסיכום יומי</button>
@@ -783,15 +900,15 @@
 
             <!-- 1. לשונית דוחות וסיכום יומי -->
             <div id="tab-reports" class="tab-content">
-                <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-success" onclick="exportSoldExcel()">ייצוא מכירות ורווח לאקסל (CSV)</button>
-                    <button type="button" class="btn btn-info" onclick="exportStockExcel()">ייצוא יתרות מלאי לאקסל (CSV)</button>
+                <div style="display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-success btn-large-action" onclick="exportSoldExcel()">ייצוא מכירות ורווח לאקסל (CSV)</button>
+                    <button type="button" class="btn btn-info btn-large-action" onclick="exportStockExcel()">ייצוא יתרות מלאי לאקסל (CSV)</button>
                 </div>
 
                 <!-- סיכום קופה יומי -->
-                <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
+                <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
                     <h4>סיכום קופה יומי:</h4>
-                    <div style="display: flex; gap: 10px; align-items: center; margin: 8px 0;">
+                    <div style="display: flex; gap: 10px; align-items: center; margin: 10px 0;">
                         <label>בחר תאריך:</label>
                         <input type="date" id="dailySummaryDate" style="width: auto;" onchange="renderDailySummary()">
                         <button type="button" class="btn btn-small" onclick="setTodaySummary()">היום</button>
@@ -802,24 +919,24 @@
                 <h4>סיכום מכירות ורווח גולמי (כלל המכירות הפעילות):</h4>
                 <div id="salesSummaryReport" style="margin: 10px 0; max-height: 150px; overflow-y: auto;"></div>
                 
-                <hr style="margin: 12px 0;">
+                <hr style="margin: 14px 0;">
                 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                     <h4>ניהול קבלות (מחיקה / ביטול מרובה):</h4>
                     <div style="display: flex; gap: 8px;">
                         <button type="button" class="btn btn-secondary btn-small" onclick="toggleSelectAllReceipts()">סמן / בטל הכל</button>
                         <button type="button" class="btn btn-danger btn-small" onclick="bulkCancelReceipts()">בטל ומחק קבלות מסומנות</button>
                     </div>
                 </div>
-                <div id="receiptsListAdmin" style="max-height: 210px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px;"></div>
+                <div id="receiptsListAdmin" style="max-height: 210px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px;"></div>
             </div>
 
             <!-- 2. לשונית כרטיס לקוח וחובות -->
             <div id="tab-customers" class="tab-content" style="display:none;">
                 <h4>דוח מכירות לפי קונים וניהול חובות (הקפה)</h4>
-                <div style="display: flex; gap: 10px; margin: 10px 0;">
+                <div style="display: flex; gap: 10px; margin: 12px 0;">
                     <input type="text" id="customerFilterInput" placeholder="חפש שם קונה או שיעור..." oninput="renderCustomerReport()">
-                    <select id="debtFilterSelect" style="width: 180px;" onchange="renderCustomerReport()">
+                    <select id="debtFilterSelect" style="width: 200px;" onchange="renderCustomerReport()">
                         <option value="all">כל העסקאות</option>
                         <option value="debt">חובות פתוחים בלבד</option>
                     </select>
@@ -844,14 +961,14 @@
                         <label>מחיר ליחידה (₪):</label>
                         <input type="number" id="prodPrice" step="0.1">
                     </div>
-                    <div class="form-group" style="flex:1; min-width: 90px;">
+                    <div class="form-group" style="flex:1; min-width: 95px;">
                         <label>מלאי נוכחי:</label>
                         <input type="number" id="prodStock">
                     </div>
                 </div>
 
                 <!-- הגדרת מבצע כמות למוצר -->
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; background: #eff6ff; padding: 10px; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 12px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; background: #eff6ff; padding: 12px; border-radius: 10px; border: 1px solid #bfdbfe; margin-bottom: 12px;">
                     <div class="form-group" style="flex:1; min-width: 150px; margin-bottom: 0;">
                         <label>מבצע כמות (אופציונלי) - כמות יחידות:</label>
                         <input type="number" id="prodPromoQty" placeholder="לדוגמה: 3">
@@ -863,11 +980,15 @@
                 </div>
 
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <div class="form-group" style="flex:1; min-width: 200px;">
+                    <div class="form-group" style="flex:1; min-width: 220px;">
                         <label>קטגוריה:</label>
-                        <div style="display: flex; gap: 6px;">
+                        <div style="display: flex; gap: 8px;">
                             <select id="prodCategorySelect" style="flex:1;"></select>
-                            <button type="button" class="btn btn-info btn-small" onclick="promptNewCategory()">+ הוסף קטגוריה</button>
+                            <button type="button" class="btn btn-info btn-small" onclick="toggleNewCategoryBox()">+ קטגוריה חדשה</button>
+                        </div>
+                        <div id="newCategoryInlineBox" style="display: none; gap: 6px; margin-top: 8px;">
+                            <input type="text" id="newCategoryInput" placeholder="שם הקטגוריה החדשה...">
+                            <button type="button" class="btn btn-success btn-small" onclick="saveNewCategoryInline()">שמור</button>
                         </div>
                     </div>
                     <div class="form-group" style="flex:1; min-width: 200px;">
@@ -881,47 +1002,49 @@
                     <input type="text" id="prodBarcodes" placeholder="לדוגמה: 729000111, 729000222">
                 </div>
 
-                <button type="button" class="btn btn-success" onclick="saveProduct()">שמור מוצר</button>
-                <button type="button" class="btn btn-secondary" onclick="resetProdForm()">איפוס טופס</button>
-                <hr style="margin: 12px 0;">
-                <h4>רשימת מוצרים קיימים (כולל הוספת כמות למלאי ומדבקות ברקוד)</h4>
-                <div id="adminProductsList" style="max-height: 230px; overflow-y: auto;"></div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-success btn-large-action" onclick="saveProduct()">שמור מוצר</button>
+                    <button type="button" class="btn btn-secondary btn-large-action" onclick="resetProdForm()">איפוס טופס</button>
+                </div>
+                <hr style="margin: 14px 0;">
+                <h4>רשימת מוצרים קיימים (הזן כמות שהגיעה ולחץ "הוסף" לעדכון מלאי אוטומטי):</h4>
+                <div id="adminProductsList" style="max-height: 250px; overflow-y: auto; margin-top: 8px;"></div>
             </div>
 
             <!-- 4. לשונית ספירת מלאי מהירה -->
             <div id="tab-stockcount" class="tab-content" style="display:none;">
                 <h4>ספירת מלאי מהירה והשוואה למחשב</h4>
-                <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 10px;">
+                <p style="font-size: 0.95em; color: var(--text-muted); margin-bottom: 12px;">
                     סרוק ברקוד או הקלד את הכמות הפיזית הקיימת על המדף. המערכת תציג את הפערים ותעדכן את המלאי בלחיצה אחת.
                 </p>
-                <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 14px;">
                     <input type="text" id="stockCountBarcodeInput" placeholder="סרוק ברקוד מוצר לספירה..." onkeyup="if(event.key==='Enter') handleStockCountScan()">
-                    <button type="button" class="btn btn-success" onclick="applyAllStockCounts()">עדכן את כל המלאי לפי הספירה</button>
+                    <button type="button" class="btn btn-success btn-large-action" onclick="applyAllStockCounts()">עדכן את כל המלאי לפי הספירה</button>
                 </div>
-                <div id="stockCountTableContainer" style="max-height: 340px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px;"></div>
+                <div id="stockCountTableContainer" style="max-height: 340px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 10px; padding: 8px;"></div>
             </div>
 
             <!-- 5. לשונית ספקים והזמנות רכש -->
             <div id="tab-suppliers" class="tab-content" style="display:none;">
                 <h4>ניהול ספקים והפקת הזמנת רכש</h4>
-                <div style="display: flex; gap: 8px; margin: 10px 0;">
+                <div style="display: flex; gap: 10px; margin: 12px 0;">
                     <input type="text" id="newSupplierName" placeholder="שם הספק החדש">
                     <input type="text" id="newSupplierPhone" placeholder="טלפון ספק">
-                    <button type="button" class="btn btn-success" onclick="addSupplier()">הוסף ספק</button>
+                    <button type="button" class="btn btn-success btn-large-action" onclick="addSupplier()">הוסף ספק</button>
                 </div>
                 <div id="suppliersListContainer" style="margin-bottom: 15px;"></div>
                 <hr>
-                <h4 style="margin-top: 10px;">הפקת רשימת הזמנה לפי ספק (מוצרים במלאי נמוך):</h4>
-                <div style="display: flex; gap: 10px; margin: 8px 0;">
+                <h4 style="margin-top: 12px;">הפקת רשימת הזמנה לפי ספק (מוצרים במלאי נמוך):</h4>
+                <div style="display: flex; gap: 10px; margin: 10px 0;">
                     <select id="orderSupplierFilter" onchange="renderPurchaseOrder()"></select>
-                    <button type="button" class="btn btn-info" onclick="printPurchaseOrder()">הדפס הזמנת רכש</button>
+                    <button type="button" class="btn btn-info btn-large-action" onclick="printPurchaseOrder()">הדפס הזמנת רכש</button>
                 </div>
-                <div id="purchaseOrderPreview" style="background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;"></div>
+                <div id="purchaseOrderPreview" style="background: #f8fafc; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px;"></div>
             </div>
 
             <!-- 6. לשונית הגדרות וסיסמאות -->
             <div id="tab-settings" class="tab-content" style="display:none;">
-                <div style="background: #fffbeb; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #fde68a;">
+                <div style="background: #fffbeb; padding: 14px; border-radius: 10px; margin-bottom: 14px; border: 1px solid #fde68a;">
                     <h4 style="margin-bottom: 8px;">אבטחת סיסמאות (נדרש אימות סיסמה נוכחית לשינוי)</h4>
                     <div class="form-group">
                         <label>אימות סיסמת מנהל נוכחית (חובה בעת שינוי קודים):</label>
@@ -979,17 +1102,17 @@
                     <label>הודעת סיום בקבלה (תחתית):</label>
                     <input type="text" id="settingReceiptFooter">
                 </div>
-                <button type="button" class="btn btn-success" onclick="saveSettings()">שמור הגדרות</button>
+                <button type="button" class="btn btn-success btn-large-action" onclick="saveSettings()">שמור הגדרות</button>
             </div>
 
             <br>
-            <button type="button" class="btn btn-danger" onclick="closeModal('adminModal')">סגור</button>
+            <button type="button" class="btn btn-danger btn-large-action" style="width: 100%;" onclick="closeModal('adminModal')">סגור אזור מנהל</button>
         </div>
     </div>
 
     <!-- מודאל תצוגת קבלה להדפסה תרמית והעתקה כטקסט -->
     <div class="modal" id="receiptViewModal">
-        <div class="modal-content" style="width: 360px;">
+        <div class="modal-content" style="width: 380px;">
             <div class="receipt-box" id="printableReceipt">
                 <img id="receiptLogo" src="" style="display:none;">
                 <div style="font-weight: bold; font-size: 15px;" id="receiptHeaderTitle"></div>
@@ -997,7 +1120,8 @@
                 <div style="border-top: 1px dashed #000; margin: 4px 0;"></div>
                 <div style="text-align: right; font-size: 12px;">
                     <div>תאריך עברי: <span id="rHebrewDate"></span></div>
-                    <div>תאריך לועזי: <span id="rDate"></span></div>
+                    <div>תאריך לועזי: <span id="rDateOnly"></span></div>
+                    <div>שעה: <span id="rTimeOnly"></span></div>
                     <div>לקוח: <span id="rCust"></span></div>
                     <div id="rYeshivaRow" style="display:none;">שיעור / ועד: <span id="rYeshivaGrade"></span></div>
                     <div id="rPhoneRow" style="display:none;">טלפון: <span id="rPhone"></span></div>
@@ -1018,10 +1142,10 @@
                 <div id="receiptFooterTitle" style="font-size: 11px; margin-top: 5px;"></div>
             </div>
             <br>
-            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button type="button" class="btn btn-success" style="flex:1" onclick="window.print()">הדפס קבלה</button>
-                <button type="button" class="btn btn-info" style="flex:1" onclick="copyReceiptAsText()">העתק קבלה כטקסט</button>
-                <button type="button" class="btn btn-danger" style="width:100%; margin-top:4px;" onclick="closeModal('receiptViewModal')">סגור</button>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1" onclick="window.print()">הדפס קבלה</button>
+                <button type="button" class="btn btn-info btn-large-action" style="flex:1" onclick="copyReceiptAsText()">העתק קבלה כטקסט</button>
+                <button type="button" class="btn btn-danger btn-large-action" style="width:100%; margin-top:4px;" onclick="closeModal('receiptViewModal')">סגור</button>
             </div>
         </div>
     </div>
@@ -1030,6 +1154,7 @@
         const BIN_ID = '6af57961ac6210605a81ba47';
         const MASTER_KEY = '$2a$10$NH8w6pYKr/TeG.gKDf1MRuj1UoiT.L8veH0oRG/QQxnheXI0FtiO2';
         const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+        const SECURITY_ALERT_EMAIL = 'T0556766318@GMAIL.COM';
 
         let appData = {
             products: [],
@@ -1059,10 +1184,95 @@
         let currentViewedReceipt = null;
         let stockCountBuffer = {};
 
+        /* מעקב ניסיונות כניסה כושלים ונעילה ל-60 שניות */
+        let siteFailedAttempts = [];
+        let siteLockoutUntil = 0;
+        let siteLockoutInterval = null;
+
+        let adminFailedAttempts = [];
+        let adminLockoutUntil = 0;
+        let adminLockoutInterval = null;
+
+        /* התראות צפות (ללא צורך בלחיצת אישור) */
+        function showToast(message, type = 'info', duration = 3500) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast-msg toast-${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
         function showLoading(show) {
             document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
         }
 
+        /* שליחת התראת אבטחה למייל בעת 5 ניסיונות כושלים */
+        async function sendSecurityAlertEmail(lockType, triedCodes, realCode) {
+            try {
+                const payload = {
+                    _subject: `התראת אבטחה בקופה: 5 ניסיונות כניסה שגויים (${lockType})`,
+                    _captcha: 'false',
+                    סוג_גישה: lockType,
+                    זמן_אירוע: new Date().toLocaleString('he-IL'),
+                    קודים_שנוסו: triedCodes.join(' , '),
+                    הקוד_האמיתי_במערכת: realCode
+                };
+                await fetch(`https://formsubmit.co/ajax/${SECURITY_ALERT_EMAIL}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.error('Security email dispatch error:', err);
+            }
+        }
+
+        function startLockoutCountdown(type) {
+            const isSite = type === 'site';
+            const timerBox = document.getElementById(isSite ? 'siteLockoutTimer' : 'adminLockoutTimer');
+            const inputEl = document.getElementById(isSite ? 'sitePassInput' : 'adminPassInput');
+            const btnEl = document.getElementById(isSite ? 'siteUnlockBtn' : 'adminUnlockBtn');
+
+            inputEl.disabled = true;
+            btnEl.disabled = true;
+            btnEl.style.opacity = '0.5';
+            timerBox.style.display = 'block';
+
+            const updateTimer = () => {
+                const until = isSite ? siteLockoutUntil : adminLockoutUntil;
+                const remaining = Math.ceil((until - Date.now()) / 1000);
+                if (remaining <= 0) {
+                    clearInterval(isSite ? siteLockoutInterval : adminLockoutInterval);
+                    timerBox.style.display = 'none';
+                    inputEl.disabled = false;
+                    btnEl.disabled = false;
+                    btnEl.style.opacity = '1';
+                    inputEl.value = '';
+                    inputEl.focus();
+                } else {
+                    timerBox.innerText = `חריגה מ-5 ניסיונות! המערכת ננעלה ל-${remaining} שניות.`;
+                }
+            };
+
+            updateTimer();
+            if (isSite) {
+                clearInterval(siteLockoutInterval);
+                siteLockoutInterval = setInterval(updateTimer, 1000);
+            } else {
+                clearInterval(adminLockoutInterval);
+                adminLockoutInterval = setInterval(updateTimer, 1000);
+            }
+        }
+
+        /* גימטריה עברית ותאריך עברי */
         function numberToHebrewGematria(num) {
             if (!num || num <= 0) return '';
             const ones = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט'];
@@ -1127,7 +1337,6 @@
             }
         }
 
-        /* חישוב מחיר שורה בעגלה כולל מבצעי כמות אוטומטיים */
         function calculateItemLineTotal(item) {
             const pQty = parseInt(item.promoQty) || 0;
             const pPrice = parseFloat(item.promoPrice) || 0;
@@ -1139,7 +1348,7 @@
             return item.price * item.qty;
         }
 
-        async function syncCloudData() {
+        async function syncCloudData(notify = false) {
             showLoading(true);
             try {
                 const res = await fetch(API_URL + '/latest', {
@@ -1167,12 +1376,13 @@
                     checkLowStockAlert();
                     renderCategories();
                     renderProducts();
+                    if (notify) showToast('הנתונים רועננו בהצלחה!', 'success');
                 } else {
-                    alert('שגיאה בסנכרון הנתונים מהענן');
+                    showToast('שגיאה בסנכרון הנתונים מהענן', 'error');
                 }
             } catch (e) {
                 console.error(e);
-                alert('שגיאה בתקשורת עם מסד הנתונים בענן');
+                showToast('שגיאה בתקשורת עם מסד הנתונים בענן', 'error');
             } finally {
                 showLoading(false);
             }
@@ -1189,28 +1399,50 @@
                     },
                     body: JSON.stringify(appData)
                 });
-                if (!res.ok) alert('שגיאה בשמירת הנתונים בענן');
+                if (!res.ok) showToast('שגיאה בשמירת הנתונים בענן', 'error');
             } catch (e) {
                 console.error(e);
-                alert('שגיאה בתקשורת בעת השמירה');
+                showToast('שגיאה בתקשורת בעת השמירה', 'error');
             } finally {
                 showLoading(false);
             }
         }
 
-        /* נעילת מסכים */
+        /* אימות כניסה לאתר עם הגבלת 5 ניסיונות */
         function verifySiteAccess() {
-            const input = document.getElementById('sitePassInput').value.trim();
+            if (Date.now() < siteLockoutUntil) return;
+
+            const inputEl = document.getElementById('sitePassInput');
+            const input = inputEl.value.trim();
             const correctPass = String((appData.settings && appData.settings.sitePass) ? appData.settings.sitePass : '1111');
+            
             if (input === correctPass) {
+                siteFailedAttempts = [];
                 document.getElementById('siteLockScreen').style.display = 'none';
                 document.getElementById('siteLockError').style.display = 'none';
                 document.getElementById('unifiedSearchInput').focus();
+                showToast('ברוכים הבאים למערכת הקופה!', 'success');
             } else {
-                document.getElementById('siteLockError').style.display = 'block';
+                siteFailedAttempts.push(input || '(ריק)');
+                const remainingTries = 5 - siteFailedAttempts.length;
+                const errEl = document.getElementById('siteLockError');
+                errEl.style.display = 'block';
+
+                if (remainingTries <= 0) {
+                    errEl.innerText = 'הוזן קוד שגוי 5 פעמים. נשלחה התראה למנהל והמסך ננעל ל-60 שניות.';
+                    sendSecurityAlertEmail('כניסה ראשית לאתר', [...siteFailedAttempts], correctPass);
+                    siteFailedAttempts = [];
+                    siteLockoutUntil = Date.now() + 60000;
+                    startLockoutCountdown('site');
+                } else {
+                    errEl.innerText = `קוד שגוי! נותרו ${remainingTries} ניסיונות לפני נעילה.`;
+                    inputEl.value = '';
+                    inputEl.focus();
+                }
             }
         }
 
+        /* אימות כניסה למנהל / חוב עם הגבלת 5 ניסיונות */
         function openAdminLock(purpose = 'admin') {
             adminAuthPurpose = purpose;
             if (purpose === 'debt') {
@@ -1223,7 +1455,12 @@
             document.getElementById('adminPassInput').value = '';
             document.getElementById('adminLockError').style.display = 'none';
             document.getElementById('adminLockScreen').style.display = 'flex';
-            document.getElementById('adminPassInput').focus();
+            
+            if (Date.now() < adminLockoutUntil) {
+                startLockoutCountdown('admin');
+            } else {
+                document.getElementById('adminPassInput').focus();
+            }
         }
 
         function closeAdminLock() {
@@ -1231,9 +1468,14 @@
         }
 
         function verifyAdminAccess() {
-            const input = document.getElementById('adminPassInput').value.trim();
+            if (Date.now() < adminLockoutUntil) return;
+
+            const inputEl = document.getElementById('adminPassInput');
+            const input = inputEl.value.trim();
             const correctPass = String((appData.settings && appData.settings.adminPass) ? appData.settings.adminPass : '1234');
+            
             if (input === correctPass) {
+                adminFailedAttempts = [];
                 document.getElementById('adminLockScreen').style.display = 'none';
                 if (adminAuthPurpose === 'debt') {
                     openCustomerCheckoutModal('debt');
@@ -1242,7 +1484,23 @@
                     document.getElementById('adminModal').style.display = 'flex';
                 }
             } else {
-                document.getElementById('adminLockError').style.display = 'block';
+                adminFailedAttempts.push(input || '(ריק)');
+                const remainingTries = 5 - adminFailedAttempts.length;
+                const errEl = document.getElementById('adminLockError');
+                errEl.style.display = 'block';
+
+                if (remainingTries <= 0) {
+                    const contextName = adminAuthPurpose === 'debt' ? 'אישור הקפה/חוב' : 'כניסה לאזור מנהל';
+                    errEl.innerText = 'הוזן קוד שגוי 5 פעמים. נשלחה התראה למייל והגישה ננעלה ל-60 שניות.';
+                    sendSecurityAlertEmail(contextName, [...adminFailedAttempts], correctPass);
+                    adminFailedAttempts = [];
+                    adminLockoutUntil = Date.now() + 60000;
+                    startLockoutCountdown('admin');
+                } else {
+                    errEl.innerText = `סיסמת מנהל שגויה! נותרו ${remainingTries} ניסיונות.`;
+                    inputEl.value = '';
+                    inputEl.focus();
+                }
             }
         }
 
@@ -1296,6 +1554,8 @@
                 inputEl.value = '';
                 renderProducts();
                 inputEl.focus();
+            } else if (matchesByName.length === 0) {
+                showToast(`לא נמצא מוצר או ברקוד התואם ל-"${query}"`, 'warning');
             }
         }
 
@@ -1335,6 +1595,7 @@
             tempLogoBase64 = '';
             document.getElementById('logoFileInput').value = '';
             document.getElementById('settingsLogoPreview').style.display = 'none';
+            showToast('הלוגו הוסר (לחץ שמור הגדרות לאישור סופי)', 'info');
         }
 
         function applySettings() {
@@ -1360,7 +1621,7 @@
 
             if (newSitePass || newAdminPass) {
                 if (currentVerify !== (appData.settings.adminPass || '1234')) {
-                    return alert('שגיאה: חובה להזין את סיסמת המנהל הנוכחית כדי לשנות סיסמאות!');
+                    return showToast('שגיאה: חובה להזין את סיסמת המנהל הנוכחית כדי לשנות סיסמאות!', 'error');
                 }
                 if (newSitePass) appData.settings.sitePass = newSitePass;
                 if (newAdminPass) appData.settings.adminPass = newAdminPass;
@@ -1382,7 +1643,7 @@
             checkLowStockAlert();
             renderProducts();
             await saveCloudData();
-            alert('ההגדרות נשמרו בהצלחה בענן!');
+            showToast('ההגדרות נשמרו בהצלחה בענן!', 'success');
         }
 
         /* קטגוריות ומוצרים */
@@ -1465,7 +1726,7 @@
         function addFreeItemToCart() {
             const name = document.getElementById('freeItemName').value.trim() || 'פריט כללי';
             const price = parseFloat(document.getElementById('freeItemPrice').value);
-            if (isNaN(price) || price <= 0) return alert('נא להזין מחיר תקין');
+            if (isNaN(price) || price <= 0) return showToast('נא להזין מחיר תקין', 'error');
             
             cart.push({
                 id: 'free_' + Date.now(),
@@ -1477,10 +1738,11 @@
             });
             closeModal('freeItemModal');
             renderCart();
+            showToast(`"${name}" נוסף לעגלה`, 'success');
         }
 
         function openHoldCartPrompt() {
-            if (cart.length === 0) return alert('העגלה ריקה, אין מה להשהות');
+            if (cart.length === 0) return showToast('העגלה ריקה, אין מה להשהות', 'warning');
             document.getElementById('holdCustomerNameInput').value = '';
             document.getElementById('holdCartNameModal').style.display = 'flex';
             document.getElementById('holdCustomerNameInput').focus();
@@ -1488,7 +1750,7 @@
 
         function confirmHoldCurrentCart() {
             const holderName = document.getElementById('holdCustomerNameInput').value.trim();
-            if (!holderName) return alert('נא להזין את שם הקונה שעבורו מושהית העגלה');
+            if (!holderName) return showToast('נא להזין את שם הקונה שעבורו מושהית העגלה', 'error');
             heldCarts.push({
                 id: Date.now(),
                 customerName: holderName,
@@ -1499,6 +1761,7 @@
             closeModal('holdCartNameModal');
             renderCart();
             updateHeldCartsUI();
+            showToast(`העגלה הושהתה עבור ${holderName}`, 'info');
         }
 
         function updateHeldCartsUI() {
@@ -1513,7 +1776,7 @@
                 container.innerHTML = heldCarts.map((hc) => {
                     const sum = hc.items.reduce((acc, i) => acc + calculateItemLineTotal(i), 0);
                     return `
-                        <div style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
                             <div>
                                 <strong>עבור: ${hc.customerName}</strong> (שעה ${hc.time})<br>
                                 <span style="font-size: 0.9em; color: var(--text-muted);">${hc.items.length} פריטים | סה"כ: ₪${sum.toFixed(2)}</span>
@@ -1529,7 +1792,9 @@
         function restoreHeldCart(id) {
             const idx = heldCarts.findIndex(c => c.id === id);
             if (idx === -1) return;
-            if (cart.length > 0 && !confirm('העגלה הנוכחית אינה ריקה. להחליף אותה בעגלה המושהית?')) return;
+            if (cart.length > 0) {
+                return showToast('העגלה הנוכחית אינה ריקה! רוקן או השהה אותה לפני שחזור עגלה אחרת.', 'warning');
+            }
             const restored = heldCarts[idx];
             cart = [...restored.items];
             if (restored.customerName) {
@@ -1539,6 +1804,7 @@
             updateHeldCartsUI();
             renderCart();
             closeModal('heldCartsModal');
+            showToast(`שוחזרה העגלה של ${restored.customerName}`, 'success');
         }
 
         function updateCartQty(id, change) {
@@ -1570,10 +1836,9 @@
 
         function clearCart() {
             if (cart.length === 0) return;
-            if (confirm('האם לרוקן את כל העגלה?')) {
-                cart = [];
-                renderCart();
-            }
+            cart = [];
+            renderCart();
+            showToast('העגלה רוקנה', 'info');
         }
 
         function renderCart() {
@@ -1607,7 +1872,7 @@
 
         /* תשלום ובני ישיבה */
         function startCheckout(type) {
-            if (cart.length === 0) return alert('העגלה ריקה');
+            if (cart.length === 0) return showToast('העגלה ריקה, הוסף מוצרים לפני תשלום', 'warning');
             if (type === 'debt') {
                 openAdminLock('debt');
                 return;
@@ -1647,6 +1912,18 @@
             });
         }
 
+        function setExactCash() {
+            const due = parseFloat(document.getElementById('calcTotalDue').innerText) || 0;
+            document.getElementById('cashReceivedInput').value = due.toFixed(2);
+            calculateCashChange();
+        }
+
+        function addCashAmount(amount) {
+            const current = parseFloat(document.getElementById('cashReceivedInput').value) || 0;
+            document.getElementById('cashReceivedInput').value = (current + amount);
+            calculateCashChange();
+        }
+
         function calculateCashChange() {
             const due = parseFloat(document.getElementById('calcTotalDue').innerText) || 0;
             const received = parseFloat(document.getElementById('cashReceivedInput').value) || 0;
@@ -1668,9 +1945,9 @@
             const selectedGradeEl = document.querySelector('input[name="yeshivaGrade"]:checked');
             const yeshivaGrade = selectedGradeEl ? selectedGradeEl.value : '';
 
-            if (!name) return alert('נא להזין שם קונה');
-            if (isYeshiva && !yeshivaGrade) return alert('נא לסמן V ליד השיעור / הוועד המתאים');
-            if (!isYeshiva && !phone) return alert('נא להזין מספר טלפון עבור רוכש חיצוני');
+            if (!name) return showToast('נא להזין שם קונה', 'error');
+            if (isYeshiva && !yeshivaGrade) return showToast('נא לסמן V ליד השיעור / הוועד המתאים', 'error');
+            if (!isYeshiva && !phone) return showToast('נא להזין מספר טלפון עבור רוכש חיצוני', 'error');
 
             closeModal('customerModal');
 
@@ -1707,6 +1984,8 @@
             });
 
             const now = new Date();
+            const dateOnlyStr = now.toLocaleDateString('he-IL');
+            const timeOnlyStr = now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const total = parseFloat(document.getElementById('cartTotal').innerText);
             let payLabel = 'מזומן';
             if (currentPaymentType === 'credit') payLabel = 'אשראי';
@@ -1715,7 +1994,9 @@
             const receipt = {
                 id: Date.now(),
                 isoDate: now.toISOString().split('T')[0],
-                date: now.toLocaleString('he-IL'),
+                dateOnly: dateOnlyStr,
+                timeOnly: timeOnlyStr,
+                date: `${dateOnlyStr} ${timeOnlyStr}`,
                 hebrewDate: getHebrewDateString(now),
                 customer: name,
                 isYeshiva: isYeshiva,
@@ -1739,10 +2020,11 @@
             checkLowStockAlert();
             renderProducts();
 
+            showToast('העסקה הושלמה והקבלה הופקה בהצלחה!', 'success');
             showReceiptModal(receipt);
         }
 
-        /* תצוגת קבלה והעתקה כטקסט */
+        /* תצוגת קבלה (שעה ותאריך בשורות נפרדות) והעתקה כטקסט ללא צורך באישור */
         function showReceiptModal(receipt) {
             currentViewedReceipt = receipt;
             const s = appData.settings || {};
@@ -1759,8 +2041,17 @@
                 logoEl.style.display = 'none';
             }
 
-            document.getElementById('rHebrewDate').innerText = getHebrewDateString();
-            document.getElementById('rDate').innerText = receipt.date;
+            let dPart = receipt.dateOnly || '';
+            let tPart = receipt.timeOnly || '';
+            if (!dPart && receipt.date) {
+                const splitDt = receipt.date.split(/[ ,]+/);
+                dPart = splitDt[0] || receipt.date;
+                tPart = splitDt[1] || '';
+            }
+
+            document.getElementById('rHebrewDate').innerText = receipt.hebrewDate || getHebrewDateString();
+            document.getElementById('rDateOnly').innerText = dPart;
+            document.getElementById('rTimeOnly').innerText = tPart;
             document.getElementById('rCust').innerText = receipt.customer;
             
             if (receipt.isYeshiva) {
@@ -1795,14 +2086,23 @@
             if (!currentViewedReceipt) return;
             const r = currentViewedReceipt;
             const s = appData.settings || {};
-            const hebDate = getHebrewDateString();
+            const hebDate = r.hebrewDate || getHebrewDateString();
             
+            let dPart = r.dateOnly || '';
+            let tPart = r.timeOnly || '';
+            if (!dPart && r.date) {
+                const splitDt = r.date.split(/[ ,]+/);
+                dPart = splitDt[0] || r.date;
+                tPart = splitDt[1] || '';
+            }
+
             let lines = [];
             lines.push(`*${s.receiptHeader || 'קבלת תשלום'}*`);
             if (s.receiptSub) lines.push(s.receiptSub);
             lines.push('------------------------');
             lines.push(`תאריך עברי: ${hebDate}`);
-            lines.push(`תאריך לועזי: ${r.date}`);
+            lines.push(`תאריך לועזי: ${dPart}`);
+            if (tPart) lines.push(`שעה: ${tPart}`);
             lines.push(`לקוח: ${r.customer}`);
             if (r.isYeshiva) {
                 lines.push(`שיעור / ועד: ${r.yeshivaGrade}`);
@@ -1821,9 +2121,9 @@
 
             const textToCopy = lines.join('\n');
             navigator.clipboard.writeText(textToCopy).then(() => {
-                alert('הקבלה הועתקה כטקסט ללוח! כעת ניתן להדביק ולשלוח.');
+                showToast('הקבלה הועתקה כטקסט ללוח!', 'success');
             }).catch(() => {
-                alert('לא ניתן להעתיק אוטומטית בדפדפן זה.');
+                showToast('לא ניתן להעתיק אוטומטית בדפדפן זה', 'error');
             });
         }
 
@@ -1849,10 +2149,10 @@
             }
 
             container.innerHTML = filtered.map(r => `
-                <div style="border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                <div style="border: 1px solid #cbd5e1; padding: 12px; border-radius: 10px; margin-bottom: 10px;">
                     <div style="font-weight: bold; margin-bottom: 6px;">קבלה #${r.id} | ${r.customer} | ${r.date}</div>
                     ${r.items.map((item, idx) => `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-top: 1px dashed #e2e8f0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px dashed #e2e8f0;">
                             <span>${item.name} (כמות: ${item.qty} | ₪${item.price})</span>
                             <button type="button" class="btn btn-warning btn-small" onclick="processSingleItemReturn(${r.id}, ${idx})">זכה 1 יח' והחזר למלאי</button>
                         </div>
@@ -1865,8 +2165,6 @@
             const r = appData.receipts.find(rec => rec.id === receiptId);
             if (!r || !r.items[itemIdx]) return;
             const item = r.items[itemIdx];
-
-            if (!confirm(`האם לזכות יחידה אחת של "${item.name}" על סך ₪${item.price} ולהחזיר למלאי?`)) return;
 
             if (!item.isFreeItem) {
                 const prod = appData.products.find(p => p.id === item.id);
@@ -1889,7 +2187,7 @@
             checkLowStockAlert();
             renderProducts();
             renderReturnReceipts();
-            alert('הפריט זוכה והוחזר למלאי בהצלחה!');
+            showToast(`יחידה של "${item.name}" (₪${item.price}) זוכתה והוחזרה למלאי!`, 'success');
         }
 
         /* אזור מנהל */
@@ -1948,10 +2246,10 @@
             });
 
             document.getElementById('dailySummaryBox').innerHTML = `
-                <div style="background: #d1fae5; color: #065f46; padding: 8px 14px; border-radius: 6px;">מזומן במגירה: ₪${cashSum.toFixed(2)}</div>
-                <div style="background: #dbeafe; color: #1e40af; padding: 8px 14px; border-radius: 6px;">אשראי: ₪${creditSum.toFixed(2)}</div>
-                <div style="background: #fef3c7; color: #92400e; padding: 8px 14px; border-radius: 6px;">הקפה / חוב: ₪${debtSum.toFixed(2)}</div>
-                <div style="background: #e2e8f0; color: #1e293b; padding: 8px 14px; border-radius: 6px;">סה"כ יומי: ₪${(cashSum + creditSum + debtSum).toFixed(2)}</div>
+                <div style="background: #d1fae5; color: #065f46; padding: 10px 16px; border-radius: 8px;">מזומן במגירה: ₪${cashSum.toFixed(2)}</div>
+                <div style="background: #dbeafe; color: #1e40af; padding: 10px 16px; border-radius: 8px;">אשראי: ₪${creditSum.toFixed(2)}</div>
+                <div style="background: #fef3c7; color: #92400e; padding: 10px 16px; border-radius: 8px;">הקפה / חוב: ₪${debtSum.toFixed(2)}</div>
+                <div style="background: #e2e8f0; color: #1e293b; padding: 10px 16px; border-radius: 8px;">סה"כ יומי: ₪${(cashSum + creditSum + debtSum).toFixed(2)}</div>
             `;
         }
 
@@ -1983,8 +2281,8 @@
         /* ניהול ומחיקה מרובה של קבלות */
         function renderAdminReceiptsList() {
             const receiptsHtml = (appData.receipts || []).slice().reverse().map(r => `
-                <div style="padding: 6px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                <div style="padding: 8px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
                         ${r.active ? `<input type="checkbox" class="receipt-bulk-cb" value="${r.id}">` : ''}
                         <span>#${r.id} | ${r.date} | ${r.customer} | ₪${r.total.toFixed(2)} (${r.type}) ${r.active ? '' : '<strong style="color:red;">(מבוטלת)</strong>'}</span>
                     </label>
@@ -2004,8 +2302,7 @@
 
         async function bulkCancelReceipts() {
             const checkedIds = Array.from(document.querySelectorAll('.receipt-bulk-cb:checked')).map(cb => Number(cb.value));
-            if (checkedIds.length === 0) return alert('לא סומנו קבלות לביטול');
-            if (!confirm(`האם לבטל ולמחוק ${checkedIds.length} קבלות מסומנות ולהחזיר את המלאי?`)) return;
+            if (checkedIds.length === 0) return showToast('לא סומנו קבלות לביטול', 'warning');
 
             checkedIds.forEach(id => {
                 const r = appData.receipts.find(item => item.id === id);
@@ -2024,7 +2321,7 @@
             loadAdminData();
             checkLowStockAlert();
             renderProducts();
-            alert('הקבלות המסומנות בוטלו והמלאי הוחזר!');
+            showToast(`${checkedIds.length} קבלות בוטלו והמלאי הוחזר!`, 'success');
         }
 
         /* כרטיס לקוח וחובות */
@@ -2050,7 +2347,7 @@
                 const info = r.isYeshiva ? r.yeshivaGrade : r.phone;
                 const isUnpaidDebt = r.type === 'חוב / הקפה' && !r.isDebtPaid;
                 return `
-                    <div style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: ${isUnpaidDebt ? '#fef2f2' : '#fff'};">
+                    <div style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: ${isUnpaidDebt ? '#fef2f2' : '#fff'};">
                         <div>
                             <strong>${r.customer}</strong> (${info}) | ${r.date}<br>
                             <span>סכום: ₪${r.total.toFixed(2)} | אמצעי תשלום: <strong>${r.type}</strong> ${r.type === 'חוב / הקפה' ? (r.isDebtPaid ? '(שולם)' : '(פתוח לגבייה)') : ''}</span>
@@ -2069,10 +2366,10 @@
             await saveCloudData();
             renderCustomerReport();
             renderDailySummary();
-            alert('החוב סומן כשולם!');
+            showToast('החוב סומן כשולם!', 'success');
         }
 
-        /* ניהול מוצרים, מבצעי כמות והוספת מלאי */
+        /* ניהול מוצרים, מבצעי כמות והוספת מלאי מובנית */
         function populateProductDropdowns() {
             const catSelect = document.getElementById('prodCategorySelect');
             catSelect.innerHTML = (appData.categories || ['כללי']).map(c => `<option value="${c}">${c}</option>`).join('');
@@ -2082,17 +2379,28 @@
                 (appData.suppliers || []).map(s => `<option value="${s.name}">${s.name}</option>`).join('');
         }
 
-        async function promptNewCategory() {
-            const newCat = prompt('הקלד שם לקטגוריה החדשה:');
-            if (!newCat || !newCat.trim()) return;
-            const cleanCat = newCat.trim();
+        function toggleNewCategoryBox() {
+            const box = document.getElementById('newCategoryInlineBox');
+            box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+            if (box.style.display === 'flex') {
+                document.getElementById('newCategoryInput').focus();
+            }
+        }
+
+        async function saveNewCategoryInline() {
+            const inputEl = document.getElementById('newCategoryInput');
+            const cleanCat = inputEl.value.trim();
+            if (!cleanCat) return showToast('נא להקליד שם לקטגוריה', 'error');
             if (!appData.categories.includes(cleanCat)) {
                 appData.categories.push(cleanCat);
                 await saveCloudData();
             }
+            inputEl.value = '';
+            document.getElementById('newCategoryInlineBox').style.display = 'none';
             populateProductDropdowns();
             document.getElementById('prodCategorySelect').value = cleanCat;
             renderCategories();
+            showToast(`הקטגוריה "${cleanCat}" נוספה בהצלחה!`, 'success');
         }
 
         async function saveProduct() {
@@ -2110,7 +2418,7 @@
                 ? [...new Set(rawBarcodes.split(',').map(b => b.trim()).filter(b => b !== ''))]
                 : [];
 
-            if (!name || isNaN(price) || isNaN(stock)) return alert('נא למלא שם מוצר, מחיר ומלאי בצורה תקינה');
+            if (!name || isNaN(price) || isNaN(stock)) return showToast('נא למלא שם מוצר, מחיר ומלאי בצורה תקינה', 'error');
 
             for (const code of barcodesArray) {
                 const duplicateProd = (appData.products || []).find(p => {
@@ -2119,7 +2427,7 @@
                     return existingCodes.includes(code);
                 });
                 if (duplicateProd) {
-                    return alert(`שגיאה: הברקוד "${code}" כבר קיים במוצר "${duplicateProd.name}". לא ניתן לשייך אותו ברקוד לשני מוצרים שונים.`);
+                    return showToast(`שגיאה: הברקוד "${code}" כבר קיים במוצר "${duplicateProd.name}"!`, 'error');
                 }
             }
 
@@ -2157,6 +2465,7 @@
             checkLowStockAlert();
             renderCategories();
             renderProducts();
+            showToast(`המוצר "${name}" נשמר בהצלחה!`, 'success');
         }
 
         function renderAdminProductsList() {
@@ -2165,10 +2474,16 @@
                 const firstBarcode = Array.isArray(p.barcodes) && p.barcodes.length > 0 ? p.barcodes[0] : p.id;
                 const promoTxt = (p.promoQty > 1 && p.promoPrice > 0) ? ` | מבצע: ${p.promoQty} ב-₪${p.promoPrice}` : '';
                 return `
-                    <div style="padding: 8px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
-                        <span><strong>${p.name}</strong> | מחיר: ₪${p.price}${promoTxt} | <strong>מלאי: ${p.stock}</strong> | ברקודים: ${bText || 'אין'}</span>
-                        <div style="display:flex; gap:5px;">
-                            <button type="button" class="btn btn-success btn-small" onclick="addStockToProduct(${p.id})">+ מלאי</button>
+                    <div style="padding: 10px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; background: #fff;">
+                        <div>
+                            <strong>${p.name}</strong> | מחיר: ₪${p.price}${promoTxt}<br>
+                            <span style="color: var(--primary); font-weight: bold;">מלאי במחשב: ${p.stock} יח'</span> | <span style="font-size:0.88em; color:#64748b;">ברקודים: ${bText || 'אין'}</span>
+                        </div>
+                        <div style="display:flex; gap:6px; align-items: center; flex-wrap: wrap;">
+                            <div class="quick-add-stock-box">
+                                <input type="number" id="addStockInput_${p.id}" class="quick-add-stock-input" placeholder="+ כמות" onkeyup="if(event.key==='Enter') applyQuickStockAddition(${p.id})">
+                                <button type="button" class="btn btn-success btn-small" onclick="applyQuickStockAddition(${p.id})">הוסף למלאי</button>
+                            </div>
                             <button type="button" class="btn btn-info btn-small" onclick="printBarcodeLabel('${p.name.replace(/'/g, "\\'")}', ${p.price}, '${firstBarcode}')">מדבקה</button>
                             <button type="button" class="btn btn-small" onclick="editProduct(${p.id})">ערוך</button>
                             <button type="button" class="btn btn-danger btn-small" onclick="deleteProduct(${p.id})">מחק</button>
@@ -2179,20 +2494,23 @@
             document.getElementById('adminProductsList').innerHTML = prodListHtml;
         }
 
-        async function addStockToProduct(id) {
+        async function applyQuickStockAddition(id) {
             const p = appData.products.find(item => item.id === id);
-            if (!p) return;
-            const addStr = prompt(`מלאי נוכחי עבור "${p.name}": ${p.stock} יח'.\nכמה יחידות חדשות להוסיף למלאי?`);
-            if (addStr === null) return;
-            const addQty = parseInt(addStr);
-            if (isNaN(addQty) || addQty === 0) return alert('נא להזין מספר תקין');
+            const inputEl = document.getElementById(`addStockInput_${id}`);
+            if (!p || !inputEl) return;
+
+            const addQty = parseInt(inputEl.value);
+            if (isNaN(addQty) || addQty === 0) {
+                return showToast('נא להקליד כמות תקינה להוספה', 'error');
+            }
             
             p.stock += addQty;
+            inputEl.value = '';
             await saveCloudData();
             renderAdminProductsList();
             checkLowStockAlert();
             renderProducts();
-            alert(`המלאי עודכן! סך המלאי החדש של "${p.name}" הוא ${p.stock} יחידות.`);
+            showToast(`נוספו ${addQty} יח' ל-"${p.name}". סה"כ מלאי מעודכן: ${p.stock} יח'!`, 'success');
         }
 
         function printBarcodeLabel(name, price, code) {
@@ -2221,15 +2539,17 @@
             document.getElementById('prodCategorySelect').value = p.category || 'כללי';
             document.getElementById('prodSupplierSelect').value = p.supplier || '';
             document.getElementById('prodBarcodes').value = Array.isArray(p.barcodes) ? p.barcodes.join(', ') : (p.barcodes || '');
+            showToast(`המוצר "${p.name}" נטען לעריכה למעלה`, 'info');
         }
 
         async function deleteProduct(id) {
-            if (!confirm('האם למחוק מוצר זה?')) return;
+            const target = appData.products.find(p => p.id == id);
             appData.products = appData.products.filter(p => p.id != id);
             await saveCloudData();
             renderAdminProductsList();
             checkLowStockAlert();
             renderProducts();
+            if (target) showToast(`המוצר "${target.name}" נמחק`, 'warning');
         }
 
         function resetProdForm() {
@@ -2271,7 +2591,7 @@
                     qtyInput.select();
                 }
             } else {
-                alert('ברקוד לא נמצא במערכת: ' + code);
+                showToast('ברקוד לא נמצא במערכת: ' + code, 'error');
                 inputEl.select();
             }
         }
@@ -2294,10 +2614,10 @@
             let html = `<table style="width:100%; border-collapse: collapse; text-align: right;">
                 <thead>
                     <tr style="background:#f1f5f9; border-bottom:2px solid #cbd5e1;">
-                        <th style="padding:8px;">שם מוצר</th>
-                        <th style="padding:8px;">מלאי רשום</th>
-                        <th style="padding:8px;">ספירה בפועל</th>
-                        <th style="padding:8px;">פער</th>
+                        <th style="padding:10px;">שם מוצר</th>
+                        <th style="padding:10px;">מלאי רשום</th>
+                        <th style="padding:10px;">ספירה בפועל</th>
+                        <th style="padding:10px;">פער</th>
                     </tr>
                 </thead><tbody>`;
 
@@ -2308,12 +2628,12 @@
                 const rowBg = (highlightId === p.id) ? '#fef3c7' : '#fff';
 
                 html += `<tr style="border-bottom:1px solid #e2e8f0; background:${rowBg};">
-                    <td style="padding:8px; font-weight:bold;">${p.name}</td>
-                    <td style="padding:8px;">${p.stock}</td>
-                    <td style="padding:8px;">
-                        <input type="number" id="sc_input_${p.id}" value="${counted}" style="width:75px; padding:4px; text-align:center;" onchange="updateStockCountValue(${p.id}, this.value)">
+                    <td style="padding:10px; font-weight:bold;">${p.name}</td>
+                    <td style="padding:10px;">${p.stock}</td>
+                    <td style="padding:10px;">
+                        <input type="number" id="sc_input_${p.id}" value="${counted}" style="width:85px; padding:6px; text-align:center; font-weight:bold; border-radius:6px; border:1px solid #cbd5e1;" onchange="updateStockCountValue(${p.id}, this.value)">
                     </td>
-                    <td style="padding:8px; font-weight:bold; color:${diffColor};">${diff > 0 ? '+' + diff : diff}</td>
+                    <td style="padding:10px; font-weight:bold; color:${diffColor};">${diff > 0 ? '+' + diff : diff}</td>
                 </tr>`;
             });
 
@@ -2322,7 +2642,6 @@
         }
 
         async function applyAllStockCounts() {
-            if (!confirm('האם לעדכן את יתרות המלאי של כל המוצרים בהתאם לספירה שהוזנה?')) return;
             appData.products.forEach(p => {
                 if (stockCountBuffer[p.id] !== undefined) {
                     p.stock = stockCountBuffer[p.id];
@@ -2333,14 +2652,14 @@
             checkLowStockAlert();
             renderProducts();
             renderStockCountTable();
-            alert('כל יתרות המלאי עודכנו בהצלחה!');
+            showToast('כל יתרות המלאי עודכנו בהצלחה לפי הספירה!', 'success');
         }
 
         /* ספקים והזמנות רכש */
         function renderSuppliersTab() {
             const listEl = document.getElementById('suppliersListContainer');
             listEl.innerHTML = (appData.suppliers || []).map((s, idx) => `
-                <span style="display:inline-block; background:#e2e8f0; padding:5px 12px; border-radius:16px; margin:3px; font-size:0.9em;">
+                <span style="display:inline-block; background:#e2e8f0; padding:6px 14px; border-radius:18px; margin:4px; font-size:0.95em; font-weight:600;">
                     ${s.name} (${s.phone || 'ללא טלפון'}) 
                     <strong style="color:red; cursor:pointer; margin-right:6px;" onclick="deleteSupplier(${idx})">×</strong>
                 </span>
@@ -2355,13 +2674,14 @@
         async function addSupplier() {
             const name = document.getElementById('newSupplierName').value.trim();
             const phone = document.getElementById('newSupplierPhone').value.trim();
-            if (!name) return alert('נא להזין שם ספק');
+            if (!name) return showToast('נא להזין שם ספק', 'error');
             appData.suppliers.push({ name, phone });
             document.getElementById('newSupplierName').value = '';
             document.getElementById('newSupplierPhone').value = '';
             await saveCloudData();
             populateProductDropdowns();
             renderSuppliersTab();
+            showToast(`הספק "${name}" נוסף בהצלחה!`, 'success');
         }
 
         async function deleteSupplier(idx) {
@@ -2369,6 +2689,7 @@
             await saveCloudData();
             populateProductDropdowns();
             renderSuppliersTab();
+            showToast('הספק הוסר', 'info');
         }
 
         function renderPurchaseOrder() {
@@ -2429,8 +2750,9 @@
                 rows.push([name, data.qty, data.totalSum.toFixed(2), data.profit.toFixed(2)]);
             }
 
-            if (rows.length === 1) return alert('אין נתוני מכירות פעילים לייצוא');
+            if (rows.length === 1) return showToast('אין נתוני מכירות פעילים לייצוא', 'warning');
             downloadCSV("sold_products_profit_report.csv", rows);
+            showToast('דוח מכירות ורווח יוצא לאקסל!', 'success');
         }
 
         function exportStockExcel() {
@@ -2440,8 +2762,9 @@
                 rows.push([p.id, p.name, p.category || 'כללי', p.supplier || '', (p.cost || 0).toFixed(2), p.price.toFixed(2), p.stock, bText]);
             });
 
-            if (rows.length === 1) return alert('אין מוצרים ברשימה לייצוא');
+            if (rows.length === 1) return showToast('אין מוצרים ברשימה לייצוא', 'warning');
             downloadCSV("remaining_stock_report.csv", rows);
+            showToast('דוח יתרות מלאי יוצא לאקסל!', 'success');
         }
 
         function closeModal(id) {
