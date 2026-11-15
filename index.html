@@ -352,6 +352,17 @@
             display: inline-block;
         }
 
+        .options-badge {
+            background: #f3e8ff;
+            color: #6b21a8;
+            font-size: 0.76em;
+            font-weight: bold;
+            padding: 2px 7px;
+            border-radius: 6px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
         .product-card .price {
             font-weight: 800;
             color: var(--accent-hover);
@@ -500,6 +511,33 @@
         .btn-secondary { background: linear-gradient(135deg, #64748b, #475569); }
         .btn-small { padding: 8px 13px; font-size: 0.92em; border-radius: 8px; }
         .btn-large-action { padding: 14px 22px; font-size: 1.08em; border-radius: 12px; }
+
+        /* כפתורי בחירת מידה / אפשרות מוצר */
+        .option-choice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .option-choice-btn {
+            padding: 14px 10px;
+            background: #f8fafc;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 1.08em;
+            font-weight: 800;
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .option-choice-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
 
         /* כפתורי שטרות מהירים למזומן */
         .quick-cash-grid {
@@ -808,6 +846,16 @@
         </div>
     </div>
 
+    <!-- מודאל בחירת מידה / אפשרות עבור מוצר -->
+    <div class="modal" id="productOptionModal">
+        <div class="modal-content" style="width: 440px; text-align: center;">
+            <h3 id="optionModalTitle">בחר אפשרות</h3>
+            <p style="color: var(--text-muted); margin-bottom: 10px;">בחר את המידה / הסוג הרצוי להוספה לעגלה:</p>
+            <div id="optionChoicesContainer" class="option-choice-grid"></div>
+            <button type="button" class="btn btn-danger btn-large-action" style="width: 100%; margin-top: 8px;" onclick="closeModal('productOptionModal')">ביטול</button>
+        </div>
+    </div>
+
     <!-- מודאל שם לקוח להשהיית עגלה -->
     <div class="modal" id="holdCartNameModal">
         <div class="modal-content" style="width: 400px;">
@@ -994,12 +1042,12 @@
 
             <!-- 3. לשונית ניהול מוצרים, מבצעי כמות והוספת מלאי -->
             <div id="tab-products" class="tab-content" style="display:none;">
-                <h4>הוספת / עריכת מוצר ומבצע כמות</h4>
+                <h4>הוספת / עריכת מוצר, מידות/אפשרויות ומבצע כמות</h4>
                 <input type="hidden" id="editProductId">
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <div class="form-group" style="flex:2; min-width: 180px;">
                         <label>שם מוצר:</label>
-                        <input type="text" id="prodName">
+                        <input type="text" id="prodName" placeholder="לדוגמה: גופיות">
                     </div>
                     <div class="form-group" style="flex:1; min-width: 100px;">
                         <label>מחיר עלות (₪):</label>
@@ -1013,6 +1061,12 @@
                         <label>מלאי נוכחי:</label>
                         <input type="number" id="prodStock">
                     </div>
+                </div>
+
+                <!-- הגדרת אפשרויות בחירה (כגון מידות) למוצר -->
+                <div class="form-group" style="background: #f5f3ff; padding: 12px; border-radius: 10px; border: 1px solid #ddd6fe;">
+                    <label style="color: #5b21b6;">אפשרויות בחירה למוצר (אופציונלי - מופרדות בפסיק, לדוגמה: S, M, L, XL או מידה 38, מידה 40):</label>
+                    <input type="text" id="prodOptions" placeholder="השאר ריק אם אין צורך בבחירת מידה/אפשרות">
                 </div>
 
                 <!-- הגדרת מבצע כמות למוצר -->
@@ -1418,13 +1472,20 @@
             }
         }
 
-        function calculateItemLineTotal(item) {
+        /* חישוב מחיר שורה בעגלה - כולל תמיכה במבצעים משולבים על כל המידות של אותו מוצר */
+        function calculateItemLineTotal(item, targetCart = cart) {
             const pQty = parseInt(item.promoQty) || 0;
             const pPrice = parseFloat(item.promoPrice) || 0;
-            if (pQty > 1 && pPrice > 0 && item.qty >= pQty) {
-                const bundles = Math.floor(item.qty / pQty);
-                const remainder = item.qty % pQty;
-                return (bundles * pPrice) + (remainder * item.price);
+            if (pQty > 1 && pPrice > 0) {
+                const sameProductItems = targetCart.filter(c => String(c.id) === String(item.id));
+                const totalProductQty = sameProductItems.reduce((sum, c) => sum + c.qty, 0);
+
+                if (totalProductQty >= pQty) {
+                    const totalBundles = Math.floor(totalProductQty / pQty);
+                    const totalRemainder = totalProductQty % pQty;
+                    const groupTotalPrice = (totalBundles * pPrice) + (totalRemainder * item.price);
+                    return (groupTotalPrice / totalProductQty) * item.qty;
+                }
             }
             return item.price * item.qty;
         }
@@ -1646,7 +1707,7 @@
             });
 
             if (foundByBarcode) {
-                addToCart(foundByBarcode.id);
+                handleProductClick(foundByBarcode.id);
                 inputEl.value = '';
                 renderProducts();
                 inputEl.focus();
@@ -1655,7 +1716,7 @@
 
             const matchesByName = (appData.products || []).filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
             if (matchesByName.length === 1) {
-                addToCart(matchesByName[0].id);
+                handleProductClick(matchesByName[0].id);
                 inputEl.value = '';
                 renderProducts();
                 inputEl.focus();
@@ -1809,11 +1870,15 @@
                 const isOutOfStock = p.stock <= 0;
                 const isLowStock = p.stock > 0 && p.stock <= threshold;
                 const hasPromo = (parseInt(p.promoQty) > 1 && parseFloat(p.promoPrice) > 0);
+                const optsList = Array.isArray(p.options) ? p.options : [];
+                const hasOptions = optsList.length > 0;
                 const cardClass = isOutOfStock ? 'out-stock-card' : (isLowStock ? 'low-stock-card' : '');
+                
                 grid.innerHTML += `
-                    <div class="product-card ${cardClass}" onclick="addToCart(${p.id})">
+                    <div class="product-card ${cardClass}" onclick="handleProductClick(${p.id})">
                         <div>
                             <strong>${p.name}</strong>
+                            ${hasOptions ? `<div class="options-badge">בחירת מידה / סוג</div>` : ''}
                             ${hasPromo ? `<div class="promo-badge">מבצע: ${p.promoQty} ב-₪${p.promoPrice}</div>` : ''}
                         </div>
                         <div class="price">₪${p.price.toFixed(2)}</div>
@@ -1825,15 +1890,62 @@
             });
         }
 
-        /* עגלת קניות */
-        function addToCart(id) {
+        /* טיפול בלחיצה על מוצר: בדיקה אם קיימות אפשרויות בחירה (כגון מידה) */
+        function handleProductClick(id) {
             const prod = appData.products.find(p => p.id === id);
             if (!prod) return;
-            const existing = cart.find(item => item.id === id);
+
+            const opts = Array.isArray(prod.options)
+                ? prod.options.filter(o => o && o.trim() !== '')
+                : (prod.options ? String(prod.options).split(',').map(o => o.trim()).filter(o => o !== '') : []);
+
+            if (opts.length > 0) {
+                openProductOptionModal(prod, opts);
+            } else {
+                addToCart(id, null);
+            }
+        }
+
+        function openProductOptionModal(prod, opts) {
+            document.getElementById('optionModalTitle').innerText = `${prod.name} - בחר מידה / אפשרות`;
+            const container = document.getElementById('optionChoicesContainer');
+            container.innerHTML = '';
+
+            opts.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'option-choice-btn';
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    addToCart(prod.id, opt);
+                    closeModal('productOptionModal');
+                };
+                container.appendChild(btn);
+            });
+
+            document.getElementById('productOptionModal').style.display = 'flex';
+        }
+
+        /* עגלת קניות */
+        function addToCart(id, selectedOption = null) {
+            const prod = appData.products.find(p => p.id === id);
+            if (!prod) return;
+
+            const cartKey = selectedOption ? `${prod.id}_${selectedOption}` : String(prod.id);
+            const displayName = selectedOption ? `${prod.name} (${selectedOption})` : prod.name;
+
+            const existing = cart.find(item => item.cartKey === cartKey);
             if (existing) {
                 existing.qty++;
             } else {
-                cart.push({ ...prod, qty: 1 });
+                cart.push({
+                    ...prod,
+                    cartKey: cartKey,
+                    name: displayName,
+                    baseName: prod.name,
+                    selectedOption: selectedOption || '',
+                    qty: 1
+                });
             }
             renderCart();
         }
@@ -1850,8 +1962,10 @@
             const price = parseFloat(document.getElementById('freeItemPrice').value);
             if (isNaN(price) || price <= 0) return showToast('נא להזין מחיר תקין', 'error');
             
+            const freeId = 'free_' + Date.now();
             cart.push({
-                id: 'free_' + Date.now(),
+                id: freeId,
+                cartKey: freeId,
                 name: name,
                 price: price,
                 cost: 0,
@@ -1896,7 +2010,7 @@
                 container.innerHTML = '<p>אין עגלות בהמתנה כרגע.</p>';
             } else {
                 container.innerHTML = heldCarts.map((hc) => {
-                    const sum = hc.items.reduce((acc, i) => acc + calculateItemLineTotal(i), 0);
+                    const sum = hc.items.reduce((acc, i) => acc + calculateItemLineTotal(i, hc.items), 0);
                     return `
                         <div style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
                             <div>
@@ -1929,30 +2043,30 @@
             showToast(`שוחזרה העגלה של ${restored.customerName}`, 'success');
         }
 
-        function updateCartQty(id, change) {
-            const item = cart.find(i => String(i.id) === String(id));
+        function updateCartQty(cartKey, change) {
+            const item = cart.find(i => String(i.cartKey || i.id) === String(cartKey));
             if (!item) return;
             item.qty += change;
             if (item.qty <= 0) {
-                cart = cart.filter(i => String(i.id) !== String(id));
+                cart = cart.filter(i => String(i.cartKey || i.id) !== String(cartKey));
             }
             renderCart();
         }
 
-        function setCartQtyDirect(id, newVal) {
-            const item = cart.find(i => String(i.id) === String(id));
+        function setCartQtyDirect(cartKey, newVal) {
+            const item = cart.find(i => String(i.cartKey || i.id) === String(cartKey));
             if (!item) return;
             const parsedQty = parseInt(newVal);
             if (isNaN(parsedQty) || parsedQty <= 0) {
-                cart = cart.filter(i => String(i.id) !== String(id));
+                cart = cart.filter(i => String(i.cartKey || i.id) !== String(cartKey));
             } else {
                 item.qty = parsedQty;
             }
             renderCart();
         }
 
-        function removeCartItem(id) {
-            cart = cart.filter(i => String(i.id) !== String(id));
+        function removeCartItem(cartKey) {
+            cart = cart.filter(i => String(i.cartKey || i.id) !== String(cartKey));
             renderCart();
         }
 
@@ -1968,10 +2082,12 @@
             container.innerHTML = '';
             let total = 0;
             cart.forEach(item => {
-                const lineTotal = calculateItemLineTotal(item);
+                const key = item.cartKey || item.id;
+                const lineTotal = calculateItemLineTotal(item, cart);
                 total += lineTotal;
                 const pQty = parseInt(item.promoQty) || 0;
-                const promoApplied = (pQty > 1 && parseFloat(item.promoPrice) > 0 && item.qty >= pQty);
+                const totalGroupQty = cart.filter(c => String(c.id) === String(item.id)).reduce((s, c) => s + c.qty, 0);
+                const promoApplied = (pQty > 1 && parseFloat(item.promoPrice) > 0 && totalGroupQty >= pQty);
 
                 container.innerHTML += `
                     <div class="cart-item">
@@ -1980,12 +2096,12 @@
                             ${promoApplied ? `<div class="cart-promo-applied">הופעל מבצע (${item.promoQty} ב-₪${item.promoPrice})</div>` : ''}
                         </div>
                         <div class="cart-controls">
-                            <button type="button" onclick="updateCartQty('${item.id}', -1)">-</button>
-                            <input type="number" class="cart-qty-input" min="1" value="${item.qty}" onchange="setCartQtyDirect('${item.id}', this.value)">
-                            <button type="button" onclick="updateCartQty('${item.id}', 1)">+</button>
+                            <button type="button" onclick="updateCartQty('${key}', -1)">-</button>
+                            <input type="number" class="cart-qty-input" min="1" value="${item.qty}" onchange="setCartQtyDirect('${key}', this.value)">
+                            <button type="button" onclick="updateCartQty('${key}', 1)">+</button>
                         </div>
                         <div style="min-width: 58px; text-align: left; font-weight: bold;">₪${lineTotal.toFixed(2)}</div>
-                        <button type="button" class="cart-remove-btn" title="הסר מוצר" onclick="removeCartItem('${item.id}')">×</button>
+                        <button type="button" class="cart-remove-btn" title="הסר מוצר" onclick="removeCartItem('${key}')">×</button>
                     </div>
                 `;
             });
@@ -2098,7 +2214,7 @@
                     const p = appData.products.find(prod => prod.id === item.id);
                     if (p) p.stock -= item.qty;
                 }
-                const lineTotal = calculateItemLineTotal(item);
+                const lineTotal = calculateItemLineTotal(item, cart);
                 return {
                     ...item,
                     lineTotal: lineTotal
@@ -2592,6 +2708,10 @@
             const barcodesArray = rawBarcodes
                 ? [...new Set(rawBarcodes.split(',').map(b => b.trim()).filter(b => b !== ''))]
                 : [];
+            const rawOptions = document.getElementById('prodOptions').value;
+            const optionsArray = rawOptions
+                ? [...new Set(rawOptions.split(',').map(o => o.trim()).filter(o => o !== ''))]
+                : [];
 
             if (!name || isNaN(price) || isNaN(stock)) return showToast('נא למלא שם מוצר, מחיר ומלאי בצורה תקינה', 'error');
 
@@ -2618,6 +2738,7 @@
                     p.category = category;
                     p.supplier = supplier;
                     p.barcodes = barcodesArray;
+                    p.options = optionsArray;
                 }
             } else {
                 appData.products.push({
@@ -2630,7 +2751,8 @@
                     promoPrice: promoPrice,
                     category: category,
                     supplier: supplier,
-                    barcodes: barcodesArray
+                    barcodes: barcodesArray,
+                    options: optionsArray
                 });
             }
 
@@ -2646,12 +2768,13 @@
         function renderAdminProductsList() {
             const prodListHtml = (appData.products || []).map(p => {
                 const bText = Array.isArray(p.barcodes) ? p.barcodes.join(', ') : (p.barcodes || '');
+                const oText = Array.isArray(p.options) && p.options.length > 0 ? ` | אפשרויות: ${p.options.join(', ')}` : '';
                 const firstBarcode = Array.isArray(p.barcodes) && p.barcodes.length > 0 ? p.barcodes[0] : p.id;
                 const promoTxt = (p.promoQty > 1 && p.promoPrice > 0) ? ` | מבצע: ${p.promoQty} ב-₪${p.promoPrice}` : '';
                 return `
                     <div style="padding: 10px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; background: #fff;">
                         <div>
-                            <strong>${p.name}</strong> | מחיר: ₪${p.price}${promoTxt}<br>
+                            <strong>${p.name}</strong> | מחיר: ₪${p.price}${promoTxt}${oText}<br>
                             <span style="color: var(--primary); font-weight: bold;">מלאי במחשב: ${p.stock} יח'</span> | <span style="font-size:0.88em; color:#64748b;">ספק: ${p.supplier || 'כללי'} | ברקודים: ${bText || 'אין'}</span>
                         </div>
                         <div style="display:flex; gap:6px; align-items: center; flex-wrap: wrap;">
@@ -2709,6 +2832,7 @@
             document.getElementById('prodCost').value = p.cost || 0;
             document.getElementById('prodPrice').value = p.price;
             document.getElementById('prodStock').value = p.stock;
+            document.getElementById('prodOptions').value = Array.isArray(p.options) ? p.options.join(', ') : (p.options || '');
             document.getElementById('prodPromoQty').value = p.promoQty || '';
             document.getElementById('prodPromoPrice').value = p.promoPrice || '';
             document.getElementById('prodCategorySelect').value = p.category || 'כללי';
@@ -2733,6 +2857,7 @@
             document.getElementById('prodCost').value = '';
             document.getElementById('prodPrice').value = '';
             document.getElementById('prodStock').value = '';
+            document.getElementById('prodOptions').value = '';
             document.getElementById('prodPromoQty').value = '';
             document.getElementById('prodPromoPrice').value = '';
             document.getElementById('prodBarcodes').value = '';
@@ -2931,10 +3056,11 @@
         }
 
         function exportStockExcel() {
-            const rows = [["מזהה מוצר", "שם מוצר", "קטגוריה", "ספק", "מחיר עלות (₪)", "מחיר מכירה (₪)", "יתרת מלאי", "ברקודים"]];
+            const rows = [["מזהה מוצר", "שם מוצר", "אפשרויות/מידות", "קטגוריה", "ספק", "מחיר עלות (₪)", "מחיר מכירה (₪)", "יתרת מלאי", "ברקודים"]];
             (appData.products || []).forEach(p => {
                 const bText = Array.isArray(p.barcodes) ? p.barcodes.join(', ') : (p.barcodes || '');
-                rows.push([p.id, p.name, p.category || 'כללי', p.supplier || '', (p.cost || 0).toFixed(2), p.price.toFixed(2), p.stock, bText]);
+                const oText = Array.isArray(p.options) ? p.options.join(', ') : (p.options || '');
+                rows.push([p.id, p.name, oText, p.category || 'כללי', p.supplier || '', (p.cost || 0).toFixed(2), p.price.toFixed(2), p.stock, bText]);
             });
 
             if (rows.length === 1) return showToast('אין מוצרים ברשימה לייצוא', 'warning');
