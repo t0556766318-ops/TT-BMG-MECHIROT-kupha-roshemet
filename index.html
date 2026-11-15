@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">קופה רושמת</title>
+    <title id="pageTitle">ת"ת בית מדרש גבוה</title>
     <style>
         :root {
             --primary: #1e293b;
@@ -871,7 +871,7 @@
     <header>
         <div class="header-logo-container">
             <img id="headerLogo" src="" alt="לוגו" class="header-logo" style="display:none;">
-            <h2 id="storeTitleDisplay">קופה רושמת</h2>
+            <h2 id="storeTitleDisplay">ת"ת בית מדרש גבוה</h2>
             <span id="adminSessionBadge" class="admin-active-badge">● מצב מנהל פעיל</span>
         </div>
         <div class="header-actions">
@@ -1400,7 +1400,7 @@
             settings: {
                 sitePass: '1111',
                 adminPass: '1234',
-                storeName: 'קופה רושמת',
+                storeName: 'ת"ת בית מדרש גבוה',
                 logoData: '',
                 cardSize: '145px',
                 lowStockThreshold: 5,
@@ -2046,8 +2046,8 @@
 
         function applySettings() {
             const s = appData.settings || {};
-            document.getElementById('storeTitleDisplay').innerText = s.storeName || 'קופה רושמת';
-            document.getElementById('pageTitle').innerText = s.storeName || 'קופה רושמת';
+            document.getElementById('storeTitleDisplay').innerText = s.storeName || 'ת"ת בית מדרש גבוה';
+            document.getElementById('pageTitle').innerText = s.storeName || 'ת"ת בית מדרש גבוה';
             document.documentElement.style.setProperty('--card-size', s.cardSize || '145px');
             
             const logoSrc = s.logoData || s.logoUrl || '';
@@ -3669,7 +3669,7 @@ if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
             if (lowList.length === 0) return showToast('אין פריטים חסרים להעתקה', 'warning');
 
             const lines = [
-                `*הזמנת רכש - ${appData.settings.storeName || 'קופה רושמת'}*`,
+                `*הזמנת רכש - ${appData.settings.storeName || 'ת"ת בית מדרש גבוה'}*`,
                 `ספק: ${sup === 'ALL' ? 'כל הספקים' : sup}`,
                 `תאריך: ${new Date().toLocaleDateString('he-IL')}`,
                 '------------------------'
