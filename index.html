@@ -1956,18 +1956,26 @@
         async function saveCloudData() {
             showLoading(true);
             try {
+                const payloadStr = JSON.stringify(appData);
                 const res = await fetch(API_URL, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-Master-Key': MASTER_KEY
                     },
-                    body: JSON.stringify(appData)
+                    body: payloadStr
                 });
-                if (!res.ok) showToast('שגיאה בשמירת הנתונים בענן', 'error');
+                if (!res.ok) {
+                    const errText = await res.text().catch(() => '');
+                    console.error('Cloud save failed:', res.status, errText);
+                    showToast(`שגיאה בשמירת הנתונים בענן (${res.status}) - ייתכן שנפח התמונה גדול מדי`, 'error', 5000);
+                    return false;
+                }
+                return true;
             } catch (e) {
                 console.error(e);
                 showToast('שגיאה בתקשורת בעת השמירה', 'error');
+                return false;
             } finally {
                 showLoading(false);
             }
@@ -2186,7 +2194,7 @@
             inputEl.focus();
         }
 
-        /* העלאת לוגו */
+        /* העלאת לוגו עם דחיסה חכמה לשמירה מהירה בענן */
         function handleLogoFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -2195,16 +2203,25 @@
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const maxW = 220;
-                    const scale = maxW / img.width;
-                    canvas.width = maxW;
-                    canvas.height = img.height * scale;
+                    const maxW = 180;
+                    const maxH = 90;
+                    const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+                    canvas.width = Math.round(img.width * scale);
+                    canvas.height = Math.round(img.height * scale);
                     const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    tempLogoBase64 = canvas.toDataURL('image/png', 0.85);
+                    
+                    let compressed = canvas.toDataURL('image/jpeg', 0.78);
+                    if (compressed.length > 25000) {
+                        compressed = canvas.toDataURL('image/jpeg', 0.55);
+                    }
+                    tempLogoBase64 = compressed;
                     const preview = document.getElementById('settingsLogoPreview');
                     preview.src = tempLogoBase64;
                     preview.style.display = 'block';
+                    showToast('התמונה נטענה ונדחסה בהצלחה — לחץ "שמור הגדרות" לשמירה קבועה', 'info', 4000);
                 };
                 img.src = e.target.result;
             };
@@ -2277,8 +2294,10 @@
             applySettings();
             renderAdminLowStockPanel();
             renderProducts();
-            await saveCloudData();
-            showToast('ההגדרות והסיסמאות נשמרו ואומתו בהצלחה!', 'success');
+            const savedOk = await saveCloudData();
+            if (savedOk) {
+                showToast('ההגדרות, הלוגו והסיסמאות נשמרו בענן בהצלחה!', 'success');
+            }
         }
 
         /* קטגוריות ומוצרים (ממוינים לפי א'-ב') */
