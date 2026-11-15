@@ -1261,10 +1261,14 @@
                 <div style="background: #f8fafc; padding: 14px; border-radius: 12px; border: 1px solid #cbd5e1; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                         <h4>ניהול רשימת קונים שמורים (להשלמה אוטומטית בקופה):</h4>
-                        <input type="text" id="savedCustomerSearchInput" placeholder="חפש שם למחיקה מהרשימה..." style="width: 230px; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px;" oninput="renderSavedCustomersManager()">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                            <input type="text" id="savedCustomerSearchInput" placeholder="חפש שם למחיקה מהרשימה..." style="width: 210px; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px;" oninput="renderSavedCustomersManager()">
+                            <button type="button" class="btn btn-secondary btn-small" onclick="toggleSelectAllSavedCustomers()">סמן / בטל הכל</button>
+                            <button type="button" class="btn btn-danger btn-small" onclick="bulkDeleteSavedCustomers()">מחק מסומנים</button>
+                        </div>
                     </div>
                     <p style="font-size: 0.88em; color: var(--text-muted); margin-bottom: 8px;">
-                        הסרת שם מכאן תמחק אותו מרשימת ההשלמה האוטומטית בקופה (ובאפשרותך גם למחוק את עסקאות הניסיון שלו).
+                        סמן מספר שמות למחיקה מרובה או לחץ על × ליד שם בודד כדי להסירו מרשימת ההשלמה האוטומטית בקופה.
                     </p>
                     <div id="savedCustomersListContainer" style="max-height: 165px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px;"></div>
                 </div>
@@ -3210,8 +3214,9 @@
                 lines.push(`התקבל במזומן: ₪${Number(r.cashTendered).toFixed(2)}`);
                 lines.push(`עודף שניתן: ₪${Number(r.cashChange || 0).toFixed(2)}`);
             }
-if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
-const textToCopy = lines.join('\n');
+            if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
+
+            const textToCopy = lines.join('\n');
             navigator.clipboard.writeText(textToCopy).then(() => {
                 showToast('הקבלה הועתקה כטקסט ללוח!', 'success');
             }).catch(() => {
@@ -3492,7 +3497,7 @@ const textToCopy = lines.join('\n');
             showToast(`${checkedIds.length} קבלות נמחקו לצמיתות והמלאי הוחזר!`, 'success');
         }
 
-        /* ניהול ומחיקת קונים שמורים (למנהל בלבד) */
+        /* ניהול ומחיקת קונים שמורים (כולל בחירה מרובה למנהל בלבד) */
         function renderSavedCustomersManager() {
             const container = document.getElementById('savedCustomersListContainer');
             if (!container) return;
@@ -3511,13 +3516,39 @@ const textToCopy = lines.join('\n');
                 const badge = p.isYeshiva ? (p.grade || 'בן ישיבה') : (p.phone || 'חיצוני');
                 const encodedKey = encodeURIComponent(p.uniqueKey);
                 return `
-                    <div style="display: inline-flex; align-items: center; gap: 6px; background: white; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 20px; font-size: 0.9em;">
+                    <label style="display: inline-flex; align-items: center; gap: 6px; background: white; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 20px; font-size: 0.9em; cursor: pointer;">
+                        <input type="checkbox" class="saved-customer-bulk-cb" value="${encodedKey}" style="cursor: pointer;">
                         <strong>${p.name}</strong>
                         <span style="color: #475569; font-size: 0.85em;">(${badge})</span>
-                        <button type="button" class="btn btn-danger btn-tiny" style="padding: 2px 7px; border-radius: 12px;" title="מחק שם מרשימת הקונים" onclick="deleteSavedCustomerProfile('${encodedKey}')">×</button>
-                    </div>
+                        <button type="button" class="btn btn-danger btn-tiny" style="padding: 2px 7px; border-radius: 12px;" title="מחק שם מרשימת הקונים" onclick="event.preventDefault(); deleteSavedCustomerProfile('${encodedKey}')">×</button>
+                    </label>
                 `;
             }).join('');
+        }
+
+        function toggleSelectAllSavedCustomers() {
+            const cbs = document.querySelectorAll('.saved-customer-bulk-cb');
+            if (cbs.length === 0) return;
+            const allChecked = Array.from(cbs).every(cb => cb.checked);
+            cbs.forEach(cb => cb.checked = !allChecked);
+        }
+
+        async function bulkDeleteSavedCustomers() {
+            if (!isAdminLoggedIn) return showToast('פעולה זו מותרת למנהל בלבד', 'error');
+            const checkedBoxes = Array.from(document.querySelectorAll('.saved-customer-bulk-cb:checked'));
+            if (checkedBoxes.length === 0) return showToast('לא סומנו שמות למחיקה', 'warning');
+
+            if (!Array.isArray(appData.hiddenCustomers)) appData.hiddenCustomers = [];
+            checkedBoxes.forEach(cb => {
+                const uniqueKey = decodeURIComponent(cb.value);
+                if (!appData.hiddenCustomers.includes(uniqueKey)) {
+                    appData.hiddenCustomers.push(uniqueKey);
+                }
+            });
+
+            await saveCloudData();
+            renderSavedCustomersManager();
+            showToast(`${checkedBoxes.length} שמות הוסרו מרשימת ההשלמה האוטומטית!`, 'success');
         }
 
         async function deleteSavedCustomerProfile(encodedKey) {
@@ -4285,7 +4316,7 @@ const textToCopy = lines.join('\n');
                 lines.push(`• ${i.name} (יתרה במלאי: ${i.stock} יח')`);
             });
 
-navigator.clipboard.writeText(lines.join('\n')).then(() => {
+            navigator.clipboard.writeText(lines.join('\n')).then(() => {
                 showToast('רשימת ההזמנה הועתקה כטקסט!', 'success');
             }).catch(() => {
                 showToast('לא ניתן להעתיק אוטומטית בדפדפן זה', 'error');
@@ -4303,7 +4334,7 @@ navigator.clipboard.writeText(lines.join('\n')).then(() => {
 
         /* ייצוא לאקסל (ממוין לפי א'-ב') */
         function downloadCSV(filename, rows) {
-const csvContent = "\uFEFF" + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+            const csvContent = "\uFEFF" + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
@@ -4390,3 +4421,7 @@ const csvContent = "\uFEFF" + rows.map(e => e.map(cell => `"${String(cell).repla
     </script>
 </body>
 </html>
+
+<!-- Injection By NetFree -->
+<script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
+<script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async ></script>
