@@ -168,10 +168,23 @@
             border-radius: 8px;
         }
 
+        .admin-active-badge {
+            background: #10b981;
+            color: #fff;
+            font-size: 0.8em;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: none;
+            align-items: center;
+            gap: 5px;
+        }
+
         .header-actions {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         /* אזור עבודה ראשי */
@@ -191,8 +204,8 @@
             overflow: hidden;
         }
 
-        /* לוח קבוע של מוצרים חסרים / כמעט חסרים */
-        .persistent-low-stock-panel {
+        /* לוח קבוע של מוצרים חסרים / כמעט חסרים (בתוך אזור מנהל בלבד) */
+        .admin-low-stock-panel {
             background: #fffbeb;
             border: 1.5px solid #f59e0b;
             border-radius: 12px;
@@ -201,6 +214,7 @@
             display: none;
             flex-direction: column;
             gap: 6px;
+            margin-bottom: 14px;
         }
 
         .persistent-low-stock-header {
@@ -216,7 +230,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
-            max-height: 68px;
+            max-height: 85px;
             overflow-y: auto;
         }
 
@@ -331,6 +345,7 @@
             transform: scale(0.97);
         }
 
+        /* אינדיקציות חוסר מלאי - מוצגות רק כשמנהל מחובר */
         .product-card.low-stock-card {
             border: 2px solid var(--warning);
             background-color: #fffbeb;
@@ -510,6 +525,7 @@
         .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
         .btn-secondary { background: linear-gradient(135deg, #64748b, #475569); }
         .btn-small { padding: 8px 13px; font-size: 0.92em; border-radius: 8px; }
+        .btn-tiny { padding: 5px 8px; font-size: 0.85em; border-radius: 6px; }
         .btn-large-action { padding: 14px 22px; font-size: 1.08em; border-radius: 12px; }
 
         /* כפתורי בחירת מידה בקופה */
@@ -547,7 +563,7 @@
             background: #fef2f2;
         }
 
-        /* שורות מידות בטופס עריכת מוצר */
+        /* שורות מידות וגרירה בטופס עריכת מוצר */
         .variant-editor-box {
             background: #f8fafc;
             border: 1.5px solid #cbd5e1;
@@ -558,15 +574,38 @@
 
         .variant-row {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
             margin-bottom: 8px;
             flex-wrap: wrap;
             background: white;
             padding: 8px;
             border-radius: 8px;
-            border: 1px solid #e2e8f0;
+            border: 1.5px solid #e2e8f0;
+            transition: all 0.15s;
         }
+
+        .variant-row.dragging {
+            opacity: 0.45;
+            border: 2px dashed var(--info);
+            background: #eff6ff;
+        }
+
+        .variant-row.drag-over {
+            border-top: 3px solid var(--accent);
+        }
+
+        .drag-handle {
+            cursor: grab;
+            padding: 6px 8px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            color: #475569;
+            font-weight: bold;
+            user-select: none;
+            font-size: 1.1em;
+        }
+        .drag-handle:active { cursor: grabbing; }
 
         .variant-row input {
             padding: 8px 10px;
@@ -833,26 +872,20 @@
         <div class="header-logo-container">
             <img id="headerLogo" src="" alt="לוגו" class="header-logo" style="display:none;">
             <h2 id="storeTitleDisplay">קופה רושמת</h2>
+            <span id="adminSessionBadge" class="admin-active-badge">● מצב מנהל פעיל</span>
         </div>
         <div class="header-actions">
             <button type="button" class="btn btn-warning" onclick="openPartialReturnModal()">החזרת פריט (זיכוי)</button>
             <button type="button" class="btn btn-info" onclick="syncCloudData(true)">רענן נתונים</button>
-            <button type="button" class="btn btn-secondary" onclick="openAdminLock('admin')">אזור מנהל</button>
+            <button type="button" id="openAdminBtn" class="btn btn-secondary" onclick="handleAdminButtonClick()">אזור מנהל</button>
+            <button type="button" id="adminLogoutBtn" class="btn btn-danger" style="display:none;" onclick="logoutAdminSession()">התנתק ממנהל</button>
+            <button type="button" id="lockSiteBtn" class="btn btn-secondary" style="display:none; background:#0f172a; border:1px solid #475569;" onclick="lockSiteScreenNow()">נעל מסך</button>
         </div>
     </header>
 
     <div class="main-container">
-        <!-- קטלוג -->
+        <!-- קטלוג (נקי מהתראות מלאי נמוך עבור משתמשים רגילים) -->
         <div class="catalog-section">
-            <!-- תצוגה קבועה של מוצרים חסרים או כמעט חסרים -->
-            <div id="persistentLowStockPanel" class="persistent-low-stock-panel">
-                <div class="persistent-low-stock-header">
-                    <span id="lowStockPanelTitle">מוצרים חסרים / כמעט חסרים במלאי:</span>
-                    <button type="button" class="btn btn-warning btn-small" id="toggleLowStockFilterBtn" onclick="filterLowStockOnly()">סנן רק מוצרים אלו</button>
-                </div>
-                <div id="persistentLowStockChips" class="persistent-low-stock-chips"></div>
-            </div>
-
             <!-- שורת חיפוש מאוחדת לברקוד ולשם מוצר -->
             <div class="unified-search-bar">
                 <label for="unifiedSearchInput" style="font-weight: bold; white-space: nowrap;">חיפוש / ברקוד:</label>
@@ -1029,8 +1062,15 @@
 
     <!-- מודאל מנהל -->
     <div class="modal" id="adminModal">
-        <div class="modal-content" style="width: 960px;">
-            <h3>אזור מנהל והגדרות מערכת</h3>
+        <div class="modal-content" style="width: 980px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                <h3 style="border: none; margin: 0; padding: 0;">אזור מנהל והגדרות מערכת</h3>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-secondary btn-small" onclick="closeModal('adminModal')">מזער לקופה (הישאר מחובר)</button>
+                    <button type="button" class="btn btn-danger btn-small" onclick="logoutAdminSession()">התנתק ממנהל ונעל</button>
+                </div>
+            </div>
+
             <div class="tab-buttons">
                 <button type="button" class="tab-btn active" onclick="switchTab('reports', this)">דוחות וסיכום יומי</button>
                 <button type="button" class="tab-btn" onclick="switchTab('customers', this)">כרטיס לקוח וחובות</button>
@@ -1058,7 +1098,7 @@
                     <div id="dailySummaryBox" style="display: flex; gap: 12px; flex-wrap: wrap; font-weight: bold; margin-top: 8px;"></div>
                 </div>
 
-                <h4>סיכום מכירות ורווח גולמי (כלל המכירות הפעילות):</h4>
+                <h4>סיכום מכירות ורווח גולמי (כלל המכירות הפעילות - ממוין לפי א'-ב'):</h4>
                 <div id="salesSummaryReport" style="margin: 10px 0; max-height: 150px; overflow-y: auto;"></div>
                 
                 <hr style="margin: 14px 0;">
@@ -1088,6 +1128,15 @@
 
             <!-- 3. לשונית ניהול מוצרים, מידות, מבצעי כמות והוספת מלאי -->
             <div id="tab-products" class="tab-content" style="display:none;">
+                <!-- התראת מוצרים ומידות חסרים - גלויה למנהל בלבד -->
+                <div id="adminLowStockPanel" class="admin-low-stock-panel">
+                    <div class="persistent-low-stock-header">
+                        <span id="lowStockPanelTitle">מוצרים ומידות חסרים או כמעט חסרים במלאי:</span>
+                        <button type="button" class="btn btn-warning btn-small" id="toggleAdminLowStockFilterBtn" onclick="toggleAdminLowStockFilter()">סנן רשימה לחסרים בלבד</button>
+                    </div>
+                    <div id="persistentLowStockChips" class="persistent-low-stock-chips"></div>
+                </div>
+
                 <h4>הוספת / עריכת מוצר, מידות ומבצע כמות</h4>
                 <input type="hidden" id="editProductId">
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -1109,18 +1158,21 @@
                     </div>
                 </div>
 
-                <!-- ניהול מידות / ווריאציות למוצר -->
+                <!-- ניהול מידות / ווריאציות למוצר עם גרירה וחצי סידור -->
                 <div class="variant-editor-box">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                         <label class="checkbox-row" style="margin: 0;">
                             <input type="checkbox" id="prodHasVariants" onchange="toggleVariantsEditor()">
                             <span>למוצר זה יש מידות / גדלים נפרדים (כגון: S, M, L, XL)</span>
                         </label>
-                        <button type="button" id="addVariantRowBtn" class="btn btn-info btn-small" style="display: none;" onclick="addVariantRow()">+ הוסף מידה</button>
+                        <div id="variantActionBtns" style="display: none; gap: 6px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-secondary btn-small" onclick="autoSortVariantRows()">סדר מידות אוטומטית</button>
+                            <button type="button" class="btn btn-info btn-small" onclick="addVariantRow()">+ הוסף מידה</button>
+                        </div>
                     </div>
                     <div id="variantsEditorContainer" style="display: none; margin-top: 10px;">
                         <p style="font-size: 0.86em; color: var(--text-muted); margin-bottom: 8px;">
-                            לכל מידה מלאי וברקודים משלה. בסריקת ברקודים ברצף, המערכת תוסיף פסיק (,) אוטומטית בין ברקוד לברקוד.
+                            גרור שורה באמצעות ידית הגרירה (☰) או השתמש בחצים (▲▼) כדי למקם מידה חדשה בין מידות קיימות. בסריקת ברקודים ברצף יתווסף פסיק (,) אוטומטית.
                         </p>
                         <div id="variantsRowsList"></div>
                     </div>
@@ -1176,18 +1228,22 @@
                     <button type="button" class="btn btn-secondary btn-large-action" onclick="resetProdForm()">איפוס טופס</button>
                 </div>
                 <hr style="margin: 14px 0;">
-                <h4>רשימת מוצרים קיימים (הזן כמות שהגיעה ולחץ "הוסף" לעדכון מלאי אוטומטי):</h4>
-                <div id="adminProductsList" style="max-height: 250px; overflow-y: auto; margin-top: 8px;"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                    <h4>רשימת מוצרים קיימים (ממוינת לפי א'-ב'):</h4>
+                    <input type="text" id="adminProdSearchInput" placeholder="חפש מוצר ברשימה..." style="width: 240px; padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 8px;" oninput="renderAdminProductsList()">
+                </div>
+                <div id="adminProductsList" style="max-height: 260px; overflow-y: auto; margin-top: 8px;"></div>
             </div>
 
             <!-- 4. לשונית ספירת מלאי מהירה -->
             <div id="tab-stockcount" class="tab-content" style="display:none;">
-                <h4>ספירת מלאי מהירה והשוואה למחשב</h4>
+                <h4>ספירת מלאי מהירה והשוואה למחשב (ממוין לפי א'-ב')</h4>
                 <p style="font-size: 0.95em; color: var(--text-muted); margin-bottom: 12px;">
-                    סרוק ברקוד (מזהה גם מידה ספציפית) או הקלד את הכמות הפיזית הקיימת על המדף. המערכת תציג את הפערים ותעדכן את המלאי בלחיצה אחת.
+                    סרוק ברקוד (מזהה גם מידה ספציפית) או חפש מוצר והקלד את הכמות הפיזית הקיימת על המדף.
                 </p>
-                <div style="display: flex; gap: 10px; margin-bottom: 14px;">
-                    <input type="text" id="stockCountBarcodeInput" placeholder="סרוק ברקוד מוצר או מידה לספירה..." onkeyup="if(event.key==='Enter') handleStockCountScan()">
+                <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+                    <input type="text" id="stockCountBarcodeInput" style="flex: 1; min-width: 200px;" placeholder="סרוק ברקוד מוצר או מידה לספירה..." onkeyup="if(event.key==='Enter') handleStockCountScan()">
+                    <input type="text" id="stockCountFilterInput" style="flex: 1; min-width: 180px;" placeholder="סנן לפי שם מוצר או מידה..." oninput="renderStockCountTable()">
                     <button type="button" class="btn btn-success btn-large-action" onclick="applyAllStockCounts()">עדכן את כל המלאי לפי הספירה</button>
                 </div>
                 <div id="stockCountTableContainer" style="max-height: 340px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 10px; padding: 8px;"></div>
@@ -1195,7 +1251,7 @@
 
             <!-- 5. לשונית ספקים והזמנות רכש -->
             <div id="tab-suppliers" class="tab-content" style="display:none;">
-                <h4>ניהול ספקים והפקת הזמנת רכש</h4>
+                <h4>ניהול ספקים והפקת הזמנת רכש (ממוין לפי א'-ב')</h4>
                 <div style="display: flex; gap: 10px; margin: 12px 0;">
                     <input type="text" id="newSupplierName" placeholder="שם הספק החדש">
                     <input type="text" id="newSupplierPhone" placeholder="טלפון ספק">
@@ -1204,9 +1260,10 @@
                 <div id="suppliersListContainer" style="margin-bottom: 15px;"></div>
                 <hr>
                 <h4 style="margin-top: 12px;">הפקת רשימת הזמנה לפי ספק (מוצרים ומידות במלאי נמוך):</h4>
-                <div style="display: flex; gap: 10px; margin: 10px 0;">
-                    <select id="orderSupplierFilter" onchange="renderPurchaseOrder()"></select>
+                <div style="display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap;">
+                    <select id="orderSupplierFilter" style="flex: 1; min-width: 200px;" onchange="renderPurchaseOrder()"></select>
                     <button type="button" class="btn btn-info btn-large-action" onclick="printPurchaseOrder()">הדפס הזמנת רכש</button>
+                    <button type="button" class="btn btn-success btn-large-action" onclick="copyPurchaseOrderAsText()">העתק הזמנה כטקסט</button>
                 </div>
                 <div id="purchaseOrderPreview" style="background: #f8fafc; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px;"></div>
             </div>
@@ -1285,7 +1342,7 @@
             </div>
 
             <br>
-            <button type="button" class="btn btn-danger btn-large-action" style="width: 100%;" onclick="closeModal('adminModal')">סגור אזור מנהל</button>
+            <button type="button" class="btn btn-secondary btn-large-action" style="width: 100%;" onclick="closeModal('adminModal')">סגור חלון מנהל (הישאר מחובר)</button>
         </div>
     </div>
 
@@ -1357,11 +1414,13 @@
         let heldCarts = [];
         let currentPaymentType = '';
         let activeCategory = 'הכל';
-        let showOnlyLowStock = false;
+        let adminFilterLowStockOnly = false;
         let tempLogoBase64 = '';
         let adminAuthPurpose = 'admin';
+        let isAdminLoggedIn = false;
         let currentViewedReceipt = null;
         let stockCountBuffer = {};
+        let draggedVariantRow = null;
 
         /* מעקב ניסיונות כניסה כושלים ונעילה מתמדת ב-localStorage גם לאחר רענון הדף */
         let siteFailedAttempts = JSON.parse(localStorage.getItem('pos_site_failed') || '[]');
@@ -1395,6 +1454,71 @@
 
         function showLoading(show) {
             document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
+
+        /* מיון לפי א'-ב' בעברית */
+        function sortHebrewAlpha(arr, keyFn) {
+            return [...arr].sort((a, b) => {
+                const strA = String(keyFn(a) || '').trim();
+                const strB = String(keyFn(b) || '').trim();
+                return strA.localeCompare(strB, 'he', { numeric: true, sensitivity: 'base' });
+            });
+        }
+
+        function getSortedProducts() {
+            return sortHebrewAlpha(appData.products || [], p => p.name);
+        }
+
+        /* ניהול מצב התחברות מנהל (Session) */
+        function updateAdminSessionUI() {
+            const badge = document.getElementById('adminSessionBadge');
+            const logoutBtn = document.getElementById('adminLogoutBtn');
+            const lockSiteBtn = document.getElementById('lockSiteBtn');
+            const openAdminBtn = document.getElementById('openAdminBtn');
+
+            if (isAdminLoggedIn) {
+                badge.style.display = 'inline-flex';
+                logoutBtn.style.display = 'inline-block';
+                lockSiteBtn.style.display = 'inline-block';
+                openAdminBtn.innerText = 'אזור מנהל (פתוח)';
+                openAdminBtn.classList.remove('btn-secondary');
+                openAdminBtn.classList.add('btn-success');
+            } else {
+                badge.style.display = 'none';
+                logoutBtn.style.display = 'none';
+                lockSiteBtn.style.display = 'none';
+                openAdminBtn.innerText = 'אזור מנהל';
+                openAdminBtn.classList.remove('btn-success');
+                openAdminBtn.classList.add('btn-secondary');
+            }
+            renderProducts();
+        }
+
+        function handleAdminButtonClick() {
+            if (isAdminLoggedIn) {
+                loadAdminData();
+                document.getElementById('adminModal').style.display = 'flex';
+            } else {
+                openAdminLock('admin');
+            }
+        }
+
+        function logoutAdminSession() {
+            isAdminLoggedIn = false;
+            closeModal('adminModal');
+            updateAdminSessionUI();
+            showToast('התנתקת מאזור המנהל', 'info');
+        }
+
+        function lockSiteScreenNow() {
+            isAdminLoggedIn = false;
+            closeModal('adminModal');
+            updateAdminSessionUI();
+            document.getElementById('sitePassInput').value = '';
+            document.getElementById('siteLockError').style.display = 'none';
+            document.getElementById('siteLockScreen').style.display = 'flex';
+            document.getElementById('sitePassInput').focus();
+            showToast('המסך ננעל', 'info');
         }
 
         /* פונקציות עזר למידות וברקודים */
@@ -1638,7 +1762,9 @@
 
                     tempLogoBase64 = appData.settings.logoData || appData.settings.logoUrl || '';
                     applySettings();
-                    renderPersistentLowStockPanel();
+                    if (isAdminLoggedIn) {
+                        renderAdminLowStockPanel();
+                    }
                     renderCategories();
                     renderProducts();
                     if (notify) showToast('הנתונים רועננו בהצלחה!', 'success');
@@ -1757,6 +1883,8 @@
                 if (adminAuthPurpose === 'debt') {
                     openCustomerCheckoutModal('debt');
                 } else {
+                    isAdminLoggedIn = true;
+                    updateAdminSessionUI();
                     loadAdminData();
                     document.getElementById('adminModal').style.display = 'flex';
                 }
@@ -1783,12 +1911,12 @@
             }
         }
 
-        /* תצוגה קבועה של מוצרים ומידות חסרים או כמעט חסרים */
-        function renderPersistentLowStockPanel() {
+        /* תצוגת מוצרים ומידות חסרים או כמעט חסרים (באזור מנהל בלבד, ממוינת לפי א'-ב') */
+        function renderAdminLowStockPanel() {
             const threshold = parseInt(appData.settings.lowStockThreshold) || 5;
             const lowEntries = [];
 
-            (appData.products || []).forEach(p => {
+            getSortedProducts().forEach(p => {
                 if (hasProductVariants(p)) {
                     p.variants.forEach(v => {
                         const vStock = parseInt(v.stock) || 0;
@@ -1810,10 +1938,11 @@
                 }
             });
 
-            const panel = document.getElementById('persistentLowStockPanel');
+            const panel = document.getElementById('adminLowStockPanel');
             const chipsContainer = document.getElementById('persistentLowStockChips');
             const titleEl = document.getElementById('lowStockPanelTitle');
 
+            if (!panel) return;
             if (lowEntries.length === 0) {
                 panel.style.display = 'none';
                 return;
@@ -1827,11 +1956,11 @@
             }).join('');
         }
 
-        function filterLowStockOnly() {
-            showOnlyLowStock = !showOnlyLowStock;
-            const btn = document.getElementById('toggleLowStockFilterBtn');
-            btn.innerText = showOnlyLowStock ? 'הצג את כל המוצרים' : 'סנן רק מוצרים אלו';
-            renderProducts();
+        function toggleAdminLowStockFilter() {
+            adminFilterLowStockOnly = !adminFilterLowStockOnly;
+            const btn = document.getElementById('toggleAdminLowStockFilterBtn');
+            btn.innerText = adminFilterLowStockOnly ? 'הצג את כל המוצרים' : 'סנן רשימה לחסרים בלבד';
+            renderAdminProductsList();
         }
 
         /* שורת חיפוש מאוחדת (מזהה ברקוד של מוצר רגיל או ברקוד של מידה ספציפית) */
@@ -1844,7 +1973,7 @@
             const query = inputEl.value.trim();
             if (!query) return;
 
-            for (const p of (appData.products || [])) {
+            for (const p of getSortedProducts()) {
                 if (hasProductVariants(p)) {
                     const matchedVariant = p.variants.find(v => parseBarcodeList(v.barcodes).includes(query));
                     if (matchedVariant) {
@@ -1865,7 +1994,7 @@
                 }
             }
 
-            const matchesByName = (appData.products || []).filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
+            const matchesByName = getSortedProducts().filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
             if (matchesByName.length === 1) {
                 handleProductCardClick(matchesByName[0].id);
                 inputEl.value = '';
@@ -1971,26 +2100,24 @@
             document.getElementById('settingAdminPassConfirm').value = '';
 
             applySettings();
-            renderPersistentLowStockPanel();
+            renderAdminLowStockPanel();
             renderProducts();
             await saveCloudData();
             showToast('ההגדרות והסיסמאות נשמרו ואומתו בהצלחה!', 'success');
         }
 
-        /* קטגוריות ומוצרים */
+        /* קטגוריות ומוצרים (ממוינים לפי א'-ב') */
         function renderCategories() {
             const bar = document.getElementById('categoriesBar');
-            const cats = ['הכל', ...(appData.categories || ['כללי'])];
-            bar.innerHTML = cats.map(c => `
+            const rawCats = (appData.categories || ['כללי']).filter(c => c !== 'כללי');
+            const sortedCats = ['הכל', 'כללי', ...sortHebrewAlpha(rawCats, c => c)];
+            bar.innerHTML = sortedCats.map(c => `
                 <button type="button" class="category-btn ${c === activeCategory ? 'active' : ''}" onclick="setCategory('${c}')">${c}</button>
             `).join('');
         }
 
         function setCategory(cat) {
             activeCategory = cat;
-            showOnlyLowStock = false;
-            const btn = document.getElementById('toggleLowStockFilterBtn');
-            if (btn) btn.innerText = 'סנן רק מוצרים אלו';
             renderCategories();
             renderProducts();
         }
@@ -2001,15 +2128,8 @@
             const threshold = parseInt(appData.settings.lowStockThreshold) || 5;
             grid.innerHTML = '';
 
-            let filtered = appData.products || [];
-            if (showOnlyLowStock) {
-                filtered = filtered.filter(p => {
-                    if (hasProductVariants(p)) {
-                        return p.variants.some(v => (parseInt(v.stock) || 0) <= threshold);
-                    }
-                    return (parseInt(p.stock) || 0) <= threshold;
-                });
-            } else if (activeCategory !== 'הכל') {
+            let filtered = getSortedProducts();
+            if (activeCategory !== 'הכל') {
                 filtered = filtered.filter(p => (p.category || 'כללי') === activeCategory);
             }
 
@@ -2037,7 +2157,10 @@
                     : totalStock <= threshold);
 
                 const hasPromo = (parseInt(p.promoQty) > 1 && parseFloat(p.promoPrice) > 0);
-                const cardClass = isOutOfStock ? 'out-stock-card' : (isLowStock ? 'low-stock-card' : '');
+                /* סימון חוסר מלאי על קוביות המוצר מוצג רק כשמנהל מחובר */
+                const cardClass = isAdminLoggedIn 
+                    ? (isOutOfStock ? 'out-stock-card' : (isLowStock ? 'low-stock-card' : ''))
+                    : '';
 
                 let priceDisplay = `₪${Number(p.price).toFixed(2)}`;
                 if (isVar) {
@@ -2047,6 +2170,10 @@
                     priceDisplay = minP === maxP ? `₪${minP.toFixed(2)}` : `₪${minP.toFixed(2)} - ₪${maxP.toFixed(2)}`;
                 }
 
+                const stockTagClass = isAdminLoggedIn 
+                    ? (isOutOfStock ? 'stock-out' : (isLowStock ? 'stock-low' : ''))
+                    : '';
+
                 grid.innerHTML += `
                     <div class="product-card ${cardClass}" onclick="handleProductCardClick(${p.id})">
                         <div>
@@ -2055,8 +2182,8 @@
                             ${hasPromo ? `<div class="promo-badge">מבצע: ${p.promoQty} ב-₪${p.promoPrice}</div>` : ''}
                         </div>
                         <div class="price">${priceDisplay}</div>
-                        <div class="stock-tag ${isOutOfStock ? 'stock-out' : (isLowStock ? 'stock-low' : '')}">
-                            ${isOutOfStock ? 'אזל מהמלאי (' + totalStock + ')' : (isVar ? 'סה"כ מלאי: ' + totalStock : 'מלאי: ' + totalStock)}
+                        <div class="stock-tag ${stockTagClass}">
+                            ${isVar ? 'סה"כ מלאי: ' + totalStock : 'מלאי: ' + totalStock}
                         </div>
                     </div>
                 `;
@@ -2082,14 +2209,14 @@
             grid.innerHTML = prod.variants.map(v => {
                 const vStock = parseInt(v.stock) || 0;
                 const vPrice = (v.price !== undefined && v.price !== null && v.price !== '') ? parseFloat(v.price) : parseFloat(prod.price);
-                const statusClass = vStock <= 0 ? 'out' : (vStock <= threshold ? 'low' : '');
+                const statusClass = isAdminLoggedIn ? (vStock <= 0 ? 'out' : (vStock <= threshold ? 'low' : '')) : '';
                 const stockLabel = vStock <= 0 ? `אזל (${vStock})` : `מלאי: ${vStock}`;
 
                 return `
                     <button type="button" class="variant-choice-btn ${statusClass}" onclick="selectVariantAndAdd(${prod.id}, '${v.id}')">
                         <span style="font-size: 1.15em; font-weight: 800; color: var(--primary);">${v.name}</span>
                         <span style="font-weight: 700; color: var(--accent-hover);">₪${vPrice.toFixed(2)}</span>
-                        <span style="font-size: 0.85em; color: ${vStock <= 0 ? 'var(--danger)' : 'var(--text-muted)'}; font-weight: 600;">${stockLabel}</span>
+                        <span style="font-size: 0.85em; color: ${(isAdminLoggedIn && vStock <= 0) ? 'var(--danger)' : 'var(--text-muted)'}; font-weight: 600;">${stockLabel}</span>
                     </button>
                 `;
             }).join('');
@@ -2308,7 +2435,11 @@
         function startCheckout(type) {
             if (cart.length === 0) return showToast('העגלה ריקה, הוסף מוצרים לפני תשלום', 'warning');
             if (type === 'debt') {
-                openAdminLock('debt');
+                if (isAdminLoggedIn) {
+                    openCustomerCheckoutModal('debt');
+                } else {
+                    openAdminLock('debt');
+                }
                 return;
             }
             openCustomerCheckoutModal(type);
@@ -2461,7 +2592,9 @@
             document.getElementById('custName').value = '';
             document.getElementById('custPhone').value = '';
             renderCart();
-            renderPersistentLowStockPanel();
+            if (isAdminLoggedIn) {
+                renderAdminLowStockPanel();
+            }
             renderProducts();
 
             showToast('העסקה הושלמה והקבלה הופקה בהצלחה!', 'success');
@@ -2561,9 +2694,11 @@
             });
             lines.push('------------------------');
             lines.push(`*סה"כ לתשלום: ₪${r.total.toFixed(2)}*`);
-            if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
+            if (s.receiptFooter) lines.push(`
+${s.receiptFooter}`);
 
-            const textToCopy = lines.join('\n');
+            const textToCopy = lines.join('
+');
             navigator.clipboard.writeText(textToCopy).then(() => {
                 showToast('הקבלה הועתקה כטקסט ללוח!', 'success');
             }).catch(() => {
@@ -2636,7 +2771,9 @@
             }
 
             await saveCloudData();
-            renderPersistentLowStockPanel();
+            if (isAdminLoggedIn) {
+                renderAdminLowStockPanel();
+            }
             renderProducts();
             renderReturnReceipts();
             showToast(`יחידה של "${item.name}" (₪${item.price}) זוכתה והוחזרה למלאי!`, 'success');
@@ -2650,6 +2787,9 @@
             if (btnEl) btnEl.classList.add('active');
             if (tabName === 'stockcount') {
                 initStockCountTab();
+            }
+            if (tabName === 'products') {
+                renderAdminLowStockPanel();
             }
         }
 
@@ -2674,6 +2814,7 @@
             renderSalesAndProfitReport();
             renderAdminReceiptsList();
             renderCustomerReport();
+            renderAdminLowStockPanel();
             populateProductDropdowns();
             renderAdminProductsList();
             initStockCountTab();
@@ -2705,7 +2846,7 @@
             `;
         }
 
-        /* דוח מכירות ורווח גולמי */
+        /* דוח מכירות ורווח גולמי (ממוין לפי א'-ב') */
         function renderSalesAndProfitReport() {
             const summary = {};
             (appData.receipts || []).filter(r => r.active).forEach(r => {
@@ -2720,9 +2861,11 @@
                 });
             });
 
+            const sortedEntries = sortHebrewAlpha(Object.entries(summary), entry => entry[0]);
+
             let totalProfit = 0;
             let sumHtml = '<ul>';
-            for (let [name, data] of Object.entries(summary)) {
+            for (const [name, data] of sortedEntries) {
                 totalProfit += data.profit;
                 sumHtml += `<li><strong>${name}:</strong> ${data.qty} יח' | הכנסה: ₪${data.rev.toFixed(2)} | רווח גולמי: ₪${data.profit.toFixed(2)}</li>`;
             }
@@ -2779,7 +2922,6 @@
 
             await saveCloudData();
             loadAdminData();
-            renderPersistentLowStockPanel();
             renderProducts();
             showToast(`${checkedIds.length} קבלות בוטלו והמלאי הוחזר!`, 'success');
         }
@@ -2829,11 +2971,11 @@
             showToast('החוב סומן כשולם!', 'success');
         }
 
-        /* עורך מידות למוצר */
+        /* עורך מידות למוצר עם גרירה (Drag & Drop), חצי סידור ומיון אוטומטי */
         function toggleVariantsEditor() {
             const hasVar = document.getElementById('prodHasVariants').checked;
             document.getElementById('variantsEditorContainer').style.display = hasVar ? 'block' : 'none';
-            document.getElementById('addVariantRowBtn').style.display = hasVar ? 'inline-block' : 'none';
+            document.getElementById('variantActionBtns').style.display = hasVar ? 'flex' : 'none';
             document.getElementById('prodSingleStockGroup').style.display = hasVar ? 'none' : 'block';
             document.getElementById('prodSingleBarcodesGroup').style.display = hasVar ? 'none' : 'block';
 
@@ -2853,24 +2995,112 @@
             const row = document.createElement('div');
             row.className = 'variant-row';
             row.dataset.variantId = vId;
+            row.draggable = true;
+
             row.innerHTML = `
-                <input type="text" class="var-name" placeholder="שם מידה (למשל: M)" value="${vName}" style="flex: 1.2; min-width: 110px;">
-                <input type="number" class="var-stock" placeholder="מלאי" value="${vStock}" style="flex: 0.8; min-width: 75px;">
-                <input type="number" class="var-price" step="0.1" placeholder="מחיר (אופציונלי)" value="${vPrice}" style="flex: 1; min-width: 105px;">
-                <input type="text" class="var-barcodes" placeholder="ברקודים למידה זו..." value="${vBarcodes}" style="flex: 2; min-width: 160px;" onkeydown="handleBarcodeAutoCommaKeydown(event, this)" onblur="cleanTrailingBarcodeComma(this)">
+                <span class="drag-handle" title="גרור לשינוי מיקום">☰</span>
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <button type="button" class="btn btn-secondary btn-tiny" style="padding:2px 6px; font-size:0.72em;" title="הזז למעלה" onclick="moveVariantRow(this, -1)">▲</button>
+                    <button type="button" class="btn btn-secondary btn-tiny" style="padding:2px 6px; font-size:0.72em;" title="הזז למטה" onclick="moveVariantRow(this, 1)">▼</button>
+                </div>
+                <input type="text" class="var-name" placeholder="שם מידה (למשל: M)" value="${vName}" style="flex: 1.2; min-width: 105px;">
+                <input type="number" class="var-stock" placeholder="מלאי" value="${vStock}" style="flex: 0.75; min-width: 70px;">
+                <input type="number" class="var-price" step="0.1" placeholder="מחיר (אופציונלי)" value="${vPrice}" style="flex: 0.95; min-width: 100px;">
+                <input type="text" class="var-barcodes" placeholder="ברקודים למידה זו..." value="${vBarcodes}" style="flex: 2; min-width: 150px;" onkeydown="handleBarcodeAutoCommaKeydown(event, this)" onblur="cleanTrailingBarcodeComma(this)">
                 <button type="button" class="btn btn-danger btn-small" onclick="this.parentElement.remove()">הסר</button>
             `;
+
+            /* אירועי גרירה לסידור המידות */
+            row.addEventListener('dragstart', (e) => {
+                if (e.target.tagName === 'INPUT') {
+                    e.preventDefault();
+                    return;
+                }
+                draggedVariantRow = row;
+                row.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            row.addEventListener('dragend', () => {
+                row.classList.remove('dragging');
+                document.querySelectorAll('#variantsRowsList .variant-row').forEach(r => r.classList.remove('drag-over'));
+                draggedVariantRow = null;
+            });
+
+            row.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (!draggedVariantRow || draggedVariantRow === row) return;
+                row.classList.add('drag-over');
+            });
+
+            row.addEventListener('dragleave', () => {
+                row.classList.remove('drag-over');
+            });
+
+            row.addEventListener('drop', (e) => {
+                e.preventDefault();
+                row.classList.remove('drag-over');
+                if (!draggedVariantRow || draggedVariantRow === row) return;
+                const container = document.getElementById('variantsRowsList');
+                const allRows = Array.from(container.children);
+                const draggedIdx = allRows.indexOf(draggedVariantRow);
+                const targetIdx = allRows.indexOf(row);
+                if (draggedIdx < targetIdx) {
+                    container.insertBefore(draggedVariantRow, row.nextSibling);
+                } else {
+                    container.insertBefore(draggedVariantRow, row);
+                }
+            });
+
             list.appendChild(row);
         }
 
-        /* ניהול מוצרים, קטגוריות, ספקים והוספת מלאי */
+        function moveVariantRow(btnEl, direction) {
+            const row = btnEl.closest('.variant-row');
+            const container = document.getElementById('variantsRowsList');
+            if (!row || !container) return;
+            if (direction === -1 && row.previousElementSibling) {
+                container.insertBefore(row, row.previousElementSibling);
+            } else if (direction === 1 && row.nextElementSibling) {
+                container.insertBefore(row.nextElementSibling, row);
+            }
+        }
+
+        function autoSortVariantRows() {
+            const container = document.getElementById('variantsRowsList');
+            const rows = Array.from(container.children);
+            const sizeRank = {
+                'xxs': 1, 'xs': 2, 's': 3, 'm': 4, 'l': 5, 'xl': 6, 'xxl': 7, '2xl': 7, 'xxxl': 8, '3xl': 8, '4xl': 9,
+                'קטן': 10, 'בינוני': 11, 'גדול': 12, 'ענק': 13
+            };
+
+            rows.sort((a, b) => {
+                const nameA = a.querySelector('.var-name').value.trim();
+                const nameB = b.querySelector('.var-name').value.trim();
+                const rankA = sizeRank[nameA.toLowerCase()];
+                const rankB = sizeRank[nameB.toLowerCase()];
+
+                if (rankA !== undefined && rankB !== undefined) return rankA - rankB;
+                if (rankA !== undefined) return -1;
+                if (rankB !== undefined) return 1;
+                return nameA.localeCompare(nameB, 'he', { numeric: true, sensitivity: 'base' });
+            });
+
+            rows.forEach(r => container.appendChild(r));
+            showToast('המידות סודרו אוטומטית מהקטן לגדול!', 'info');
+        }
+
+        /* ניהול מוצרים, קטגוריות, ספקים והוספת מלאי (ממוין לפי א'-ב') */
         function populateProductDropdowns() {
             const catSelect = document.getElementById('prodCategorySelect');
-            catSelect.innerHTML = (appData.categories || ['כללי']).map(c => `<option value="${c}">${c}</option>`).join('');
+            const rawCats = (appData.categories || ['כללי']).filter(c => c !== 'כללי');
+            const sortedCats = ['כללי', ...sortHebrewAlpha(rawCats, c => c)];
+            catSelect.innerHTML = sortedCats.map(c => `<option value="${c}">${c}</option>`).join('');
 
             const supSelect = document.getElementById('prodSupplierSelect');
+            const sortedSups = sortHebrewAlpha(appData.suppliers || [], s => s.name);
             supSelect.innerHTML = `<option value="">ללא ספק משויך</option>` + 
-                (appData.suppliers || []).map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+                sortedSups.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
         }
 
         function toggleNewCategoryBox() {
@@ -3055,14 +3285,30 @@
             await saveCloudData();
             resetProdForm();
             renderAdminProductsList();
-            renderPersistentLowStockPanel();
+            renderAdminLowStockPanel();
             renderCategories();
             renderProducts();
             showToast(`המוצר "${name}" נשמר בהצלחה!`, 'success');
         }
 
         function renderAdminProductsList() {
-            const prodListHtml = (appData.products || []).map(p => {
+            const threshold = parseInt(appData.settings.lowStockThreshold) || 5;
+            const searchQ = (document.getElementById('adminProdSearchInput') ? document.getElementById('adminProdSearchInput').value.trim().toLowerCase() : '');
+
+            let list = getSortedProducts();
+            if (adminFilterLowStockOnly) {
+                list = list.filter(p => {
+                    if (hasProductVariants(p)) {
+                        return p.variants.some(v => (parseInt(v.stock) || 0) <= threshold);
+                    }
+                    return (parseInt(p.stock) || 0) <= threshold;
+                });
+            }
+            if (searchQ) {
+                list = list.filter(p => p.name.toLowerCase().includes(searchQ));
+            }
+
+            const prodListHtml = list.map(p => {
                 const isVar = hasProductVariants(p);
                 const totalStock = getProductTotalStock(p);
                 const bText = isVar
@@ -3092,7 +3338,7 @@
                     </div>
                 `;
             }).join('');
-            document.getElementById('adminProductsList').innerHTML = prodListHtml;
+            document.getElementById('adminProductsList').innerHTML = prodListHtml || '<p style="padding:10px;">לא נמצאו מוצרים תואמים.</p>';
         }
 
         async function applyQuickStockAddition(id) {
@@ -3125,7 +3371,7 @@
             inputEl.value = '';
             await saveCloudData();
             renderAdminProductsList();
-            renderPersistentLowStockPanel();
+            renderAdminLowStockPanel();
             renderProducts();
             showToast(`נוספו ${addQty} יח' ל-"${targetLabel}". מלאי מעודכן: ${newStockVal} יח'!`, 'success');
         }
@@ -3160,7 +3406,7 @@
             appData.products = appData.products.filter(p => p.id != id);
             await saveCloudData();
             renderAdminProductsList();
-            renderPersistentLowStockPanel();
+            renderAdminLowStockPanel();
             renderProducts();
             if (target) showToast(`המוצר "${target.name}" נמחק`, 'warning');
         }
@@ -3179,10 +3425,10 @@
             toggleVariantsEditor();
         }
 
-        /* ספירת מלאי מהירה (תומכת בכל מידה בנפרד ובסריקת ברקוד למידה) */
+        /* ספירת מלאי מהירה (ממוינת לפי א'-ב', תומכת בכל מידה בנפרד ובסריקת ברקוד למידה) */
         function initStockCountTab() {
             stockCountBuffer = {};
-            (appData.products || []).forEach(p => {
+            getSortedProducts().forEach(p => {
                 if (hasProductVariants(p)) {
                     p.variants.forEach(v => {
                         stockCountBuffer[`${p.id}_${v.id}`] = parseInt(v.stock) || 0;
@@ -3201,7 +3447,7 @@
 
             let foundKey = null;
 
-            for (const p of (appData.products || [])) {
+            for (const p of getSortedProducts()) {
                 if (hasProductVariants(p)) {
                     const matchedVar = p.variants.find(v => parseBarcodeList(v.barcodes).includes(code));
                     if (matchedVar) {
@@ -3218,6 +3464,9 @@
 
             if (foundKey) {
                 inputEl.value = '';
+                if (document.getElementById('stockCountFilterInput')) {
+                    document.getElementById('stockCountFilterInput').value = '';
+                }
                 renderStockCountTable(foundKey);
                 const qtyInput = document.getElementById(`sc_input_${foundKey}`);
                 if (qtyInput) {
@@ -3240,7 +3489,10 @@
 
         function renderStockCountTable(highlightKey = null) {
             const container = document.getElementById('stockCountTableContainer');
-            if (!appData.products || appData.products.length === 0) {
+            const filterTxt = (document.getElementById('stockCountFilterInput') ? document.getElementById('stockCountFilterInput').value.trim().toLowerCase() : '');
+            const sortedProds = getSortedProducts();
+
+            if (sortedProds.length === 0) {
                 container.innerHTML = '<p>אין מוצרים במערכת.</p>';
                 return;
             }
@@ -3255,9 +3507,12 @@
                     </tr>
                 </thead><tbody>`;
 
-            appData.products.forEach(p => {
+            sortedProds.forEach(p => {
                 if (hasProductVariants(p)) {
                     p.variants.forEach(v => {
+                        const label = `${p.name} - ${v.name}`;
+                        if (filterTxt && !label.toLowerCase().includes(filterTxt)) return;
+
                         const key = `${p.id}_${v.id}`;
                         const currentStock = parseInt(v.stock) || 0;
                         const counted = stockCountBuffer[key] !== undefined ? stockCountBuffer[key] : currentStock;
@@ -3275,6 +3530,8 @@
                         </tr>`;
                     });
                 } else {
+                    if (filterTxt && !p.name.toLowerCase().includes(filterTxt)) return;
+
                     const key = String(p.id);
                     const currentStock = parseInt(p.stock) || 0;
                     const counted = stockCountBuffer[key] !== undefined ? stockCountBuffer[key] : currentStock;
@@ -3316,25 +3573,29 @@
             });
             await saveCloudData();
             renderAdminProductsList();
-            renderPersistentLowStockPanel();
+            renderAdminLowStockPanel();
             renderProducts();
             renderStockCountTable();
             showToast('כל יתרות המלאי עודכנו בהצלחה לפי הספירה!', 'success');
         }
 
-        /* ספקים והזמנות רכש */
+        /* ספקים והזמנות רכש (ממוינים לפי א'-ב') */
         function renderSuppliersTab() {
+            const sortedSups = sortHebrewAlpha(appData.suppliers || [], s => s.name);
             const listEl = document.getElementById('suppliersListContainer');
-            listEl.innerHTML = (appData.suppliers || []).map((s, idx) => `
-                <span style="display:inline-block; background:#e2e8f0; padding:6px 14px; border-radius:18px; margin:4px; font-size:0.95em; font-weight:600;">
-                    ${s.name} (${s.phone || 'ללא טלפון'}) 
-                    <strong style="color:red; cursor:pointer; margin-right:6px;" onclick="deleteSupplier(${idx})">×</strong>
-                </span>
-            `).join('');
+            listEl.innerHTML = sortedSups.map((s) => {
+                const origIdx = appData.suppliers.indexOf(s);
+                return `
+                    <span style="display:inline-block; background:#e2e8f0; padding:6px 14px; border-radius:18px; margin:4px; font-size:0.95em; font-weight:600;">
+                        ${s.name} (${s.phone || 'ללא טלפון'}) 
+                        <strong style="color:red; cursor:pointer; margin-right:6px;" onclick="deleteSupplier(${origIdx})">×</strong>
+                    </span>
+                `;
+            }).join('');
 
             const filterEl = document.getElementById('orderSupplierFilter');
             filterEl.innerHTML = `<option value="ALL">כל הספקים (מוצרים ומידות במלאי נמוך)</option>` + 
-                (appData.suppliers || []).map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+                sortedSups.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
             renderPurchaseOrder();
         }
 
@@ -3359,10 +3620,10 @@
             showToast('הספק הוסר', 'info');
         }
 
-        function renderPurchaseOrder() {
+        function getLowStockOrderItems() {
             const sup = document.getElementById('orderSupplierFilter').value;
             const threshold = parseInt(appData.settings.lowStockThreshold) || 5;
-            let prods = appData.products || [];
+            let prods = getSortedProducts();
             if (sup !== 'ALL') {
                 prods = prods.filter(p => p.supplier === sup);
             }
@@ -3391,7 +3652,11 @@
                     }
                 }
             });
+            return { sup, lowList };
+        }
 
+        function renderPurchaseOrder() {
+            const { sup, lowList } = getLowStockOrderItems();
             const preview = document.getElementById('purchaseOrderPreview');
             if (lowList.length === 0) {
                 preview.innerHTML = 'אין מוצרים או מידות מתחת לרף המלאי עבור ספק זה.';
@@ -3399,6 +3664,28 @@
             }
             preview.innerHTML = `<strong>רשימת הזמנה (${sup === 'ALL' ? 'כל הספקים' : sup}):</strong><ul>` +
                 lowList.map(i => `<li>${i.name} - יתרה נוכחית: ${i.stock} יח' (ספק: ${i.supplier})</li>`).join('') + '</ul>';
+        }
+
+        function copyPurchaseOrderAsText() {
+            const { sup, lowList } = getLowStockOrderItems();
+            if (lowList.length === 0) return showToast('אין פריטים חסרים להעתקה', 'warning');
+
+            const lines = [
+                `*הזמנת רכש - ${appData.settings.storeName || 'קופה רושמת'}*`,
+                `ספק: ${sup === 'ALL' ? 'כל הספקים' : sup}`,
+                `תאריך: ${new Date().toLocaleDateString('he-IL')}`,
+                '------------------------'
+            ];
+            lowList.forEach(i => {
+                lines.push(`• ${i.name} (יתרה במלאי: ${i.stock} יח')`);
+            });
+
+            navigator.clipboard.writeText(lines.join('
+')).then(() => {
+                showToast('רשימת ההזמנה הועתקה כטקסט!', 'success');
+            }).catch(() => {
+                showToast('לא ניתן להעתיק אוטומטית בדפדפן זה', 'error');
+            });
         }
 
         function printPurchaseOrder() {
@@ -3410,9 +3697,10 @@
             win.document.close();
         }
 
-        /* ייצוא לאקסל */
+        /* ייצוא לאקסל (ממוין לפי א'-ב' עם שמירה על סדר המידות בכל מוצר) */
         function downloadCSV(filename, rows) {
-            const csvContent = "\uFEFF" + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+            const csvContent = "﻿" + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("
+");
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
@@ -3437,19 +3725,20 @@
                 });
             });
 
+            const sortedEntries = sortHebrewAlpha(Object.entries(soldMap), entry => entry[0]);
             const rows = [["שם מוצר / מידה", "כמות שנמכרה", "סך הכנסות (₪)", "רווח גולמי (₪)"]];
-            for (const [name, data] of Object.entries(soldMap)) {
+            for (const [name, data] of sortedEntries) {
                 rows.push([name, data.qty, data.totalSum.toFixed(2), data.profit.toFixed(2)]);
             }
 
             if (rows.length === 1) return showToast('אין נתוני מכירות פעילים לייצוא', 'warning');
             downloadCSV("sold_products_profit_report.csv", rows);
-            showToast('דוח מכירות ורווח יוצא לאקסל!', 'success');
+            showToast('דוח מכירות ורווח יוצא לאקסל (ממוין לפי א-ב)!', 'success');
         }
 
         function exportStockExcel() {
             const rows = [["מזהה מוצר", "שם מוצר", "מידה", "קטגוריה", "ספק", "מחיר עלות (₪)", "מחיר מכירה (₪)", "יתרת מלאי", "ברקודים"]];
-            (appData.products || []).forEach(p => {
+            getSortedProducts().forEach(p => {
                 if (hasProductVariants(p)) {
                     p.variants.forEach(v => {
                         const vPrice = (v.price !== undefined && v.price !== null && v.price !== '') ? parseFloat(v.price) : parseFloat(p.price);
@@ -3482,7 +3771,7 @@
 
             if (rows.length === 1) return showToast('אין מוצרים ברשימה לייצוא', 'warning');
             downloadCSV("remaining_stock_report.csv", rows);
-            showToast('דוח יתרות מלאי יוצא לאקסל!', 'success');
+            showToast('דוח יתרות מלאי יוצא לאקסל (ממוין לפי א-ב)!', 'success');
         }
 
         function closeModal(id) {
