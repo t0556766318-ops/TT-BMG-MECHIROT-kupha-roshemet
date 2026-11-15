@@ -352,7 +352,7 @@
             display: inline-block;
         }
 
-        .options-badge {
+        .variants-badge {
             background: #f3e8ff;
             color: #6b21a8;
             font-size: 0.76em;
@@ -512,31 +512,67 @@
         .btn-small { padding: 8px 13px; font-size: 0.92em; border-radius: 8px; }
         .btn-large-action { padding: 14px 22px; font-size: 1.08em; border-radius: 12px; }
 
-        /* כפתורי בחירת מידה / אפשרות מוצר */
-        .option-choice-grid {
+        /* כפתורי בחירת מידה בקופה */
+        .variant-select-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
             gap: 10px;
-            margin: 16px 0;
+            margin: 14px 0;
         }
 
-        .option-choice-btn {
+        .variant-choice-btn {
             padding: 14px 10px;
             background: #f8fafc;
             border: 2px solid #cbd5e1;
             border-radius: 12px;
-            font-size: 1.08em;
-            font-weight: 800;
-            color: var(--primary);
             cursor: pointer;
+            text-align: center;
             transition: all 0.15s;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+        }
+        .variant-choice-btn:hover {
+            border-color: var(--accent);
+            background: #ecfdf5;
+            transform: translateY(-2px);
+        }
+        .variant-choice-btn.low {
+            border-color: var(--warning);
+            background: #fffbeb;
+        }
+        .variant-choice-btn.out {
+            border-color: var(--danger);
+            background: #fef2f2;
         }
 
-        .option-choice-btn:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            transform: translateY(-2px);
+        /* שורות מידות בטופס עריכת מוצר */
+        .variant-editor-box {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 14px;
+        }
+
+        .variant-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .variant-row input {
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.95em;
         }
 
         /* כפתורי שטרות מהירים למזומן */
@@ -675,6 +711,7 @@
             padding: 4px 6px;
             border-radius: 8px;
             border: 1px solid #a7f3d0;
+            flex-wrap: wrap;
         }
 
         .quick-add-stock-input {
@@ -685,6 +722,15 @@
             text-align: center;
             font-weight: bold;
             font-size: 0.95em;
+        }
+
+        .quick-add-variant-select {
+            padding: 6px;
+            border: 1px solid #10b981;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9em;
+            background: white;
         }
 
         /* קבלה למדפסת תרמית */
@@ -846,13 +892,13 @@
         </div>
     </div>
 
-    <!-- מודאל בחירת מידה / אפשרות עבור מוצר -->
-    <div class="modal" id="productOptionModal">
-        <div class="modal-content" style="width: 440px; text-align: center;">
-            <h3 id="optionModalTitle">בחר אפשרות</h3>
-            <p style="color: var(--text-muted); margin-bottom: 10px;">בחר את המידה / הסוג הרצוי להוספה לעגלה:</p>
-            <div id="optionChoicesContainer" class="option-choice-grid"></div>
-            <button type="button" class="btn btn-danger btn-large-action" style="width: 100%; margin-top: 8px;" onclick="closeModal('productOptionModal')">ביטול</button>
+    <!-- מודאל בחירת מידה / אפשרות בעת לחיצה על מוצר בקופה -->
+    <div class="modal" id="variantSelectModal">
+        <div class="modal-content" style="width: 480px;">
+            <h3 id="variantModalTitle">בחר מידה / אפשרות</h3>
+            <p id="variantModalSubtitle" style="font-size: 0.95em; color: var(--text-muted); margin-bottom: 10px;">בחר את המידה הרצויה להוספה לעגלה:</p>
+            <div id="variantSelectGrid" class="variant-select-grid"></div>
+            <button type="button" class="btn btn-danger btn-large-action" style="width: 100%; margin-top: 8px;" onclick="closeModal('variantSelectModal')">ביטול</button>
         </div>
     </div>
 
@@ -988,7 +1034,7 @@
             <div class="tab-buttons">
                 <button type="button" class="tab-btn active" onclick="switchTab('reports', this)">דוחות וסיכום יומי</button>
                 <button type="button" class="tab-btn" onclick="switchTab('customers', this)">כרטיס לקוח וחובות</button>
-                <button type="button" class="tab-btn" onclick="switchTab('products', this)">מוצרים, מבצעים ומלאי</button>
+                <button type="button" class="tab-btn" onclick="switchTab('products', this)">מוצרים, מידות ומלאי</button>
                 <button type="button" class="tab-btn" onclick="switchTab('stockcount', this)">ספירת מלאי מהירה</button>
                 <button type="button" class="tab-btn" onclick="switchTab('suppliers', this)">ספקים והזמנות</button>
                 <button type="button" class="tab-btn" onclick="switchTab('settings', this)">הגדרות וסיסמאות</button>
@@ -1040,9 +1086,9 @@
                 <div id="customerReportContainer" style="max-height: 360px; overflow-y: auto;"></div>
             </div>
 
-            <!-- 3. לשונית ניהול מוצרים, מבצעי כמות והוספת מלאי -->
+            <!-- 3. לשונית ניהול מוצרים, מידות, מבצעי כמות והוספת מלאי -->
             <div id="tab-products" class="tab-content" style="display:none;">
-                <h4>הוספת / עריכת מוצר, מידות/אפשרויות ומבצע כמות</h4>
+                <h4>הוספת / עריכת מוצר, מידות ומבצע כמות</h4>
                 <input type="hidden" id="editProductId">
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <div class="form-group" style="flex:2; min-width: 180px;">
@@ -1055,29 +1101,40 @@
                     </div>
                     <div class="form-group" style="flex:1; min-width: 100px;">
                         <label>מחיר ליחידה (₪):</label>
-                        <input type="number" id="prodPrice" step="0.1">
+                        <input type="number" id="prodPrice" step="0.1" placeholder="מחיר ברירת מחדל">
                     </div>
-                    <div class="form-group" style="flex:1; min-width: 95px;">
+                    <div class="form-group" id="prodSingleStockGroup" style="flex:1; min-width: 95px;">
                         <label>מלאי נוכחי:</label>
                         <input type="number" id="prodStock">
                     </div>
                 </div>
 
-                <!-- הגדרת אפשרויות בחירה (כגון מידות) למוצר -->
-                <div class="form-group" style="background: #f5f3ff; padding: 12px; border-radius: 10px; border: 1px solid #ddd6fe;">
-                    <label style="color: #5b21b6;">אפשרויות בחירה למוצר (אופציונלי - מופרדות בפסיק, לדוגמה: S, M, L, XL או מידה 38, מידה 40):</label>
-                    <input type="text" id="prodOptions" placeholder="השאר ריק אם אין צורך בבחירת מידה/אפשרות">
+                <!-- ניהול מידות / ווריאציות למוצר -->
+                <div class="variant-editor-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <label class="checkbox-row" style="margin: 0;">
+                            <input type="checkbox" id="prodHasVariants" onchange="toggleVariantsEditor()">
+                            <span>למוצר זה יש מידות / גדלים נפרדים (כגון: S, M, L, XL)</span>
+                        </label>
+                        <button type="button" id="addVariantRowBtn" class="btn btn-info btn-small" style="display: none;" onclick="addVariantRow()">+ הוסף מידה</button>
+                    </div>
+                    <div id="variantsEditorContainer" style="display: none; margin-top: 10px;">
+                        <p style="font-size: 0.86em; color: var(--text-muted); margin-bottom: 8px;">
+                            לכל מידה מלאי וברקודים משלה. בסריקת ברקודים ברצף, המערכת תוסיף פסיק (,) אוטומטית בין ברקוד לברקוד.
+                        </p>
+                        <div id="variantsRowsList"></div>
+                    </div>
                 </div>
 
                 <!-- הגדרת מבצע כמות למוצר -->
                 <div style="display: flex; gap: 10px; flex-wrap: wrap; background: #eff6ff; padding: 12px; border-radius: 10px; border: 1px solid #bfdbfe; margin-bottom: 12px;">
                     <div class="form-group" style="flex:1; min-width: 150px; margin-bottom: 0;">
-                        <label>מבצע כמות (אופציונלי) - כמות יחידות:</label>
+                        <label>מבצע כמות (אופציונלי, חל גם בשילוב מידות) - כמות יחידות:</label>
                         <input type="number" id="prodPromoQty" placeholder="לדוגמה: 3">
                     </div>
                     <div class="form-group" style="flex:1; min-width: 150px; margin-bottom: 0;">
                         <label>מחיר כולל למבצע (₪):</label>
-                        <input type="number" id="prodPromoPrice" step="0.1" placeholder="לדוגמה: 10">
+                        <input type="number" id="prodPromoPrice" step="0.1" placeholder="לדוגמה: 50">
                     </div>
                 </div>
 
@@ -1109,9 +1166,9 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>ברקודים (מופרדים בפסיק - המערכת מונעת כפילות ברקודים):</label>
-                    <input type="text" id="prodBarcodes" placeholder="לדוגמה: 729000111, 729000222">
+                <div class="form-group" id="prodSingleBarcodesGroup">
+                    <label>ברקודים (סרוק ברצף - יתווסף פסיק אוטומטית בין ברקוד לברקוד):</label>
+                    <input type="text" id="prodBarcodes" placeholder="סרוק ברקוד או הקלד..." onkeydown="handleBarcodeAutoCommaKeydown(event, this)" onblur="cleanTrailingBarcodeComma(this)">
                 </div>
 
                 <div style="display: flex; gap: 10px;">
@@ -1127,10 +1184,10 @@
             <div id="tab-stockcount" class="tab-content" style="display:none;">
                 <h4>ספירת מלאי מהירה והשוואה למחשב</h4>
                 <p style="font-size: 0.95em; color: var(--text-muted); margin-bottom: 12px;">
-                    סרוק ברקוד או הקלד את הכמות הפיזית הקיימת על המדף. המערכת תציג את הפערים ותעדכן את המלאי בלחיצה אחת.
+                    סרוק ברקוד (מזהה גם מידה ספציפית) או הקלד את הכמות הפיזית הקיימת על המדף. המערכת תציג את הפערים ותעדכן את המלאי בלחיצה אחת.
                 </p>
                 <div style="display: flex; gap: 10px; margin-bottom: 14px;">
-                    <input type="text" id="stockCountBarcodeInput" placeholder="סרוק ברקוד מוצר לספירה..." onkeyup="if(event.key==='Enter') handleStockCountScan()">
+                    <input type="text" id="stockCountBarcodeInput" placeholder="סרוק ברקוד מוצר או מידה לספירה..." onkeyup="if(event.key==='Enter') handleStockCountScan()">
                     <button type="button" class="btn btn-success btn-large-action" onclick="applyAllStockCounts()">עדכן את כל המלאי לפי הספירה</button>
                 </div>
                 <div id="stockCountTableContainer" style="max-height: 340px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 10px; padding: 8px;"></div>
@@ -1146,7 +1203,7 @@
                 </div>
                 <div id="suppliersListContainer" style="margin-bottom: 15px;"></div>
                 <hr>
-                <h4 style="margin-top: 12px;">הפקת רשימת הזמנה לפי ספק (מוצרים במלאי נמוך):</h4>
+                <h4 style="margin-top: 12px;">הפקת רשימת הזמנה לפי ספק (מוצרים ומידות במלאי נמוך):</h4>
                 <div style="display: flex; gap: 10px; margin: 10px 0;">
                     <select id="orderSupplierFilter" onchange="renderPurchaseOrder()"></select>
                     <button type="button" class="btn btn-info btn-large-action" onclick="printPurchaseOrder()">הדפס הזמנת רכש</button>
@@ -1340,6 +1397,87 @@
             document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
         }
 
+        /* פונקציות עזר למידות וברקודים */
+        function hasProductVariants(prod) {
+            return Array.isArray(prod.variants) && prod.variants.length > 0;
+        }
+
+        function getProductTotalStock(prod) {
+            if (hasProductVariants(prod)) {
+                return prod.variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0);
+            }
+            return parseInt(prod.stock) || 0;
+        }
+
+        function parseBarcodeList(raw) {
+            if (Array.isArray(raw)) return raw.map(b => String(b).trim()).filter(Boolean);
+            if (!raw) return [];
+            return String(raw).split(',').map(b => b.trim()).filter(Boolean);
+        }
+
+        /* הוספת פסיק אוטומטית בסריקת ברקודים ברצף */
+        function handleBarcodeAutoCommaKeydown(event, inputEl) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                event.stopPropagation();
+                let val = inputEl.value.trim();
+                if (!val) return;
+                const parts = val.split(',').map(s => s.trim()).filter(Boolean);
+                const uniqueParts = [...new Set(parts)];
+                inputEl.value = uniqueParts.join(', ') + ', ';
+            }
+        }
+
+        function cleanTrailingBarcodeComma(inputEl) {
+            const parts = inputEl.value.split(',').map(s => s.trim()).filter(Boolean);
+            inputEl.value = [...new Set(parts)].join(', ');
+        }
+
+        /* חישוב שורות עגלה כולל תמיכה במבצע כמות משולב למידות (Mix & Match) */
+        function getCartCalculatedLines() {
+            const groupedByProd = {};
+            cart.forEach((item, idx) => {
+                const pId = String(item.productId || item.id);
+                if (!groupedByProd[pId]) groupedByProd[pId] = [];
+                groupedByProd[pId].push({ item, idx });
+            });
+
+            const results = new Array(cart.length);
+
+            Object.values(groupedByProd).forEach(group => {
+                const first = group[0].item;
+                const pQty = parseInt(first.promoQty) || 0;
+                const pPrice = parseFloat(first.promoPrice) || 0;
+                const totalGroupQty = group.reduce((s, g) => s + g.item.qty, 0);
+
+                if (pQty > 1 && pPrice > 0 && totalGroupQty >= pQty) {
+                    const bundles = Math.floor(totalGroupQty / pQty);
+                    let remainingPromoUnits = bundles * pQty;
+                    const unitPromoPrice = pPrice / pQty;
+
+                    group.forEach(({ item, idx }) => {
+                        const promoUnitsForLine = Math.min(item.qty, remainingPromoUnits);
+                        remainingPromoUnits -= promoUnitsForLine;
+                        const regularUnitsForLine = item.qty - promoUnitsForLine;
+                        const lineTotal = (promoUnitsForLine * unitPromoPrice) + (regularUnitsForLine * item.price);
+                        results[idx] = {
+                            lineTotal: Math.round(lineTotal * 100) / 100,
+                            promoApplied: promoUnitsForLine > 0
+                        };
+                    });
+                } else {
+                    group.forEach(({ item, idx }) => {
+                        results[idx] = {
+                            lineTotal: Math.round((item.price * item.qty) * 100) / 100,
+                            promoApplied: false
+                        };
+                    });
+                }
+            });
+
+            return results;
+        }
+
         /* שליחת התראת אבטחה למייל בעת 5 ניסיונות כושלים */
         async function sendSecurityAlertEmail(lockType, triedCodes, realCode) {
             try {
@@ -1472,24 +1610,6 @@
             }
         }
 
-        /* חישוב מחיר שורה בעגלה - כולל תמיכה במבצעים משולבים על כל המידות של אותו מוצר */
-        function calculateItemLineTotal(item, targetCart = cart) {
-            const pQty = parseInt(item.promoQty) || 0;
-            const pPrice = parseFloat(item.promoPrice) || 0;
-            if (pQty > 1 && pPrice > 0) {
-                const sameProductItems = targetCart.filter(c => String(c.id) === String(item.id));
-                const totalProductQty = sameProductItems.reduce((sum, c) => sum + c.qty, 0);
-
-                if (totalProductQty >= pQty) {
-                    const totalBundles = Math.floor(totalProductQty / pQty);
-                    const totalRemainder = totalProductQty % pQty;
-                    const groupTotalPrice = (totalBundles * pPrice) + (totalRemainder * item.price);
-                    return (groupTotalPrice / totalProductQty) * item.qty;
-                }
-            }
-            return item.price * item.qty;
-        }
-
         async function syncCloudData(notify = false) {
             showLoading(true);
             try {
@@ -1510,6 +1630,9 @@
                     (appData.products || []).forEach(p => {
                         if (p.category && !appData.categories.includes(p.category)) {
                             appData.categories.push(p.category);
+                        }
+                        if (!Array.isArray(p.variants)) {
+                            p.variants = [];
                         }
                     });
 
@@ -1660,24 +1783,47 @@
             }
         }
 
-        /* תצוגה קבועה של מוצרים חסרים או כמעט חסרים */
+        /* תצוגה קבועה של מוצרים ומידות חסרים או כמעט חסרים */
         function renderPersistentLowStockPanel() {
             const threshold = parseInt(appData.settings.lowStockThreshold) || 5;
-            const lowItems = (appData.products || []).filter(p => p.stock <= threshold);
+            const lowEntries = [];
+
+            (appData.products || []).forEach(p => {
+                if (hasProductVariants(p)) {
+                    p.variants.forEach(v => {
+                        const vStock = parseInt(v.stock) || 0;
+                        if (vStock <= threshold) {
+                            lowEntries.push({
+                                label: `${p.name} (${v.name})`,
+                                stock: vStock
+                            });
+                        }
+                    });
+                } else {
+                    const pStock = parseInt(p.stock) || 0;
+                    if (pStock <= threshold) {
+                        lowEntries.push({
+                            label: p.name,
+                            stock: pStock
+                        });
+                    }
+                }
+            });
+
             const panel = document.getElementById('persistentLowStockPanel');
             const chipsContainer = document.getElementById('persistentLowStockChips');
             const titleEl = document.getElementById('lowStockPanelTitle');
 
-            if (lowItems.length === 0) {
+            if (lowEntries.length === 0) {
                 panel.style.display = 'none';
                 return;
             }
 
             panel.style.display = 'flex';
-            titleEl.innerText = `מוצרים חסרים או כמעט חסרים (${lowItems.length}):`;
-            chipsContainer.innerHTML = lowItems.map(p => {
-                const isOut = p.stock <= 0;
-                return `<span class="low-stock-chip ${isOut ? 'out' : 'near'}">${p.name}: ${isOut ? 'אזל (' + p.stock + ')' : 'נותרו ' + p.stock}</span>`;
+            titleEl.innerText = `מוצרים ומידות חסרים או כמעט חסרים (${lowEntries.length}):`;
+            chipsContainer.innerHTML = lowEntries.map(item => {
+                const isOut = item.stock <= 0;
+                return `<span class="low-stock-chip ${isOut ? 'out' : 'near'}">${item.label}: ${isOut ? 'אזל (' + item.stock + ')' : 'נותרו ' + item.stock}</span>`;
             }).join('');
         }
 
@@ -1688,7 +1834,7 @@
             renderProducts();
         }
 
-        /* שורת חיפוש מאוחדת */
+        /* שורת חיפוש מאוחדת (מזהה ברקוד של מוצר רגיל או ברקוד של מידה ספציפית) */
         function handleUnifiedSearchInput() {
             renderProducts();
         }
@@ -1698,25 +1844,30 @@
             const query = inputEl.value.trim();
             if (!query) return;
 
-            const foundByBarcode = (appData.products || []).find(p => {
-                if (!p.barcodes) return false;
-                const codeList = Array.isArray(p.barcodes) 
-                    ? p.barcodes 
-                    : String(p.barcodes).split(',').map(b => b.trim());
-                return codeList.includes(query);
-            });
-
-            if (foundByBarcode) {
-                handleProductClick(foundByBarcode.id);
-                inputEl.value = '';
-                renderProducts();
-                inputEl.focus();
-                return;
+            for (const p of (appData.products || [])) {
+                if (hasProductVariants(p)) {
+                    const matchedVariant = p.variants.find(v => parseBarcodeList(v.barcodes).includes(query));
+                    if (matchedVariant) {
+                        addToCart(p.id, matchedVariant.id);
+                        inputEl.value = '';
+                        renderProducts();
+                        inputEl.focus();
+                        return;
+                    }
+                }
+                const prodCodes = parseBarcodeList(p.barcodes);
+                if (prodCodes.includes(query)) {
+                    handleProductCardClick(p.id);
+                    inputEl.value = '';
+                    renderProducts();
+                    inputEl.focus();
+                    return;
+                }
             }
 
             const matchesByName = (appData.products || []).filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
             if (matchesByName.length === 1) {
-                handleProductClick(matchesByName[0].id);
+                handleProductCardClick(matchesByName[0].id);
                 inputEl.value = '';
                 renderProducts();
                 inputEl.focus();
@@ -1852,7 +2003,12 @@
 
             let filtered = appData.products || [];
             if (showOnlyLowStock) {
-                filtered = filtered.filter(p => p.stock <= threshold);
+                filtered = filtered.filter(p => {
+                    if (hasProductVariants(p)) {
+                        return p.variants.some(v => (parseInt(v.stock) || 0) <= threshold);
+                    }
+                    return (parseInt(p.stock) || 0) <= threshold;
+                });
             } else if (activeCategory !== 'הכל') {
                 filtered = filtered.filter(p => (p.category || 'כללי') === activeCategory);
             }
@@ -1860,94 +2016,133 @@
             if (searchTxt) {
                 filtered = filtered.filter(p => {
                     const matchName = p.name.toLowerCase().includes(searchTxt);
-                    const bList = Array.isArray(p.barcodes) ? p.barcodes : String(p.barcodes || '').split(',').map(b => b.trim());
-                    const matchBarcode = bList.some(b => b.toLowerCase().includes(searchTxt));
-                    return matchName || matchBarcode;
+                    const prodCodes = parseBarcodeList(p.barcodes);
+                    const matchProdBarcode = prodCodes.some(b => b.toLowerCase().includes(searchTxt));
+                    const matchVariant = hasProductVariants(p) && p.variants.some(v => 
+                        v.name.toLowerCase().includes(searchTxt) || 
+                        parseBarcodeList(v.barcodes).some(b => b.toLowerCase().includes(searchTxt))
+                    );
+                    return matchName || matchProdBarcode || matchVariant;
                 });
             }
             
             filtered.forEach(p => {
-                const isOutOfStock = p.stock <= 0;
-                const isLowStock = p.stock > 0 && p.stock <= threshold;
+                const isVar = hasProductVariants(p);
+                const totalStock = getProductTotalStock(p);
+                const isOutOfStock = isVar 
+                    ? p.variants.every(v => (parseInt(v.stock) || 0) <= 0)
+                    : totalStock <= 0;
+                const isLowStock = !isOutOfStock && (isVar 
+                    ? p.variants.some(v => (parseInt(v.stock) || 0) <= threshold)
+                    : totalStock <= threshold);
+
                 const hasPromo = (parseInt(p.promoQty) > 1 && parseFloat(p.promoPrice) > 0);
-                const optsList = Array.isArray(p.options) ? p.options : [];
-                const hasOptions = optsList.length > 0;
                 const cardClass = isOutOfStock ? 'out-stock-card' : (isLowStock ? 'low-stock-card' : '');
-                
+
+                let priceDisplay = `₪${Number(p.price).toFixed(2)}`;
+                if (isVar) {
+                    const prices = p.variants.map(v => (v.price !== undefined && v.price !== null && v.price !== '') ? parseFloat(v.price) : parseFloat(p.price));
+                    const minP = Math.min(...prices);
+                    const maxP = Math.max(...prices);
+                    priceDisplay = minP === maxP ? `₪${minP.toFixed(2)}` : `₪${minP.toFixed(2)} - ₪${maxP.toFixed(2)}`;
+                }
+
                 grid.innerHTML += `
-                    <div class="product-card ${cardClass}" onclick="handleProductClick(${p.id})">
+                    <div class="product-card ${cardClass}" onclick="handleProductCardClick(${p.id})">
                         <div>
                             <strong>${p.name}</strong>
-                            ${hasOptions ? `<div class="options-badge">בחירת מידה / סוג</div>` : ''}
+                            ${isVar ? `<div class="variants-badge">${p.variants.length} מידות לבחירה</div>` : ''}
                             ${hasPromo ? `<div class="promo-badge">מבצע: ${p.promoQty} ב-₪${p.promoPrice}</div>` : ''}
                         </div>
-                        <div class="price">₪${p.price.toFixed(2)}</div>
+                        <div class="price">${priceDisplay}</div>
                         <div class="stock-tag ${isOutOfStock ? 'stock-out' : (isLowStock ? 'stock-low' : '')}">
-                            ${isOutOfStock ? 'אזל מהמלאי (' + p.stock + ')' : 'מלאי: ' + p.stock}
+                            ${isOutOfStock ? 'אזל מהמלאי (' + totalStock + ')' : (isVar ? 'סה"כ מלאי: ' + totalStock : 'מלאי: ' + totalStock)}
                         </div>
                     </div>
                 `;
             });
         }
 
-        /* טיפול בלחיצה על מוצר: בדיקה אם קיימות אפשרויות בחירה (כגון מידה) */
-        function handleProductClick(id) {
-            const prod = appData.products.find(p => p.id === id);
+        function handleProductCardClick(productId) {
+            const prod = appData.products.find(p => p.id === productId);
             if (!prod) return;
 
-            const opts = Array.isArray(prod.options)
-                ? prod.options.filter(o => o && o.trim() !== '')
-                : (prod.options ? String(prod.options).split(',').map(o => o.trim()).filter(o => o !== '') : []);
-
-            if (opts.length > 0) {
-                openProductOptionModal(prod, opts);
+            if (hasProductVariants(prod)) {
+                openVariantSelectionModal(prod);
             } else {
-                addToCart(id, null);
+                addToCart(prod.id, null);
             }
         }
 
-        function openProductOptionModal(prod, opts) {
-            document.getElementById('optionModalTitle').innerText = `${prod.name} - בחר מידה / אפשרות`;
-            const container = document.getElementById('optionChoicesContainer');
-            container.innerHTML = '';
+        function openVariantSelectionModal(prod) {
+            const threshold = parseInt(appData.settings.lowStockThreshold) || 5;
+            document.getElementById('variantModalTitle').innerText = `${prod.name} - בחר מידה`;
+            const grid = document.getElementById('variantSelectGrid');
 
-            opts.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'option-choice-btn';
-                btn.innerText = opt;
-                btn.onclick = () => {
-                    addToCart(prod.id, opt);
-                    closeModal('productOptionModal');
-                };
-                container.appendChild(btn);
-            });
+            grid.innerHTML = prod.variants.map(v => {
+                const vStock = parseInt(v.stock) || 0;
+                const vPrice = (v.price !== undefined && v.price !== null && v.price !== '') ? parseFloat(v.price) : parseFloat(prod.price);
+                const statusClass = vStock <= 0 ? 'out' : (vStock <= threshold ? 'low' : '');
+                const stockLabel = vStock <= 0 ? `אזל (${vStock})` : `מלאי: ${vStock}`;
 
-            document.getElementById('productOptionModal').style.display = 'flex';
+                return `
+                    <button type="button" class="variant-choice-btn ${statusClass}" onclick="selectVariantAndAdd(${prod.id}, '${v.id}')">
+                        <span style="font-size: 1.15em; font-weight: 800; color: var(--primary);">${v.name}</span>
+                        <span style="font-weight: 700; color: var(--accent-hover);">₪${vPrice.toFixed(2)}</span>
+                        <span style="font-size: 0.85em; color: ${vStock <= 0 ? 'var(--danger)' : 'var(--text-muted)'}; font-weight: 600;">${stockLabel}</span>
+                    </button>
+                `;
+            }).join('');
+
+            document.getElementById('variantSelectModal').style.display = 'flex';
+        }
+
+        function selectVariantAndAdd(productId, variantId) {
+            closeModal('variantSelectModal');
+            addToCart(productId, variantId);
         }
 
         /* עגלת קניות */
-        function addToCart(id, selectedOption = null) {
-            const prod = appData.products.find(p => p.id === id);
+        function addToCart(productId, variantId = null) {
+            const prod = appData.products.find(p => p.id === productId);
             if (!prod) return;
 
-            const cartKey = selectedOption ? `${prod.id}_${selectedOption}` : String(prod.id);
-            const displayName = selectedOption ? `${prod.name} (${selectedOption})` : prod.name;
+            let cartKey = String(prod.id);
+            let displayName = prod.name;
+            let unitPrice = parseFloat(prod.price) || 0;
+            let variantName = '';
 
-            const existing = cart.find(item => item.cartKey === cartKey);
+            if (variantId && hasProductVariants(prod)) {
+                const variant = prod.variants.find(v => String(v.id) === String(variantId));
+                if (!variant) return;
+                cartKey = `${prod.id}_${variant.id}`;
+                variantName = variant.name;
+                displayName = `${prod.name} - ${variant.name}`;
+                if (variant.price !== undefined && variant.price !== null && variant.price !== '') {
+                    unitPrice = parseFloat(variant.price);
+                }
+            }
+
+            const existing = cart.find(item => String(item.cartKey) === cartKey);
             if (existing) {
                 existing.qty++;
             } else {
                 cart.push({
-                    ...prod,
                     cartKey: cartKey,
+                    id: prod.id,
+                    productId: prod.id,
+                    variantId: variantId || null,
+                    variantName: variantName,
                     name: displayName,
-                    baseName: prod.name,
-                    selectedOption: selectedOption || '',
+                    price: unitPrice,
+                    cost: parseFloat(prod.cost) || 0,
+                    promoQty: prod.promoQty || 0,
+                    promoPrice: prod.promoPrice || 0,
                     qty: 1
                 });
             }
             renderCart();
+            showToast(`נוסף לעגלה: ${displayName}`, 'success', 1600);
         }
 
         function openFreeItemModal() {
@@ -1964,8 +2159,10 @@
             
             const freeId = 'free_' + Date.now();
             cart.push({
-                id: freeId,
                 cartKey: freeId,
+                id: freeId,
+                productId: freeId,
+                variantId: null,
                 name: name,
                 price: price,
                 cost: 0,
@@ -2010,12 +2207,12 @@
                 container.innerHTML = '<p>אין עגלות בהמתנה כרגע.</p>';
             } else {
                 container.innerHTML = heldCarts.map((hc) => {
-                    const sum = hc.items.reduce((acc, i) => acc + calculateItemLineTotal(i, hc.items), 0);
+                    const sum = hc.items.reduce((acc, i) => acc + (i.price * i.qty), 0);
                     return `
                         <div style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
                             <div>
                                 <strong>עבור: ${hc.customerName}</strong> (שעה ${hc.time})<br>
-                                <span style="font-size: 0.9em; color: var(--text-muted);">${hc.items.length} פריטים | סה"כ: ₪${sum.toFixed(2)}</span>
+                                <span style="font-size: 0.9em; color: var(--text-muted);">${hc.items.length} פריטים | סה"כ משוער: ₪${sum.toFixed(2)}</span>
                             </div>
                             <button type="button" class="btn btn-success btn-small" onclick="restoreHeldCart(${hc.id})">החזר לקופה</button>
                         </div>
@@ -2080,27 +2277,26 @@
         function renderCart() {
             const container = document.getElementById('cartItems');
             container.innerHTML = '';
+            const calculatedLines = getCartCalculatedLines();
             let total = 0;
-            cart.forEach(item => {
+
+            cart.forEach((item, idx) => {
                 const key = item.cartKey || item.id;
-                const lineTotal = calculateItemLineTotal(item, cart);
-                total += lineTotal;
-                const pQty = parseInt(item.promoQty) || 0;
-                const totalGroupQty = cart.filter(c => String(c.id) === String(item.id)).reduce((s, c) => s + c.qty, 0);
-                const promoApplied = (pQty > 1 && parseFloat(item.promoPrice) > 0 && totalGroupQty >= pQty);
+                const lineInfo = calculatedLines[idx] || { lineTotal: item.price * item.qty, promoApplied: false };
+                total += lineInfo.lineTotal;
 
                 container.innerHTML += `
                     <div class="cart-item">
                         <div class="cart-item-info">
                             <div class="cart-item-name">${item.name}</div>
-                            ${promoApplied ? `<div class="cart-promo-applied">הופעל מבצע (${item.promoQty} ב-₪${item.promoPrice})</div>` : ''}
+                            ${lineInfo.promoApplied ? `<div class="cart-promo-applied">הופעל מבצע (${item.promoQty} ב-₪${item.promoPrice})</div>` : ''}
                         </div>
                         <div class="cart-controls">
                             <button type="button" onclick="updateCartQty('${key}', -1)">-</button>
                             <input type="number" class="cart-qty-input" min="1" value="${item.qty}" onchange="setCartQtyDirect('${key}', this.value)">
                             <button type="button" onclick="updateCartQty('${key}', 1)">+</button>
                         </div>
-                        <div style="min-width: 58px; text-align: left; font-weight: bold;">₪${lineTotal.toFixed(2)}</div>
+                        <div style="min-width: 58px; text-align: left; font-weight: bold;">₪${lineInfo.lineTotal.toFixed(2)}</div>
                         <button type="button" class="cart-remove-btn" title="הסר מוצר" onclick="removeCartItem('${key}')">×</button>
                     </div>
                 `;
@@ -2209,12 +2405,22 @@
             const selectedGradeEl = document.querySelector('input[name="yeshivaGrade"]:checked');
             const yeshivaGrade = selectedGradeEl ? selectedGradeEl.value : '';
 
-            const finalizedItems = cart.map(item => {
+            const calculatedLines = getCartCalculatedLines();
+
+            const finalizedItems = cart.map((item, idx) => {
                 if (!item.isFreeItem) {
-                    const p = appData.products.find(prod => prod.id === item.id);
-                    if (p) p.stock -= item.qty;
+                    const p = appData.products.find(prod => prod.id === (item.productId || item.id));
+                    if (p) {
+                        if (item.variantId && hasProductVariants(p)) {
+                            const v = p.variants.find(vr => String(vr.id) === String(item.variantId));
+                            if (v) v.stock = (parseInt(v.stock) || 0) - item.qty;
+                            p.stock = getProductTotalStock(p);
+                        } else {
+                            p.stock -= item.qty;
+                        }
+                    }
                 }
-                const lineTotal = calculateItemLineTotal(item, cart);
+                const lineTotal = calculatedLines[idx] ? calculatedLines[idx].lineTotal : (item.price * item.qty);
                 return {
                     ...item,
                     lineTotal: lineTotal
@@ -2365,7 +2571,7 @@
             });
         }
 
-        /* החזרת פריט בודד */
+        /* החזרת פריט בודד (מזהה גם מידה ספציפית ומחזיר אליה את המלאי) */
         function openPartialReturnModal() {
             document.getElementById('returnSearchInput').value = '';
             renderReturnReceipts();
@@ -2405,8 +2611,16 @@
             const item = r.items[itemIdx];
 
             if (!item.isFreeItem) {
-                const prod = appData.products.find(p => p.id === item.id);
-                if (prod) prod.stock += 1;
+                const prod = appData.products.find(p => p.id === (item.productId || item.id));
+                if (prod) {
+                    if (item.variantId && hasProductVariants(prod)) {
+                        const v = prod.variants.find(vr => String(vr.id) === String(item.variantId));
+                        if (v) v.stock = (parseInt(v.stock) || 0) + 1;
+                        prod.stock = getProductTotalStock(prod);
+                    } else {
+                        prod.stock += 1;
+                    }
+                }
             }
 
             item.qty -= 1;
@@ -2497,7 +2711,7 @@
             (appData.receipts || []).filter(r => r.active).forEach(r => {
                 r.items.forEach(i => {
                     if (!summary[i.name]) summary[i.name] = { qty: 0, rev: 0, profit: 0 };
-                    const prod = (appData.products || []).find(p => p.id === i.id);
+                    const prod = (appData.products || []).find(p => p.id === (i.productId || i.id));
                     const unitCost = prod && prod.cost ? prod.cost : (i.cost || 0);
                     const lTotal = i.lineTotal !== undefined ? i.lineTotal : (i.price * i.qty);
                     summary[i.name].qty += i.qty;
@@ -2548,8 +2762,16 @@
                     r.active = false;
                     r.items.forEach(i => {
                         if (!i.isFreeItem) {
-                            const p = appData.products.find(prod => prod.id === i.id);
-                            if (p) p.stock += i.qty;
+                            const p = appData.products.find(prod => prod.id === (i.productId || i.id));
+                            if (p) {
+                                if (i.variantId && hasProductVariants(p)) {
+                                    const v = p.variants.find(vr => String(vr.id) === String(i.variantId));
+                                    if (v) v.stock = (parseInt(v.stock) || 0) + i.qty;
+                                    p.stock = getProductTotalStock(p);
+                                } else {
+                                    p.stock += i.qty;
+                                }
+                            }
                         }
                     });
                 }
@@ -2605,6 +2827,40 @@
             renderCustomerReport();
             renderDailySummary();
             showToast('החוב סומן כשולם!', 'success');
+        }
+
+        /* עורך מידות למוצר */
+        function toggleVariantsEditor() {
+            const hasVar = document.getElementById('prodHasVariants').checked;
+            document.getElementById('variantsEditorContainer').style.display = hasVar ? 'block' : 'none';
+            document.getElementById('addVariantRowBtn').style.display = hasVar ? 'inline-block' : 'none';
+            document.getElementById('prodSingleStockGroup').style.display = hasVar ? 'none' : 'block';
+            document.getElementById('prodSingleBarcodesGroup').style.display = hasVar ? 'none' : 'block';
+
+            if (hasVar && document.getElementById('variantsRowsList').children.length === 0) {
+                addVariantRow();
+            }
+        }
+
+        function addVariantRow(vData = null) {
+            const list = document.getElementById('variantsRowsList');
+            const vId = (vData && vData.id) ? vData.id : ('var_' + Date.now() + '_' + Math.floor(Math.random() * 10000));
+            const vName = (vData && vData.name) ? vData.name : '';
+            const vStock = (vData && vData.stock !== undefined) ? vData.stock : '';
+            const vPrice = (vData && vData.price !== undefined && vData.price !== null) ? vData.price : '';
+            const vBarcodes = (vData && vData.barcodes) ? parseBarcodeList(vData.barcodes).join(', ') : '';
+
+            const row = document.createElement('div');
+            row.className = 'variant-row';
+            row.dataset.variantId = vId;
+            row.innerHTML = `
+                <input type="text" class="var-name" placeholder="שם מידה (למשל: M)" value="${vName}" style="flex: 1.2; min-width: 110px;">
+                <input type="number" class="var-stock" placeholder="מלאי" value="${vStock}" style="flex: 0.8; min-width: 75px;">
+                <input type="number" class="var-price" step="0.1" placeholder="מחיר (אופציונלי)" value="${vPrice}" style="flex: 1; min-width: 105px;">
+                <input type="text" class="var-barcodes" placeholder="ברקודים למידה זו..." value="${vBarcodes}" style="flex: 2; min-width: 160px;" onkeydown="handleBarcodeAutoCommaKeydown(event, this)" onblur="cleanTrailingBarcodeComma(this)">
+                <button type="button" class="btn btn-danger btn-small" onclick="this.parentElement.remove()">הסר</button>
+            `;
+            list.appendChild(row);
         }
 
         /* ניהול מוצרים, קטגוריות, ספקים והוספת מלאי */
@@ -2699,30 +2955,70 @@
             const name = document.getElementById('prodName').value.trim();
             const cost = parseFloat(document.getElementById('prodCost').value) || 0;
             const price = parseFloat(document.getElementById('prodPrice').value);
-            const stock = parseInt(document.getElementById('prodStock').value);
+            const hasVar = document.getElementById('prodHasVariants').checked;
             const promoQty = parseInt(document.getElementById('prodPromoQty').value) || 0;
             const promoPrice = parseFloat(document.getElementById('prodPromoPrice').value) || 0;
             const category = document.getElementById('prodCategorySelect').value || 'כללי';
             const supplier = document.getElementById('prodSupplierSelect').value || '';
-            const rawBarcodes = document.getElementById('prodBarcodes').value;
-            const barcodesArray = rawBarcodes
-                ? [...new Set(rawBarcodes.split(',').map(b => b.trim()).filter(b => b !== ''))]
-                : [];
-            const rawOptions = document.getElementById('prodOptions').value;
-            const optionsArray = rawOptions
-                ? [...new Set(rawOptions.split(',').map(o => o.trim()).filter(o => o !== ''))]
-                : [];
 
-            if (!name || isNaN(price) || isNaN(stock)) return showToast('נא למלא שם מוצר, מחיר ומלאי בצורה תקינה', 'error');
+            if (!name || isNaN(price)) return showToast('נא למלא שם מוצר ומחיר בצורה תקינה', 'error');
 
-            for (const code of barcodesArray) {
-                const duplicateProd = (appData.products || []).find(p => {
-                    if (id && String(p.id) === String(id)) return false;
-                    const existingCodes = Array.isArray(p.barcodes) ? p.barcodes : String(p.barcodes || '').split(',').map(b => b.trim());
-                    return existingCodes.includes(code);
-                });
-                if (duplicateProd) {
-                    return showToast(`שגיאה: הברקוד "${code}" כבר קיים במוצר "${duplicateProd.name}"!`, 'error');
+            let variantsArray = [];
+            let stock = 0;
+            let barcodesArray = [];
+
+            if (hasVar) {
+                const rows = document.querySelectorAll('#variantsRowsList .variant-row');
+                if (rows.length === 0) return showToast('נא להוסיף לפחות מידה אחת למוצר', 'error');
+
+                for (const row of rows) {
+                    const vName = row.querySelector('.var-name').value.trim();
+                    const vStock = parseInt(row.querySelector('.var-stock').value);
+                    const vPriceRaw = row.querySelector('.var-price').value.trim();
+                    const vPrice = vPriceRaw !== '' ? parseFloat(vPriceRaw) : null;
+                    const vBarcodes = [...new Set(parseBarcodeList(row.querySelector('.var-barcodes').value))];
+
+                    if (!vName || isNaN(vStock)) {
+                        return showToast('נא למלא שם מידה ומלאי תקין בכל השורות', 'error');
+                    }
+
+                    variantsArray.push({
+                        id: row.dataset.variantId,
+                        name: vName,
+                        stock: vStock,
+                        price: vPrice,
+                        barcodes: vBarcodes
+                    });
+                }
+                stock = variantsArray.reduce((sum, v) => sum + v.stock, 0);
+            } else {
+                stock = parseInt(document.getElementById('prodStock').value);
+                if (isNaN(stock)) return showToast('נא להזין מלאי תקין', 'error');
+                barcodesArray = [...new Set(parseBarcodeList(document.getElementById('prodBarcodes').value))];
+            }
+
+            /* בדיקת כפילות ברקודים מול כל המוצרים והמידות */
+            const allCodesInThisProduct = hasVar
+                ? variantsArray.flatMap(v => v.barcodes)
+                : barcodesArray;
+
+            if (new Set(allCodesInThisProduct).size !== allCodesInThisProduct.length) {
+                return showToast('שגיאה: הוזן ברקוד כפול בין מידות של אותו מוצר!', 'error');
+            }
+
+            for (const code of allCodesInThisProduct) {
+                for (const p of (appData.products || [])) {
+                    if (id && String(p.id) === String(id)) continue;
+                    const pCodes = parseBarcodeList(p.barcodes);
+                    if (pCodes.includes(code)) {
+                        return showToast(`שגיאה: הברקוד "${code}" כבר קיים במוצר "${p.name}"!`, 'error');
+                    }
+                    if (hasProductVariants(p)) {
+                        const dupVar = p.variants.find(v => parseBarcodeList(v.barcodes).includes(code));
+                        if (dupVar) {
+                            return showToast(`שגיאה: הברקוד "${code}" כבר קיים ב-${p.name} (${dupVar.name})!`, 'error');
+                        }
+                    }
                 }
             }
 
@@ -2733,12 +3029,12 @@
                     p.cost = cost;
                     p.price = price;
                     p.stock = stock;
+                    p.variants = variantsArray;
                     p.promoQty = promoQty;
                     p.promoPrice = promoPrice;
                     p.category = category;
                     p.supplier = supplier;
                     p.barcodes = barcodesArray;
-                    p.options = optionsArray;
                 }
             } else {
                 appData.products.push({
@@ -2747,12 +3043,12 @@
                     cost: cost,
                     price: price,
                     stock: stock,
+                    variants: variantsArray,
                     promoQty: promoQty,
                     promoPrice: promoPrice,
                     category: category,
                     supplier: supplier,
-                    barcodes: barcodesArray,
-                    options: optionsArray
+                    barcodes: barcodesArray
                 });
             }
 
@@ -2767,22 +3063,29 @@
 
         function renderAdminProductsList() {
             const prodListHtml = (appData.products || []).map(p => {
-                const bText = Array.isArray(p.barcodes) ? p.barcodes.join(', ') : (p.barcodes || '');
-                const oText = Array.isArray(p.options) && p.options.length > 0 ? ` | אפשרויות: ${p.options.join(', ')}` : '';
-                const firstBarcode = Array.isArray(p.barcodes) && p.barcodes.length > 0 ? p.barcodes[0] : p.id;
+                const isVar = hasProductVariants(p);
+                const totalStock = getProductTotalStock(p);
+                const bText = isVar
+                    ? p.variants.map(v => `${v.name}: ${v.stock} יח'`).join(' | ')
+                    : `ברקודים: ${parseBarcodeList(p.barcodes).join(', ') || 'אין'}`;
                 const promoTxt = (p.promoQty > 1 && p.promoPrice > 0) ? ` | מבצע: ${p.promoQty} ב-₪${p.promoPrice}` : '';
+
+                const variantSelectHtml = isVar
+                    ? `<select id="addStockVarSelect_${p.id}" class="quick-add-variant-select">${p.variants.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}</select>`
+                    : '';
+
                 return `
                     <div style="padding: 10px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; background: #fff;">
                         <div>
-                            <strong>${p.name}</strong> | מחיר: ₪${p.price}${promoTxt}${oText}<br>
-                            <span style="color: var(--primary); font-weight: bold;">מלאי במחשב: ${p.stock} יח'</span> | <span style="font-size:0.88em; color:#64748b;">ספק: ${p.supplier || 'כללי'} | ברקודים: ${bText || 'אין'}</span>
+                            <strong>${p.name}</strong> | מחיר: ₪${p.price}${promoTxt}<br>
+                            <span style="color: var(--primary); font-weight: bold;">מלאי במחשב: ${totalStock} יח'</span> | <span style="font-size:0.88em; color:#64748b;">ספק: ${p.supplier || 'כללי'} | ${bText}</span>
                         </div>
                         <div style="display:flex; gap:6px; align-items: center; flex-wrap: wrap;">
                             <div class="quick-add-stock-box">
+                                ${variantSelectHtml}
                                 <input type="number" id="addStockInput_${p.id}" class="quick-add-stock-input" placeholder="+ כמות" onkeyup="if(event.key==='Enter') applyQuickStockAddition(${p.id})">
                                 <button type="button" class="btn btn-success btn-small" onclick="applyQuickStockAddition(${p.id})">הוסף למלאי</button>
                             </div>
-                            <button type="button" class="btn btn-info btn-small" onclick="printBarcodeLabel('${p.name.replace(/'/g, "\\'")}', ${p.price}, '${firstBarcode}')">מדבקה</button>
                             <button type="button" class="btn btn-small" onclick="editProduct(${p.id})">ערוך</button>
                             <button type="button" class="btn btn-danger btn-small" onclick="deleteProduct(${p.id})">מחק</button>
                         </div>
@@ -2801,27 +3104,30 @@
             if (isNaN(addQty) || addQty === 0) {
                 return showToast('נא להקליד כמות תקינה להוספה', 'error');
             }
-            
-            p.stock += addQty;
+
+            let targetLabel = p.name;
+            let newStockVal = 0;
+
+            if (hasProductVariants(p)) {
+                const varSelect = document.getElementById(`addStockVarSelect_${id}`);
+                const selectedVarId = varSelect ? varSelect.value : null;
+                const v = p.variants.find(vr => String(vr.id) === String(selectedVarId));
+                if (!v) return showToast('נא לבחור מידה', 'error');
+                v.stock = (parseInt(v.stock) || 0) + addQty;
+                p.stock = getProductTotalStock(p);
+                targetLabel = `${p.name} (${v.name})`;
+                newStockVal = v.stock;
+            } else {
+                p.stock += addQty;
+                newStockVal = p.stock;
+            }
+
             inputEl.value = '';
             await saveCloudData();
             renderAdminProductsList();
             renderPersistentLowStockPanel();
             renderProducts();
-            showToast(`נוספו ${addQty} יח' ל-"${p.name}". סה"כ מלאי מעודכן: ${p.stock} יח'!`, 'success');
-        }
-
-        function printBarcodeLabel(name, price, code) {
-            const win = window.open('', '_blank', 'width=350,height=250');
-            win.document.write('<html dir="rtl"><body style="text-align:center; font-family:Arial; padding:15px;">');
-            win.document.write('<div style="border:2px solid #000; padding:10px; display:inline-block; width:220px;">');
-            win.document.write('<div style="font-weight:bold; font-size:16px;">' + name + '</div>');
-            win.document.write('<div style="font-size:18px; font-weight:bold; margin:5px 0;">₪' + Number(price).toFixed(2) + '</div>');
-            win.document.write('<div style="font-family:monospace; letter-spacing:3px; font-size:14px; border-top:1px solid #000; padding-top:4px;">*' + code + '*</div>');
-            win.document.write('</div>');
-            win.document.write('<script>window.onload = function(){ window.print(); window.close(); };<' + '/script>');
-            win.document.write('</body></html>');
-            win.document.close();
+            showToast(`נוספו ${addQty} יח' ל-"${targetLabel}". מלאי מעודכן: ${newStockVal} יח'!`, 'success');
         }
 
         function editProduct(id) {
@@ -2832,12 +3138,20 @@
             document.getElementById('prodCost').value = p.cost || 0;
             document.getElementById('prodPrice').value = p.price;
             document.getElementById('prodStock').value = p.stock;
-            document.getElementById('prodOptions').value = Array.isArray(p.options) ? p.options.join(', ') : (p.options || '');
             document.getElementById('prodPromoQty').value = p.promoQty || '';
             document.getElementById('prodPromoPrice').value = p.promoPrice || '';
             document.getElementById('prodCategorySelect').value = p.category || 'כללי';
             document.getElementById('prodSupplierSelect').value = p.supplier || '';
-            document.getElementById('prodBarcodes').value = Array.isArray(p.barcodes) ? p.barcodes.join(', ') : (p.barcodes || '');
+            document.getElementById('prodBarcodes').value = parseBarcodeList(p.barcodes).join(', ');
+
+            const isVar = hasProductVariants(p);
+            document.getElementById('prodHasVariants').checked = isVar;
+            document.getElementById('variantsRowsList').innerHTML = '';
+            if (isVar) {
+                p.variants.forEach(v => addVariantRow(v));
+            }
+            toggleVariantsEditor();
+
             showToast(`המוצר "${p.name}" נטען לעריכה למעלה`, 'info');
         }
 
@@ -2857,17 +3171,25 @@
             document.getElementById('prodCost').value = '';
             document.getElementById('prodPrice').value = '';
             document.getElementById('prodStock').value = '';
-            document.getElementById('prodOptions').value = '';
             document.getElementById('prodPromoQty').value = '';
             document.getElementById('prodPromoPrice').value = '';
             document.getElementById('prodBarcodes').value = '';
+            document.getElementById('prodHasVariants').checked = false;
+            document.getElementById('variantsRowsList').innerHTML = '';
+            toggleVariantsEditor();
         }
 
-        /* ספירת מלאי מהירה */
+        /* ספירת מלאי מהירה (תומכת בכל מידה בנפרד ובסריקת ברקוד למידה) */
         function initStockCountTab() {
             stockCountBuffer = {};
             (appData.products || []).forEach(p => {
-                stockCountBuffer[p.id] = p.stock;
+                if (hasProductVariants(p)) {
+                    p.variants.forEach(v => {
+                        stockCountBuffer[`${p.id}_${v.id}`] = parseInt(v.stock) || 0;
+                    });
+                } else {
+                    stockCountBuffer[String(p.id)] = parseInt(p.stock) || 0;
+                }
             });
             renderStockCountTable();
         }
@@ -2877,15 +3199,27 @@
             const code = inputEl.value.trim();
             if (!code) return;
 
-            const found = (appData.products || []).find(p => {
-                const bList = Array.isArray(p.barcodes) ? p.barcodes : String(p.barcodes || '').split(',').map(b => b.trim());
-                return bList.includes(code) || String(p.id) === code;
-            });
+            let foundKey = null;
 
-            if (found) {
+            for (const p of (appData.products || [])) {
+                if (hasProductVariants(p)) {
+                    const matchedVar = p.variants.find(v => parseBarcodeList(v.barcodes).includes(code));
+                    if (matchedVar) {
+                        foundKey = `${p.id}_${matchedVar.id}`;
+                        break;
+                    }
+                } else {
+                    if (parseBarcodeList(p.barcodes).includes(code) || String(p.id) === code) {
+                        foundKey = String(p.id);
+                        break;
+                    }
+                }
+            }
+
+            if (foundKey) {
                 inputEl.value = '';
-                renderStockCountTable(found.id);
-                const qtyInput = document.getElementById(`sc_input_${found.id}`);
+                renderStockCountTable(foundKey);
+                const qtyInput = document.getElementById(`sc_input_${foundKey}`);
                 if (qtyInput) {
                     qtyInput.focus();
                     qtyInput.select();
@@ -2896,15 +3230,15 @@
             }
         }
 
-        function updateStockCountValue(id, val) {
+        function updateStockCountValue(key, val) {
             const num = parseInt(val);
             if (!isNaN(num)) {
-                stockCountBuffer[id] = num;
+                stockCountBuffer[key] = num;
                 renderStockCountTable();
             }
         }
 
-        function renderStockCountTable(highlightId = null) {
+        function renderStockCountTable(highlightKey = null) {
             const container = document.getElementById('stockCountTableContainer');
             if (!appData.products || appData.products.length === 0) {
                 container.innerHTML = '<p>אין מוצרים במערכת.</p>';
@@ -2914,7 +3248,7 @@
             let html = `<table style="width:100%; border-collapse: collapse; text-align: right;">
                 <thead>
                     <tr style="background:#f1f5f9; border-bottom:2px solid #cbd5e1;">
-                        <th style="padding:10px;">שם מוצר</th>
+                        <th style="padding:10px;">שם מוצר / מידה</th>
                         <th style="padding:10px;">מלאי רשום</th>
                         <th style="padding:10px;">ספירה בפועל</th>
                         <th style="padding:10px;">פער</th>
@@ -2922,19 +3256,41 @@
                 </thead><tbody>`;
 
             appData.products.forEach(p => {
-                const counted = stockCountBuffer[p.id] !== undefined ? stockCountBuffer[p.id] : p.stock;
-                const diff = counted - p.stock;
-                const diffColor = diff === 0 ? '#64748b' : (diff > 0 ? '#10b981' : '#ef4444');
-                const rowBg = (highlightId === p.id) ? '#fef3c7' : '#fff';
+                if (hasProductVariants(p)) {
+                    p.variants.forEach(v => {
+                        const key = `${p.id}_${v.id}`;
+                        const currentStock = parseInt(v.stock) || 0;
+                        const counted = stockCountBuffer[key] !== undefined ? stockCountBuffer[key] : currentStock;
+                        const diff = counted - currentStock;
+                        const diffColor = diff === 0 ? '#64748b' : (diff > 0 ? '#10b981' : '#ef4444');
+                        const rowBg = (highlightKey === key) ? '#fef3c7' : '#fff';
 
-                html += `<tr style="border-bottom:1px solid #e2e8f0; background:${rowBg};">
-                    <td style="padding:10px; font-weight:bold;">${p.name}</td>
-                    <td style="padding:10px;">${p.stock}</td>
-                    <td style="padding:10px;">
-                        <input type="number" id="sc_input_${p.id}" value="${counted}" style="width:85px; padding:6px; text-align:center; font-weight:bold; border-radius:6px; border:1px solid #cbd5e1;" onchange="updateStockCountValue(${p.id}, this.value)">
-                    </td>
-                    <td style="padding:10px; font-weight:bold; color:${diffColor};">${diff > 0 ? '+' + diff : diff}</td>
-                </tr>`;
+                        html += `<tr style="border-bottom:1px solid #e2e8f0; background:${rowBg};">
+                            <td style="padding:10px; font-weight:bold;">${p.name} - <span style="color:#6b21a8;">${v.name}</span></td>
+                            <td style="padding:10px;">${currentStock}</td>
+                            <td style="padding:10px;">
+                                <input type="number" id="sc_input_${key}" value="${counted}" style="width:85px; padding:6px; text-align:center; font-weight:bold; border-radius:6px; border:1px solid #cbd5e1;" onchange="updateStockCountValue('${key}', this.value)">
+                            </td>
+                            <td style="padding:10px; font-weight:bold; color:${diffColor};">${diff > 0 ? '+' + diff : diff}</td>
+                        </tr>`;
+                    });
+                } else {
+                    const key = String(p.id);
+                    const currentStock = parseInt(p.stock) || 0;
+                    const counted = stockCountBuffer[key] !== undefined ? stockCountBuffer[key] : currentStock;
+                    const diff = counted - currentStock;
+                    const diffColor = diff === 0 ? '#64748b' : (diff > 0 ? '#10b981' : '#ef4444');
+                    const rowBg = (highlightKey === key) ? '#fef3c7' : '#fff';
+
+                    html += `<tr style="border-bottom:1px solid #e2e8f0; background:${rowBg};">
+                        <td style="padding:10px; font-weight:bold;">${p.name}</td>
+                        <td style="padding:10px;">${currentStock}</td>
+                        <td style="padding:10px;">
+                            <input type="number" id="sc_input_${key}" value="${counted}" style="width:85px; padding:6px; text-align:center; font-weight:bold; border-radius:6px; border:1px solid #cbd5e1;" onchange="updateStockCountValue('${key}', this.value)">
+                        </td>
+                        <td style="padding:10px; font-weight:bold; color:${diffColor};">${diff > 0 ? '+' + diff : diff}</td>
+                    </tr>`;
+                }
             });
 
             html += '</tbody></table>';
@@ -2943,8 +3299,19 @@
 
         async function applyAllStockCounts() {
             appData.products.forEach(p => {
-                if (stockCountBuffer[p.id] !== undefined) {
-                    p.stock = stockCountBuffer[p.id];
+                if (hasProductVariants(p)) {
+                    p.variants.forEach(v => {
+                        const key = `${p.id}_${v.id}`;
+                        if (stockCountBuffer[key] !== undefined) {
+                            v.stock = stockCountBuffer[key];
+                        }
+                    });
+                    p.stock = getProductTotalStock(p);
+                } else {
+                    const key = String(p.id);
+                    if (stockCountBuffer[key] !== undefined) {
+                        p.stock = stockCountBuffer[key];
+                    }
                 }
             });
             await saveCloudData();
@@ -2966,7 +3333,7 @@
             `).join('');
 
             const filterEl = document.getElementById('orderSupplierFilter');
-            filterEl.innerHTML = `<option value="ALL">כל הספקים (מוצרים במלאי נמוך)</option>` + 
+            filterEl.innerHTML = `<option value="ALL">כל הספקים (מוצרים ומידות במלאי נמוך)</option>` + 
                 (appData.suppliers || []).map(s => `<option value="${s.name}">${s.name}</option>`).join('');
             renderPurchaseOrder();
         }
@@ -2995,18 +3362,43 @@
         function renderPurchaseOrder() {
             const sup = document.getElementById('orderSupplierFilter').value;
             const threshold = parseInt(appData.settings.lowStockThreshold) || 5;
-            let items = (appData.products || []).filter(p => p.stock <= threshold);
+            let prods = appData.products || [];
             if (sup !== 'ALL') {
-                items = items.filter(p => p.supplier === sup);
+                prods = prods.filter(p => p.supplier === sup);
             }
 
+            const lowList = [];
+            prods.forEach(p => {
+                if (hasProductVariants(p)) {
+                    p.variants.forEach(v => {
+                        const vStock = parseInt(v.stock) || 0;
+                        if (vStock <= threshold) {
+                            lowList.push({
+                                name: `${p.name} - מידה ${v.name}`,
+                                stock: vStock,
+                                supplier: p.supplier || 'כללי'
+                            });
+                        }
+                    });
+                } else {
+                    const pStock = parseInt(p.stock) || 0;
+                    if (pStock <= threshold) {
+                        lowList.push({
+                            name: p.name,
+                            stock: pStock,
+                            supplier: p.supplier || 'כללי'
+                        });
+                    }
+                }
+            });
+
             const preview = document.getElementById('purchaseOrderPreview');
-            if (items.length === 0) {
-                preview.innerHTML = 'אין מוצרים מתחת לרף המלאי עבור ספק זה.';
+            if (lowList.length === 0) {
+                preview.innerHTML = 'אין מוצרים או מידות מתחת לרף המלאי עבור ספק זה.';
                 return;
             }
             preview.innerHTML = `<strong>רשימת הזמנה (${sup === 'ALL' ? 'כל הספקים' : sup}):</strong><ul>` +
-                items.map(i => `<li>${i.name} - יתרה נוכחית: ${i.stock} יח' (ספק: ${i.supplier || 'כללי'})</li>`).join('') + '</ul>';
+                lowList.map(i => `<li>${i.name} - יתרה נוכחית: ${i.stock} יח' (ספק: ${i.supplier})</li>`).join('') + '</ul>';
         }
 
         function printPurchaseOrder() {
@@ -3036,7 +3428,7 @@
             (appData.receipts || []).filter(r => r.active).forEach(r => {
                 r.items.forEach(i => {
                     if (!soldMap[i.name]) soldMap[i.name] = { qty: 0, totalSum: 0, profit: 0 };
-                    const prod = (appData.products || []).find(p => p.id === i.id);
+                    const prod = (appData.products || []).find(p => p.id === (i.productId || i.id));
                     const unitCost = prod && prod.cost ? prod.cost : (i.cost || 0);
                     const lTotal = i.lineTotal !== undefined ? i.lineTotal : (i.price * i.qty);
                     soldMap[i.name].qty += i.qty;
@@ -3045,7 +3437,7 @@
                 });
             });
 
-            const rows = [["שם מוצר", "כמות שנמכרה", "סך הכנסות (₪)", "רווח גולמי (₪)"]];
+            const rows = [["שם מוצר / מידה", "כמות שנמכרה", "סך הכנסות (₪)", "רווח גולמי (₪)"]];
             for (const [name, data] of Object.entries(soldMap)) {
                 rows.push([name, data.qty, data.totalSum.toFixed(2), data.profit.toFixed(2)]);
             }
@@ -3056,11 +3448,36 @@
         }
 
         function exportStockExcel() {
-            const rows = [["מזהה מוצר", "שם מוצר", "אפשרויות/מידות", "קטגוריה", "ספק", "מחיר עלות (₪)", "מחיר מכירה (₪)", "יתרת מלאי", "ברקודים"]];
+            const rows = [["מזהה מוצר", "שם מוצר", "מידה", "קטגוריה", "ספק", "מחיר עלות (₪)", "מחיר מכירה (₪)", "יתרת מלאי", "ברקודים"]];
             (appData.products || []).forEach(p => {
-                const bText = Array.isArray(p.barcodes) ? p.barcodes.join(', ') : (p.barcodes || '');
-                const oText = Array.isArray(p.options) ? p.options.join(', ') : (p.options || '');
-                rows.push([p.id, p.name, oText, p.category || 'כללי', p.supplier || '', (p.cost || 0).toFixed(2), p.price.toFixed(2), p.stock, bText]);
+                if (hasProductVariants(p)) {
+                    p.variants.forEach(v => {
+                        const vPrice = (v.price !== undefined && v.price !== null && v.price !== '') ? parseFloat(v.price) : parseFloat(p.price);
+                        rows.push([
+                            p.id,
+                            p.name,
+                            v.name,
+                            p.category || 'כללי',
+                            p.supplier || '',
+                            (p.cost || 0).toFixed(2),
+                            vPrice.toFixed(2),
+                            v.stock,
+                            parseBarcodeList(v.barcodes).join(', ')
+                        ]);
+                    });
+                } else {
+                    rows.push([
+                        p.id,
+                        p.name,
+                        '-',
+                        p.category || 'כללי',
+                        p.supplier || '',
+                        (p.cost || 0).toFixed(2),
+                        p.price.toFixed(2),
+                        p.stock,
+                        parseBarcodeList(p.barcodes).join(', ')
+                    ]);
+                }
             });
 
             if (rows.length === 1) return showToast('אין מוצרים ברשימה לייצוא', 'warning');
