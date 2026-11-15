@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">ת"ת בית מדרש גבוה</title>
+    <title id="pageTitle">ת"ת ישיבת בית מדרש גבוה</title>
     <style>
         :root {
             --primary: #1e293b;
@@ -13,6 +13,7 @@
             --danger: #ef4444;
             --warning: #f59e0b;
             --info: #3b82f6;
+            --purple: #8b5cf6;
             --bg: #f1f5f9;
             --panel-bg: #ffffff;
             --border-color: #e2e8f0;
@@ -392,7 +393,7 @@
         /* עגלת קניות */
         .cart-section {
             flex: 1;
-            min-width: 370px;
+            min-width: 390px;
             background: var(--panel-bg);
             border-radius: 16px;
             padding: 16px;
@@ -523,10 +524,11 @@
         .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
         .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
         .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .btn-purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
         .btn-secondary { background: linear-gradient(135deg, #64748b, #475569); }
         .btn-small { padding: 8px 13px; font-size: 0.92em; border-radius: 8px; }
         .btn-tiny { padding: 5px 8px; font-size: 0.85em; border-radius: 6px; }
-        .btn-large-action { padding: 14px 22px; font-size: 1.08em; border-radius: 12px; }
+        .btn-large-action { padding: 14px 18px; font-size: 1.04em; border-radius: 12px; }
 
         /* כפתורי בחירת מידה בקופה */
         .variant-select-grid {
@@ -669,7 +671,7 @@
             font-size: 1.3em;
         }
 
-        .form-group { margin-bottom: 14px; }
+        .form-group { margin-bottom: 14px; position: relative; }
         .form-group label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.95em; color: #334155; }
         .form-group input[type="text"],
         .form-group input[type="number"],
@@ -683,6 +685,46 @@
             border: 1.5px solid #cbd5e1;
             border-radius: 10px;
             font-size: 1em;
+        }
+
+        /* רשימת השלמה אוטומטית ללקוחות חוזרים */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 1.5px solid var(--info);
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 185px;
+            overflow-y: auto;
+            z-index: 1200;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            display: none;
+        }
+
+        .autocomplete-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95em;
+        }
+
+        .autocomplete-item:hover {
+            background: #eff6ff;
+        }
+
+        .autocomplete-badge {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 700;
         }
 
         .checkbox-row {
@@ -844,8 +886,8 @@
     <!-- מסך נעילה ראשי לכניסה לאתר -->
     <div id="siteLockScreen" class="lock-screen">
         <div class="lock-box">
-            <h2>כניסה למערכת הקופה</h2>
-            <p>הזן קוד גישה לאתר</p>
+            <h2>ת"ת ישיבת בית מדרש גבוה</h2>
+            <p>הזן קוד גישה למערכת הקופה</p>
             <div id="siteLockoutTimer" class="lockout-timer-box"></div>
             <input type="password" id="sitePassInput" placeholder="••••" onkeyup="if(event.key==='Enter') verifySiteAccess()">
             <div id="siteLockError" class="lock-error">קוד שגוי, נסה שנית</div>
@@ -871,11 +913,11 @@
     <header>
         <div class="header-logo-container">
             <img id="headerLogo" src="" alt="לוגו" class="header-logo" style="display:none;">
-            <h2 id="storeTitleDisplay">ת"ת בית מדרש גבוה</h2>
+            <h2 id="storeTitleDisplay">ת"ת ישיבת בית מדרש גבוה</h2>
             <span id="adminSessionBadge" class="admin-active-badge">● מצב מנהל פעיל</span>
         </div>
         <div class="header-actions">
-            <button type="button" class="btn btn-warning" onclick="openPartialReturnModal()">החזרת פריט (זיכוי)</button>
+            <button type="button" class="btn btn-warning" onclick="openPartialReturnModal()">קבלות / החזרת פריט</button>
             <button type="button" class="btn btn-info" onclick="syncCloudData(true)">רענן נתונים</button>
             <button type="button" id="openAdminBtn" class="btn btn-secondary" onclick="handleAdminButtonClick()">אזור מנהל</button>
             <button type="button" id="adminLogoutBtn" class="btn btn-danger" style="display:none;" onclick="logoutAdminSession()">התנתק ממנהל</button>
@@ -886,7 +928,6 @@
     <div class="main-container">
         <!-- קטלוג (נקי מהתראות מלאי נמוך עבור משתמשים רגילים) -->
         <div class="catalog-section">
-            <!-- שורת חיפוש מאוחדת לברקוד ולשם מוצר -->
             <div class="unified-search-bar">
                 <label for="unifiedSearchInput" style="font-weight: bold; white-space: nowrap;">חיפוש / ברקוד:</label>
                 <input type="text" id="unifiedSearchInput" placeholder="סרוק ברקוד (Enter) או הקלד שם מוצר לסינון..." oninput="handleUnifiedSearchInput()" onkeyup="if(event.key==='Enter') handleUnifiedSearchEnter()">
@@ -917,10 +958,11 @@
                 <span>₪<span id="cartTotal">0.00</span></span>
             </div>
             
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button type="button" class="btn btn-success btn-large-action" style="flex:1;" onclick="startCheckout('cash')">מזומן</button>
-                <button type="button" class="btn btn-info btn-large-action" style="flex:1;" onclick="startCheckout('credit')">אשראי</button>
-                <button type="button" class="btn btn-warning btn-large-action" style="flex:1;" onclick="startCheckout('debt')">הקפה / חוב</button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <button type="button" class="btn btn-success btn-large-action" onclick="startCheckout('cash')">מזומן</button>
+                <button type="button" class="btn btn-info btn-large-action" onclick="startCheckout('credit')">אשראי</button>
+                <button type="button" class="btn btn-purple btn-large-action" onclick="startCheckout('mixed')">מזומן + אשראי</button>
+                <button type="button" class="btn btn-warning btn-large-action" onclick="startCheckout('debt')">הקפה / חוב</button>
             </div>
         </div>
     </div>
@@ -978,27 +1020,28 @@
         </div>
     </div>
 
-    <!-- מודאל החזרת פריט בודד (זיכוי חלקי) -->
+    <!-- מודאל קבלות אחרונות והחזרת פריט בודד -->
     <div class="modal" id="partialReturnModal">
-        <div class="modal-content" style="width: 580px;">
-            <h3>החזרת פריט בודד / זיכוי חלקי</h3>
-            <p style="font-size: 0.92em; color: var(--text-muted); margin-bottom: 10px;">בחר קבלה פעילה ולחץ על הפריט להחזרה למלאי וזיכוי כספי:</p>
+        <div class="modal-content" style="width: 620px;">
+            <h3>היסטוריית קבלות והחזרת פריט (זיכוי)</h3>
+            <p style="font-size: 0.92em; color: var(--text-muted); margin-bottom: 10px;">ניתן להציג/להדפיס מחדש קבלה פעילה או לזכות פריט בודד ולהחזירו למלאי:</p>
             <div class="form-group">
-                <input type="text" id="returnSearchInput" placeholder="חפש לפי שם לקוח או מספר קבלה..." oninput="renderReturnReceipts()">
+                <input type="text" id="returnSearchInput" placeholder="חפש לפי שם לקוח, שיעור או מספר קבלה..." oninput="renderReturnReceipts()">
             </div>
-            <div id="returnReceiptsContainer" style="max-height: 350px; overflow-y: auto;"></div>
+            <div id="returnReceiptsContainer" style="max-height: 380px; overflow-y: auto;"></div>
             <br>
             <button type="button" class="btn btn-danger btn-large-action" style="width: 100%;" onclick="closeModal('partialReturnModal')">סגור</button>
         </div>
     </div>
 
-    <!-- מודאל פרטי קונה ומחשבון עודף -->
+    <!-- מודאל פרטי קונה, מחשבון עודף ותשלום משולב -->
     <div class="modal" id="customerModal">
         <div class="modal-content">
-            <h3>פרטי רוכש ותשלום</h3>
+            <h3 id="checkoutModalHeader">פרטי רוכש ותשלום</h3>
             <div class="form-group">
-                <label>שם הקונה:</label>
-                <input type="text" id="custName" required placeholder="הקלד שם מלא">
+                <label>שם הקונה (מתחילים להקליד להשלמה אוטומטית של לקוח חוזר):</label>
+                <input type="text" id="custName" required autocomplete="off" placeholder="הקלד שם מלא" oninput="handleCustomerAutocomplete()" onblur="setTimeout(hideCustomerAutocomplete, 200)">
+                <div id="customerAutocompleteList" class="autocomplete-dropdown"></div>
             </div>
 
             <label class="checkbox-row">
@@ -1022,11 +1065,11 @@
                 <input type="tel" id="custPhone" placeholder="050-0000000">
             </div>
 
-            <!-- מחשבון עודף למזומן עם כפתורי שטרות גדולים -->
+            <!-- מחשבון עודף למזומן בלבד -->
             <div id="cashChangeCalculator" style="display:none; background: #ecfdf5; padding: 14px; border-radius: 12px; border: 1.5px solid #a7f3d0; margin-bottom: 16px;">
-                <div style="font-weight: 800; font-size: 1.05em; margin-bottom: 8px;">מחשבון עודף במזומן (לתשלום: ₪<span id="calcTotalDue">0.00</span>)</div>
+                <div style="font-weight: 800; font-size: 1.05em; margin-bottom: 8px;">תשלום במזומן בלבד (לתשלום: ₪<span id="calcTotalDue">0.00</span>)</div>
                 <div style="display: flex; gap: 12px; align-items: center;">
-                    <input type="number" id="cashReceivedInput" style="font-size: 1.25em; font-weight: bold; padding: 12px; border-radius: 10px; border: 2px solid #10b981; flex: 1;" placeholder="סכום שהתקבל" oninput="calculateCashChange()">
+                    <input type="number" id="cashReceivedInput" step="0.1" style="font-size: 1.25em; font-weight: bold; padding: 12px; border-radius: 10px; border: 2px solid #10b981; flex: 1;" placeholder="סכום שהתקבל מהלקוח" oninput="calculateCashChange()">
                     <div style="white-space: nowrap; font-weight: 800; font-size: 1.2em; background: white; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1;">
                         עודף: <span id="cashChangeResult" style="color: var(--accent-hover);">₪0.00</span>
                     </div>
@@ -1041,6 +1084,27 @@
                 </div>
             </div>
 
+            <!-- מחשבון תשלום משולב: מזומן + אשראי -->
+            <div id="mixedPaymentCalculator" style="display:none; background: #f5f3ff; padding: 14px; border-radius: 12px; border: 1.5px solid #c4b5fd; margin-bottom: 16px;">
+                <div style="font-weight: 800; font-size: 1.05em; color: #5b21b6; margin-bottom: 10px;">
+                    תשלום משולב: מזומן + אשראי (סה"כ עסקה: ₪<span id="mixedTotalDue">0.00</span>)
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+                    <div style="flex: 1; min-width: 140px;">
+                        <label style="font-size: 0.88em; font-weight: 700; display: block; margin-bottom: 4px;">סכום לקיזוז במזומן (₪):</label>
+                        <input type="number" id="mixedCashPortionInput" step="0.1" style="font-size: 1.15em; font-weight: bold; padding: 10px; border-radius: 8px; border: 2px solid #8b5cf6; width: 100%;" placeholder="0.00" oninput="calculateMixedPayment()">
+                    </div>
+                    <div style="flex: 1; min-width: 140px;">
+                        <label style="font-size: 0.88em; font-weight: 700; display: block; margin-bottom: 4px;">מזומן שהתקבל בפועל (לעודף):</label>
+                        <input type="number" id="mixedCashTenderedInput" step="0.1" style="font-size: 1.15em; font-weight: bold; padding: 10px; border-radius: 8px; border: 1.5px solid #cbd5e1; width: 100%;" placeholder="אופציונלי (לעודף)" oninput="calculateMixedPayment()">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 14px; border-radius: 10px; border: 1px solid #ddd6fe; font-weight: 800;">
+                    <span style="color: #1e40af; font-size: 1.1em;">יתרה לתשלום באשראי: <span id="mixedCreditDueResult">₪0.00</span></span>
+                    <span style="color: var(--accent-hover);">עודף ממזומן: <span id="mixedCashChangeResult">₪0.00</span></span>
+                </div>
+            </div>
+
             <div style="display: flex; gap: 10px;">
                 <button type="button" class="btn btn-success btn-large-action" style="flex:1" onclick="proceedToPayment()">אישור וסיום עסקה</button>
                 <button type="button" class="btn btn-danger btn-large-action" style="flex:1" onclick="closeModal('customerModal')">ביטול</button>
@@ -1048,11 +1112,16 @@
         </div>
     </div>
 
-    <!-- מודאל תשלום אשראי מרחף -->
+    <!-- מודאל תשלום אשראי מרחף עם תצוגת סכום בולטת -->
     <div class="modal" id="creditIframeModal">
-        <div class="modal-content" style="width: 720px; height: 620px; display: flex; flex-direction: column;">
-            <h3>תשלום באשראי (נדרים פלוס)</h3>
-            <iframe id="creditIframe" src="" style="width: 100%; flex: 1; border: 1px solid #cbd5e1; border-radius: 10px; margin: 10px 0;"></iframe>
+        <div class="modal-content" style="width: 720px; height: 640px; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 8px;">
+                <h3 style="border: none; margin: 0; padding: 0;">תשלום באשראי (נדרים פלוס)</h3>
+                <div style="background: #dbeafe; color: #1e3a8a; padding: 8px 16px; border-radius: 10px; font-weight: 800; font-size: 1.2em; border: 1.5px solid #93c5fd;">
+                    סכום לגבייה באשראי: ₪<span id="creditModalAmountDisplay">0.00</span>
+                </div>
+            </div>
+            <iframe id="creditIframe" src="" style="width: 100%; flex: 1; border: 1px solid #cbd5e1; border-radius: 10px; margin: 6px 0 12px 0;"></iframe>
             <div style="display: flex; justify-content: space-between; gap: 12px;">
                 <button type="button" class="btn btn-success btn-large-action" style="flex:1" onclick="completeCreditTransaction()">אישור סיום תשלום</button>
                 <button type="button" class="btn btn-danger btn-large-action" style="flex:1" onclick="closeModal('creditIframeModal')">ביטול עסקה</button>
@@ -1089,7 +1158,7 @@
 
                 <!-- סיכום קופה יומי -->
                 <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
-                    <h4>סיכום קופה יומי:</h4>
+                    <h4>סיכום קופה יומי (כולל פיצול עסקאות משולבות):</h4>
                     <div style="display: flex; gap: 10px; align-items: center; margin: 10px 0;">
                         <label>בחר תאריך:</label>
                         <input type="date" id="dailySummaryDate" style="width: auto;" onchange="renderDailySummary()">
@@ -1128,7 +1197,6 @@
 
             <!-- 3. לשונית ניהול מוצרים, מידות, מבצעי כמות והוספת מלאי -->
             <div id="tab-products" class="tab-content" style="display:none;">
-                <!-- התראת מוצרים ומידות חסרים - גלויה למנהל בלבד -->
                 <div id="adminLowStockPanel" class="admin-low-stock-panel">
                     <div class="persistent-low-stock-header">
                         <span id="lowStockPanelTitle">מוצרים ומידות חסרים או כמעט חסרים במלאי:</span>
@@ -1361,7 +1429,7 @@
                     <div>לקוח: <span id="rCust"></span></div>
                     <div id="rYeshivaRow" style="display:none;">שיעור / ועד: <span id="rYeshivaGrade"></span></div>
                     <div id="rPhoneRow" style="display:none;">טלפון: <span id="rPhone"></span></div>
-                    <div>תשלום: <span id="rPayType"></span></div>
+                    <div>אופן תשלום: <strong><span id="rPayType"></span></strong></div>
                 </div>
                 <div style="border-top: 1px dashed #000; margin: 4px 0;"></div>
                 <table class="receipt-table">
@@ -1373,6 +1441,10 @@
                 <div style="border-top: 1px dashed #000; margin: 4px 0;"></div>
                 <div style="text-align: left; font-weight: bold; font-size: 14px; margin: 4px 0;">
                     סה"כ לתשלום: ₪<span id="rTotal"></span>
+                </div>
+                <div id="rCashDetailsBox" style="display:none; text-align: right; font-size: 12px; border-top: 1px dotted #666; padding-top: 4px; margin-top: 4px;">
+                    <div>התקבל במזומן: ₪<span id="rCashTendered"></span></div>
+                    <div style="font-weight: bold;">עודף שניתן: ₪<span id="rCashChange"></span></div>
                 </div>
                 <div style="border-top: 1px dashed #000; margin: 4px 0;"></div>
                 <div id="receiptFooterTitle" style="font-size: 11px; margin-top: 5px;"></div>
@@ -1400,12 +1472,12 @@
             settings: {
                 sitePass: '1111',
                 adminPass: '1234',
-                storeName: 'ת"ת בית מדרש גבוה',
+                storeName: 'ת"ת ישיבת בית מדרש גבוה',
                 logoData: '',
                 cardSize: '145px',
                 lowStockThreshold: 5,
-                receiptHeader: 'קבלת תשלום',
-                receiptSub: 'רחוב הישיבה | טלפון: 02-0000000',
+                receiptHeader: 'ת"ת ישיבת בית מדרש גבוה',
+                receiptSub: 'היכל הישיבה',
                 receiptFooter: 'תודה רבה ותזכו למצוות!'
             }
         };
@@ -1421,6 +1493,14 @@
         let currentViewedReceipt = null;
         let stockCountBuffer = {};
         let draggedVariantRow = null;
+
+        /* פרטי תשלום לעסקה הנוכחית (כולל מזומן, עודף ותשלום משולב) */
+        let pendingPaymentDetails = {
+            cashApplied: 0,
+            creditApplied: 0,
+            cashTendered: 0,
+            cashChange: 0
+        };
 
         /* מעקב ניסיונות כניסה כושלים ונעילה מתמדת ב-localStorage גם לאחר רענון הדף */
         let siteFailedAttempts = JSON.parse(localStorage.getItem('pos_site_failed') || '[]');
@@ -1748,6 +1828,9 @@
                     if (!appData.settings.sitePass) appData.settings.sitePass = '1111';
                     if (!appData.settings.adminPass) appData.settings.adminPass = '1234';
                     if (!appData.settings.lowStockThreshold) appData.settings.lowStockThreshold = 5;
+                    if (!appData.settings.storeName || appData.settings.storeName === 'קופה רושמת') {
+                        appData.settings.storeName = 'ת"ת ישיבת בית מדרש גבוה';
+                    }
                     if (!appData.categories) appData.categories = ['כללי'];
                     if (!appData.suppliers) appData.suppliers = [];
                     
@@ -2046,8 +2129,9 @@
 
         function applySettings() {
             const s = appData.settings || {};
-            document.getElementById('storeTitleDisplay').innerText = s.storeName || 'ת"ת בית מדרש גבוה';
-            document.getElementById('pageTitle').innerText = s.storeName || 'ת"ת בית מדרש גבוה';
+            const storeTitle = s.storeName || 'ת"ת ישיבת בית מדרש גבוה';
+            document.getElementById('storeTitleDisplay').innerText = storeTitle;
+            document.getElementById('pageTitle').innerText = storeTitle;
             document.documentElement.style.setProperty('--card-size', s.cardSize || '145px');
             
             const logoSrc = s.logoData || s.logoUrl || '';
@@ -2085,7 +2169,7 @@
                 }
             }
 
-            appData.settings.storeName = document.getElementById('settingStoreName').value;
+            appData.settings.storeName = document.getElementById('settingStoreName').value || 'ת"ת ישיבת בית מדרש גבוה';
             appData.settings.lowStockThreshold = parseInt(document.getElementById('settingLowStockThreshold').value) || 5;
             appData.settings.logoData = tempLogoBase64;
             appData.settings.cardSize = document.getElementById('settingCardSize').value;
@@ -2157,7 +2241,6 @@
                     : totalStock <= threshold);
 
                 const hasPromo = (parseInt(p.promoQty) > 1 && parseFloat(p.promoPrice) > 0);
-                /* סימון חוסר מלאי על קוביות המוצר מוצג רק כשמנהל מחובר */
                 const cardClass = isAdminLoggedIn 
                     ? (isOutOfStock ? 'out-stock-card' : (isLowStock ? 'low-stock-card' : ''))
                     : '';
@@ -2229,6 +2312,19 @@
             addToCart(productId, variantId);
         }
 
+        /* בדיקת חריגת מלאי בזמן אמת */
+        function checkStockWarning(prod, variantId, desiredQty, displayName) {
+            if (!prod) return;
+            let availableStock = parseInt(prod.stock) || 0;
+            if (variantId && hasProductVariants(prod)) {
+                const v = prod.variants.find(vr => String(vr.id) === String(variantId));
+                if (v) availableStock = parseInt(v.stock) || 0;
+            }
+            if (desiredQty > availableStock) {
+                showToast(`שים לב: הכמות בעגלה עבור "${displayName}" (${desiredQty}) חורגת מהמלאי הרשום (${availableStock})`, 'warning', 3200);
+            }
+        }
+
         /* עגלת קניות */
         function addToCart(productId, variantId = null) {
             const prod = appData.products.find(p => p.id === productId);
@@ -2251,8 +2347,10 @@
             }
 
             const existing = cart.find(item => String(item.cartKey) === cartKey);
+            let newQty = 1;
             if (existing) {
                 existing.qty++;
+                newQty = existing.qty;
             } else {
                 cart.push({
                     cartKey: cartKey,
@@ -2269,7 +2367,8 @@
                 });
             }
             renderCart();
-            showToast(`נוסף לעגלה: ${displayName}`, 'success', 1600);
+            showToast(`נוסף לעגלה: ${displayName}`, 'success', 1500);
+            checkStockWarning(prod, variantId, newQty, displayName);
         }
 
         function openFreeItemModal() {
@@ -2373,6 +2472,9 @@
             item.qty += change;
             if (item.qty <= 0) {
                 cart = cart.filter(i => String(i.cartKey || i.id) !== String(cartKey));
+            } else if (!item.isFreeItem && change > 0) {
+                const prod = appData.products.find(p => p.id === (item.productId || item.id));
+                checkStockWarning(prod, item.variantId, item.qty, item.name);
             }
             renderCart();
         }
@@ -2385,6 +2487,10 @@
                 cart = cart.filter(i => String(i.cartKey || i.id) !== String(cartKey));
             } else {
                 item.qty = parsedQty;
+                if (!item.isFreeItem) {
+                    const prod = appData.products.find(p => p.id === (item.productId || item.id));
+                    checkStockWarning(prod, item.variantId, item.qty, item.name);
+                }
             }
             renderCart();
         }
@@ -2431,6 +2537,73 @@
             document.getElementById('cartTotal').innerText = total.toFixed(2);
         }
 
+        /* השלמה אוטומטית ללקוחות חוזרים (מבחינה בין שמות זהים לפי שיעור או טלפון) */
+        function getUniqueCustomerProfiles() {
+            const map = new Map();
+            (appData.receipts || []).forEach(r => {
+                if (!r.customer) return;
+                const name = r.customer.trim();
+                const isYeshiva = Boolean(r.isYeshiva);
+                const grade = r.yeshivaGrade || '';
+                const phone = r.phone || '';
+                const uniqueKey = `${name}|${isYeshiva ? 'Y:' + grade : 'P:' + phone}`;
+                map.set(uniqueKey, { name, isYeshiva, grade, phone });
+            });
+            return Array.from(map.values());
+        }
+
+        function handleCustomerAutocomplete() {
+            const input = document.getElementById('custName').value.trim().toLowerCase();
+            const dropdown = document.getElementById('customerAutocompleteList');
+            if (!input) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            const profiles = getUniqueCustomerProfiles().filter(p => p.name.toLowerCase().includes(input));
+            if (profiles.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            dropdown.innerHTML = profiles.slice(0, 8).map((p, idx) => {
+                const detailLabel = p.isYeshiva ? (p.grade || 'בן ישיבה') : (p.phone || 'רוכש חיצוני');
+                const encodedData = encodeURIComponent(JSON.stringify(p));
+                return `
+                    <div class="autocomplete-item" onmousedown="selectAutocompleteCustomer('${encodedData}')">
+                        <strong>${p.name}</strong>
+                        <span class="autocomplete-badge">${detailLabel}</span>
+                    </div>
+                `;
+            }).join('');
+            dropdown.style.display = 'block';
+        }
+
+        function selectAutocompleteCustomer(encodedProfile) {
+            try {
+                const p = JSON.parse(decodeURIComponent(encodedProfile));
+                document.getElementById('custName').value = p.name;
+                document.getElementById('isYeshivaCheck').checked = p.isYeshiva;
+                toggleYeshivaFields();
+
+                if (p.isYeshiva) {
+                    document.querySelectorAll('input[name="yeshivaGrade"]').forEach(cb => {
+                        cb.checked = (cb.value === p.grade);
+                    });
+                } else {
+                    document.getElementById('custPhone').value = p.phone || '';
+                }
+                hideCustomerAutocomplete();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function hideCustomerAutocomplete() {
+            const dropdown = document.getElementById('customerAutocompleteList');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
         /* תשלום ובני ישיבה */
         function startCheckout(type) {
             if (cart.length === 0) return showToast('העגלה ריקה, הוסף מוצרים לפני תשלום', 'warning');
@@ -2447,18 +2620,37 @@
 
         function openCustomerCheckoutModal(type) {
             currentPaymentType = type;
+            hideCustomerAutocomplete();
             document.getElementById('isYeshivaCheck').checked = true;
             document.querySelectorAll('input[name="yeshivaGrade"]').forEach(cb => cb.checked = false);
             toggleYeshivaFields();
 
-            const total = parseFloat(document.getElementById('cartTotal').innerText);
+            const total = parseFloat(document.getElementById('cartTotal').innerText) || 0;
+            const cashCalc = document.getElementById('cashChangeCalculator');
+            const mixedCalc = document.getElementById('mixedPaymentCalculator');
+
+            cashCalc.style.display = 'none';
+            mixedCalc.style.display = 'none';
+
             if (type === 'cash') {
-                document.getElementById('cashChangeCalculator').style.display = 'block';
+                document.getElementById('checkoutModalHeader').innerText = 'פרטי רוכש ותשלום במזומן';
+                cashCalc.style.display = 'block';
                 document.getElementById('calcTotalDue').innerText = total.toFixed(2);
                 document.getElementById('cashReceivedInput').value = '';
                 document.getElementById('cashChangeResult').innerText = '₪0.00';
+                document.getElementById('cashChangeResult').style.color = 'var(--accent-hover)';
+            } else if (type === 'mixed') {
+                document.getElementById('checkoutModalHeader').innerText = 'תשלום משולב (מזומן + אשראי)';
+                mixedCalc.style.display = 'block';
+                document.getElementById('mixedTotalDue').innerText = total.toFixed(2);
+                document.getElementById('mixedCashPortionInput').value = '';
+                document.getElementById('mixedCashTenderedInput').value = '';
+                document.getElementById('mixedCreditDueResult').innerText = `₪${total.toFixed(2)}`;
+                document.getElementById('mixedCashChangeResult').innerText = '₪0.00';
+            } else if (type === 'credit') {
+                document.getElementById('checkoutModalHeader').innerText = 'פרטי רוכש ותשלום באשראי';
             } else {
-                document.getElementById('cashChangeCalculator').style.display = 'none';
+                document.getElementById('checkoutModalHeader').innerText = 'פרטי רוכש ורישום חוב / הקפה';
             }
 
             document.getElementById('customerModal').style.display = 'flex';
@@ -2492,7 +2684,7 @@
         function calculateCashChange() {
             const due = parseFloat(document.getElementById('calcTotalDue').innerText) || 0;
             const received = parseFloat(document.getElementById('cashReceivedInput').value) || 0;
-            const change = received - due;
+            const change = Math.round((received - due) * 100) / 100;
             const resEl = document.getElementById('cashChangeResult');
             if (change >= 0) {
                 resEl.innerText = '₪' + change.toFixed(2);
@@ -2503,21 +2695,102 @@
             }
         }
 
+        function calculateMixedPayment() {
+            const total = parseFloat(document.getElementById('mixedTotalDue').innerText) || 0;
+            const cashPortion = parseFloat(document.getElementById('mixedCashPortionInput').value) || 0;
+            const cashTenderedRaw = document.getElementById('mixedCashTenderedInput').value.trim();
+            const cashTendered = cashTenderedRaw !== '' ? (parseFloat(cashTenderedRaw) || 0) : cashPortion;
+
+            const creditDue = Math.max(0, Math.round((total - cashPortion) * 100) / 100);
+            const change = Math.round((cashTendered - cashPortion) * 100) / 100;
+
+            document.getElementById('mixedCreditDueResult').innerText = `₪${creditDue.toFixed(2)}`;
+            const changeEl = document.getElementById('mixedCashChangeResult');
+            if (change >= 0) {
+                changeEl.innerText = `₪${change.toFixed(2)}`;
+                changeEl.style.color = 'var(--accent-hover)';
+            } else {
+                changeEl.innerText = `חסר ₪${Math.abs(change).toFixed(2)}`;
+                changeEl.style.color = 'var(--danger)';
+            }
+        }
+
         function proceedToPayment() {
             const name = document.getElementById('custName').value.trim();
             const isYeshiva = document.getElementById('isYeshivaCheck').checked;
             const phone = document.getElementById('custPhone').value.trim();
             const selectedGradeEl = document.querySelector('input[name="yeshivaGrade"]:checked');
             const yeshivaGrade = selectedGradeEl ? selectedGradeEl.value : '';
+            const total = Math.round((parseFloat(document.getElementById('cartTotal').innerText) || 0) * 100) / 100;
 
             if (!name) return showToast('נא להזין שם קונה', 'error');
             if (isYeshiva && !yeshivaGrade) return showToast('נא לסמן V ליד השיעור / הוועד המתאים', 'error');
             if (!isYeshiva && !phone) return showToast('נא להזין מספר טלפון עבור רוכש חיצוני', 'error');
 
+            /* אימות סכומים וחסימת השלמת עסקה במידה וחסר כסף */
+            if (currentPaymentType === 'cash') {
+                const rawReceived = document.getElementById('cashReceivedInput').value.trim();
+                const received = parseFloat(rawReceived);
+                if (rawReceived === '' || isNaN(received)) {
+                    document.getElementById('cashReceivedInput').focus();
+                    return showToast('חובה להזין את הסכום שהתקבל במזומן מהלקוח!', 'error');
+                }
+                if (received + 0.001 < total) {
+                    const missing = (total - received).toFixed(2);
+                    document.getElementById('cashReceivedInput').focus();
+                    return showToast(`שגיאה: הסכום שהתקבל נמוך מסך העסקה (חסרים ₪${missing}). לתשלום חלקי בחר "מזומן + אשראי".`, 'error', 4500);
+                }
+                pendingPaymentDetails = {
+                    cashApplied: total,
+                    creditApplied: 0,
+                    cashTendered: Math.round(received * 100) / 100,
+                    cashChange: Math.round((received - total) * 100) / 100
+                };
+            } else if (currentPaymentType === 'mixed') {
+                const cashPortion = parseFloat(document.getElementById('mixedCashPortionInput').value);
+                if (isNaN(cashPortion) || cashPortion <= 0) {
+                    document.getElementById('mixedCashPortionInput').focus();
+                    return showToast('נא להזין סכום מזומן חיובי לקיזוז מהעסקה', 'error');
+                }
+                if (cashPortion >= total) {
+                    document.getElementById('mixedCashPortionInput').focus();
+                    return showToast('סכום המזומן מכסה את כל העסקה - בחר בתשלום "מזומן" רגיל.', 'warning');
+                }
+                const rawTendered = document.getElementById('mixedCashTenderedInput').value.trim();
+                const cashTendered = rawTendered !== '' ? parseFloat(rawTendered) : cashPortion;
+                if (isNaN(cashTendered) || cashTendered + 0.001 < cashPortion) {
+                    document.getElementById('mixedCashTenderedInput').focus();
+                    return showToast('המזומן שהתקבל בפועל נמוך מסכום המזומן לקיזוז!', 'error');
+                }
+                const creditDue = Math.round((total - cashPortion) * 100) / 100;
+                pendingPaymentDetails = {
+                    cashApplied: Math.round(cashPortion * 100) / 100,
+                    creditApplied: creditDue,
+                    cashTendered: Math.round(cashTendered * 100) / 100,
+                    cashChange: Math.round((cashTendered - cashPortion) * 100) / 100
+                };
+            } else if (currentPaymentType === 'credit') {
+                pendingPaymentDetails = {
+                    cashApplied: 0,
+                    creditApplied: total,
+                    cashTendered: 0,
+                    cashChange: 0
+                };
+            } else {
+                pendingPaymentDetails = {
+                    cashApplied: 0,
+                    creditApplied: 0,
+                    cashTendered: 0,
+                    cashChange: 0
+                };
+            }
+
             closeModal('customerModal');
 
-            if (currentPaymentType === 'credit') {
-                document.getElementById('creditIframe').src = 'https://www.matara.pro/nedarimplus/online/?mosad=1000858';
+            if (currentPaymentType === 'credit' || currentPaymentType === 'mixed') {
+                const creditAmount = pendingPaymentDetails.creditApplied;
+                document.getElementById('creditModalAmountDisplay').innerText = creditAmount.toFixed(2);
+                document.getElementById('creditIframe').src = `https://www.matara.pro/nedarimplus/online/?mosad=1000858&Amount=${creditAmount.toFixed(2)}`;
                 document.getElementById('creditIframeModal').style.display = 'flex';
             } else {
                 finalizeTransaction();
@@ -2562,9 +2835,13 @@
             const dateOnlyStr = now.toLocaleDateString('he-IL');
             const timeOnlyStr = now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const total = parseFloat(document.getElementById('cartTotal').innerText);
+            
             let payLabel = 'מזומן';
             if (currentPaymentType === 'credit') payLabel = 'אשראי';
             if (currentPaymentType === 'debt') payLabel = 'חוב / הקפה';
+            if (currentPaymentType === 'mixed') {
+                payLabel = `משולב (מזומן ₪${pendingPaymentDetails.cashApplied.toFixed(2)} + אשראי ₪${pendingPaymentDetails.creditApplied.toFixed(2)})`;
+            }
 
             const receipt = {
                 id: Date.now(),
@@ -2580,6 +2857,11 @@
                 items: finalizedItems,
                 total: total,
                 type: payLabel,
+                paymentMode: currentPaymentType,
+                cashApplied: pendingPaymentDetails.cashApplied,
+                creditApplied: pendingPaymentDetails.creditApplied,
+                cashTendered: pendingPaymentDetails.cashTendered,
+                cashChange: pendingPaymentDetails.cashChange,
                 isDebtPaid: currentPaymentType !== 'debt',
                 active: true
             };
@@ -2601,11 +2883,11 @@
             showReceiptModal(receipt);
         }
 
-        /* תצוגת קבלה (שעה ותאריך בשורות נפרדות) והעתקה כטקסט ללא צורך באישור */
+        /* תצוגת קבלה (כולל אופן תשלום, מזומן שהתקבל ועודף) והעתקה כטקסט */
         function showReceiptModal(receipt) {
             currentViewedReceipt = receipt;
             const s = appData.settings || {};
-            document.getElementById('receiptHeaderTitle').innerText = s.receiptHeader || 'קבלת תשלום';
+            document.getElementById('receiptHeaderTitle').innerText = s.receiptHeader || 'ת"ת ישיבת בית מדרש גבוה';
             document.getElementById('receiptSubTitle').innerText = s.receiptSub || '';
             document.getElementById('receiptFooterTitle').innerText = s.receiptFooter || '';
 
@@ -2644,6 +2926,17 @@
             document.getElementById('rPayType').innerText = receipt.type;
             document.getElementById('rTotal').innerText = receipt.total.toFixed(2);
 
+            const cashBox = document.getElementById('rCashDetailsBox');
+            const hasCashInfo = (receipt.cashTendered !== undefined && receipt.cashTendered > 0) ||
+                                (receipt.type && receipt.type.includes('מזומן'));
+            if (hasCashInfo && receipt.cashTendered > 0) {
+                cashBox.style.display = 'block';
+                document.getElementById('rCashTendered').innerText = Number(receipt.cashTendered).toFixed(2);
+                document.getElementById('rCashChange').innerText = Number(receipt.cashChange || 0).toFixed(2);
+            } else {
+                cashBox.style.display = 'none';
+            }
+
             const tbody = document.getElementById('rItems');
             tbody.innerHTML = receipt.items.map(i => {
                 const lTotal = i.lineTotal !== undefined ? i.lineTotal : (i.price * i.qty);
@@ -2674,7 +2967,7 @@
             }
 
             let lines = [];
-            lines.push(`*${s.receiptHeader || 'קבלת תשלום'}*`);
+            lines.push(`*${s.receiptHeader || 'ת"ת ישיבת בית מדרש גבוה'}*`);
             if (s.receiptSub) lines.push(s.receiptSub);
             lines.push('------------------------');
             lines.push(`תאריך עברי: ${hebDate}`);
@@ -2686,7 +2979,7 @@
             } else {
                 lines.push(`טלפון: ${r.phone}`);
             }
-            lines.push(`אמצעי תשלום: ${r.type}`);
+            lines.push(`אופן תשלום: ${r.type}`);
             lines.push('------------------------');
             r.items.forEach(i => {
                 const lTotal = i.lineTotal !== undefined ? i.lineTotal : (i.price * i.qty);
@@ -2694,7 +2987,11 @@
             });
             lines.push('------------------------');
             lines.push(`*סה"כ לתשלום: ₪${r.total.toFixed(2)}*`);
-if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
+            if (r.cashTendered !== undefined && r.cashTendered > 0) {
+                lines.push(`התקבל במזומן: ₪${Number(r.cashTendered).toFixed(2)}`);
+                lines.push(`עודף שניתן: ₪${Number(r.cashChange || 0).toFixed(2)}`);
+            }
+            if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
 
             const textToCopy = lines.join('\n');
             navigator.clipboard.writeText(textToCopy).then(() => {
@@ -2704,7 +3001,7 @@ if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
             });
         }
 
-        /* החזרת פריט בודד (מזהה גם מידה ספציפית ומחזיר אליה את המלאי) */
+        /* היסטוריית קבלות והחזרת פריט בודד (מזהה גם מידה ספציפית ומחזיר אליה את המלאי) */
         function openPartialReturnModal() {
             document.getElementById('returnSearchInput').value = '';
             renderReturnReceipts();
@@ -2717,8 +3014,12 @@ if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
             const activeReceipts = (appData.receipts || []).filter(r => r.active && r.items.length > 0).reverse();
             
             const filtered = q 
-                ? activeReceipts.filter(r => r.customer.toLowerCase().includes(q) || String(r.id).includes(q))
-                : activeReceipts.slice(0, 20);
+                ? activeReceipts.filter(r => 
+                    r.customer.toLowerCase().includes(q) || 
+                    String(r.id).includes(q) ||
+                    (r.yeshivaGrade && r.yeshivaGrade.toLowerCase().includes(q))
+                  )
+                : activeReceipts.slice(0, 25);
 
             if (filtered.length === 0) {
                 container.innerHTML = '<p>לא נמצאו קבלות מתאימות.</p>';
@@ -2726,8 +3027,12 @@ if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
             }
 
             container.innerHTML = filtered.map(r => `
-                <div style="border: 1px solid #cbd5e1; padding: 12px; border-radius: 10px; margin-bottom: 10px;">
-                    <div style="font-weight: bold; margin-bottom: 6px;">קבלה #${r.id} | ${r.customer} | ${r.date}</div>
+                <div style="border: 1px solid #cbd5e1; padding: 12px; border-radius: 10px; margin-bottom: 10px; background: #fff;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                        <div style="font-weight: bold;">קבלה #${r.id} | ${r.customer} ${r.yeshivaGrade ? '(' + r.yeshivaGrade + ')' : ''} | ${r.date}</div>
+                        <button type="button" class="btn btn-info btn-tiny" onclick='showReceiptModal(${JSON.stringify(r)})'>הצג / הדפס קבלה</button>
+                    </div>
+                    <div style="font-size: 0.88em; color: var(--text-muted); margin-bottom: 6px;">תשלום: ${r.type} | סה"כ: ₪${r.total.toFixed(2)}</div>
                     ${r.items.map((item, idx) => `
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px dashed #e2e8f0;">
                             <span>${item.name} (כמות: ${item.qty} | ₪${item.price})</span>
@@ -2819,7 +3124,7 @@ if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
             renderSuppliersTab();
         }
 
-        /* סיכום קופה יומי */
+        /* סיכום קופה יומי (מפצל עסקאות משולבות למזומן ולאשראי) */
         function setTodaySummary() {
             document.getElementById('dailySummaryDate').value = new Date().toISOString().split('T')[0];
             renderDailySummary();
@@ -2831,9 +3136,16 @@ if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
             
             let cashSum = 0, creditSum = 0, debtSum = 0;
             dayReceipts.forEach(r => {
-                if (r.type.includes('מזומן')) cashSum += r.total;
-                else if (r.type === 'אשראי') creditSum += r.total;
-                else debtSum += r.total;
+                if (r.paymentMode === 'mixed' || (r.cashApplied > 0 && r.creditApplied > 0)) {
+                    cashSum += Number(r.cashApplied) || 0;
+                    creditSum += Number(r.creditApplied) || 0;
+                } else if (r.type.includes('מזומן')) {
+                    cashSum += r.total;
+                } else if (r.type === 'אשראי') {
+                    creditSum += r.total;
+                } else {
+                    debtSum += r.total;
+                }
             });
 
             document.getElementById('dailySummaryBox').innerHTML = `
@@ -3008,7 +3320,6 @@ if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
                 <button type="button" class="btn btn-danger btn-small" onclick="this.parentElement.remove()">הסר</button>
             `;
 
-            /* אירועי גרירה לסידור המידות */
             row.addEventListener('dragstart', (e) => {
                 if (e.target.tagName === 'INPUT') {
                     e.preventDefault();
@@ -3669,7 +3980,7 @@ if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
             if (lowList.length === 0) return showToast('אין פריטים חסרים להעתקה', 'warning');
 
             const lines = [
-                `*הזמנת רכש - ${appData.settings.storeName || 'ת"ת בית מדרש גבוה'}*`,
+                `*הזמנת רכש - ${appData.settings.storeName || 'ת"ת ישיבת בית מדרש גבוה'}*`,
                 `ספק: ${sup === 'ALL' ? 'כל הספקים' : sup}`,
                 `תאריך: ${new Date().toLocaleDateString('he-IL')}`,
                 '------------------------'
@@ -3678,7 +3989,7 @@ if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
                 lines.push(`• ${i.name} (יתרה במלאי: ${i.stock} יח')`);
             });
 
-navigator.clipboard.writeText(lines.join('\n')).then(() => {
+            navigator.clipboard.writeText(lines.join('\n')).then(() => {
                 showToast('רשימת ההזמנה הועתקה כטקסט!', 'success');
             }).catch(() => {
                 showToast('לא ניתן להעתיק אוטומטית בדפדפן זה', 'error');
@@ -3695,7 +4006,7 @@ navigator.clipboard.writeText(lines.join('\n')).then(() => {
         }
 
         /* ייצוא לאקסל (ממוין לפי א'-ב' עם שמירה על סדר המידות בכל מוצר) */
-function downloadCSV(filename, rows) {
+        function downloadCSV(filename, rows) {
             const csvContent = "\uFEFF" + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
