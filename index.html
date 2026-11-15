@@ -1686,6 +1686,20 @@
             return val !== null && val !== undefined && val !== '' && !isNaN(parseInt(val));
         }
 
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function showReceiptById(receiptId) {
+            const r = (appData.receipts || []).find(rec => rec.id === receiptId);
+            if (r) showReceiptModal(r);
+        }
+
         function getSortedProducts() {
             const list = [...(appData.products || [])];
             return list.sort((a, b) => {
@@ -2374,7 +2388,7 @@
             const rawCats = (appData.categories || ['כללי']).filter(c => c !== 'כללי');
             const sortedCats = ['הכל', 'כללי', ...sortHebrewAlpha(rawCats, c => c)];
             bar.innerHTML = sortedCats.map(c => `
-                <button type="button" class="category-btn ${c === activeCategory ? 'active' : ''}" onclick="setCategory('${c}')">${c}</button>
+                <button type="button" class="category-btn ${c === activeCategory ? 'active' : ''}" data-cat="${escapeHtml(c)}" onclick="setCategory(this.dataset.cat)">${escapeHtml(c)}</button>
             `).join('');
         }
 
@@ -3350,7 +3364,7 @@
                 <div style="border: 1px solid #cbd5e1; padding: 12px; border-radius: 10px; margin-bottom: 10px; background: #fff;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
                         <div style="font-weight: bold;">קבלה #${r.id} | ${r.customer} ${r.yeshivaGrade ? '(' + r.yeshivaGrade + ')' : ''} | ${r.date}</div>
-                        <button type="button" class="btn btn-info btn-tiny" onclick='showReceiptModal(${JSON.stringify(r)})'>הצג / הדפס קבלה</button>
+                        <button type="button" class="btn btn-info btn-tiny" onclick="showReceiptById(${r.id})">הצג / הדפס קבלה</button>
                     </div>
                     <div style="font-size: 0.88em; color: var(--text-muted); margin-bottom: 6px;">תשלום: ${r.type} | סה"כ: ₪${r.total.toFixed(2)}</div>
                     ${r.items.map((item, idx) => `
@@ -3381,11 +3395,24 @@
                 }
             }
 
-            item.qty -= 1;
-            if (item.lineTotal !== undefined) {
-                item.lineTotal = Math.max(0, item.lineTotal - item.price);
+            const currentLineTotal = item.lineTotal !== undefined ? Number(item.lineTotal) : (item.price * item.qty);
+            let refundAmount = item.price;
+
+            if (item.qty === 1) {
+                refundAmount = currentLineTotal;
+            } else if (item.promoQty > 1 && item.promoPrice > 0) {
+                const newQty = item.qty - 1;
+                const bundles = Math.floor(newQty / item.promoQty);
+                const rem = newQty % item.promoQty;
+                const newLineTotal = Math.round(((bundles * item.promoPrice) + (rem * item.price)) * 100) / 100;
+                refundAmount = Math.max(0, Math.round((currentLineTotal - newLineTotal) * 100) / 100);
+            } else {
+                refundAmount = Math.min(item.price, currentLineTotal);
             }
-            r.total = Math.max(0, r.total - item.price);
+
+            item.qty -= 1;
+            item.lineTotal = Math.max(0, Math.round((currentLineTotal - refundAmount) * 100) / 100);
+            r.total = Math.max(0, Math.round((r.total - refundAmount) * 100) / 100);
             if (item.qty <= 0) {
                 r.items.splice(itemIdx, 1);
             }
@@ -3399,7 +3426,7 @@
             }
             renderProducts();
             renderReturnReceipts();
-            showToast(`יחידה של "${item.name}" (₪${item.price}) זוכתה והוחזרה למלאי!`, 'success');
+            showToast(`יחידה של "${item.name}" (₪${refundAmount.toFixed(2)}) זוכתה והוחזרה למלאי!`, 'success');
         }
 
         /* אזור מנהל */
@@ -3517,7 +3544,7 @@
                         <span>#${r.id} | ${r.date} | ${r.customer} | ₪${r.total.toFixed(2)} (${r.type}) ${r.active ? '' : '<strong style="color:red;">(מבוטלת)</strong>'}</span>
                     </label>
                     <div>
-                        <button type="button" class="btn btn-small" onclick='showReceiptModal(${JSON.stringify(r)})'>הצג</button>
+                        <button type="button" class="btn btn-small" onclick="showReceiptById(${r.id})">הצג</button>
                     </div>
                 </div>
             `).join('');
@@ -3576,10 +3603,10 @@
                             if (p) {
                                 if (i.variantId && hasProductVariants(p)) {
                                     const v = p.variants.find(vr => String(vr.id) === String(i.variantId));
-                                    if (v) v.stock = (parseInt(v.stock) || 0) + i.qty;
+                                    if (v && hasStockValue(v.stock)) v.stock = (parseInt(v.stock) || 0) + i.qty;
                                     p.stock = getProductTotalStock(p);
-                                } else {
-                                    p.stock += i.qty;
+                                } else if (hasStockValue(p.stock)) {
+                                    p.stock = (parseInt(p.stock) || 0) + i.qty;
                                 }
                             }
                         }
@@ -4323,9 +4350,11 @@
             getSortedProducts().forEach(p => {
                 if (hasProductVariants(p)) {
                     p.variants.forEach(v => {
-                        stockCountBuffer[`${p.id}_${v.id}`] = parseInt(v.stock) || 0;
+                        if (hasStockValue(v.stock)) {
+                            stockCountBuffer[`${p.id}_${v.id}`] = parseInt(v.stock) || 0;
+                        }
                     });
-                } else {
+                } else if (hasStockValue(p.stock)) {
                     stockCountBuffer[String(p.id)] = parseInt(p.stock) || 0;
                 }
             });
@@ -4406,14 +4435,25 @@
                         if (filterTxt && !label.toLowerCase().includes(filterTxt)) return;
 
                         const key = `${p.id}_${v.id}`;
+                        const rowBg = (highlightKey === key) ? '#fef3c7' : '#fff';
+
+                        if (!hasStockValue(v.stock)) {
+                            html += `<tr style="border-bottom:1px solid #e2e8f0; background:${rowBg}; opacity:0.7;">
+                                <td style="padding:10px; font-weight:bold;">${escapeHtml(p.name)} - <span style="color:#6b21a8;">${escapeHtml(v.name)}</span></td>
+                                <td style="padding:10px; color:#64748b;">ללא מעקב מלאי</td>
+                                <td style="padding:10px; color:#64748b;">-</td>
+                                <td style="padding:10px; color:#64748b;">-</td>
+                            </tr>`;
+                            return;
+                        }
+
                         const currentStock = parseInt(v.stock) || 0;
                         const counted = stockCountBuffer[key] !== undefined ? stockCountBuffer[key] : currentStock;
                         const diff = counted - currentStock;
                         const diffColor = diff === 0 ? '#64748b' : (diff > 0 ? '#10b981' : '#ef4444');
-                        const rowBg = (highlightKey === key) ? '#fef3c7' : '#fff';
 
                         html += `<tr style="border-bottom:1px solid #e2e8f0; background:${rowBg};">
-                            <td style="padding:10px; font-weight:bold;">${p.name} - <span style="color:#6b21a8;">${v.name}</span></td>
+                            <td style="padding:10px; font-weight:bold;">${escapeHtml(p.name)} - <span style="color:#6b21a8;">${escapeHtml(v.name)}</span></td>
                             <td style="padding:10px;">${currentStock}</td>
                             <td style="padding:10px;">
                                 <input type="number" id="sc_input_${key}" value="${counted}" style="width:85px; padding:6px; text-align:center; font-weight:bold; border-radius:6px; border:1px solid #cbd5e1;" onchange="updateStockCountValue('${key}', this.value)">
@@ -4425,14 +4465,25 @@
                     if (filterTxt && !p.name.toLowerCase().includes(filterTxt)) return;
 
                     const key = String(p.id);
+                    const rowBg = (highlightKey === key) ? '#fef3c7' : '#fff';
+
+                    if (!hasStockValue(p.stock)) {
+                        html += `<tr style="border-bottom:1px solid #e2e8f0; background:${rowBg}; opacity:0.7;">
+                            <td style="padding:10px; font-weight:bold;">${escapeHtml(p.name)}</td>
+                            <td style="padding:10px; color:#64748b;">ללא מעקב מלאי</td>
+                            <td style="padding:10px; color:#64748b;">-</td>
+                            <td style="padding:10px; color:#64748b;">-</td>
+                        </tr>`;
+                        return;
+                    }
+
                     const currentStock = parseInt(p.stock) || 0;
                     const counted = stockCountBuffer[key] !== undefined ? stockCountBuffer[key] : currentStock;
                     const diff = counted - currentStock;
                     const diffColor = diff === 0 ? '#64748b' : (diff > 0 ? '#10b981' : '#ef4444');
-                    const rowBg = (highlightKey === key) ? '#fef3c7' : '#fff';
 
                     html += `<tr style="border-bottom:1px solid #e2e8f0; background:${rowBg};">
-                        <td style="padding:10px; font-weight:bold;">${p.name}</td>
+                        <td style="padding:10px; font-weight:bold;">${escapeHtml(p.name)}</td>
                         <td style="padding:10px;">${currentStock}</td>
                         <td style="padding:10px;">
                             <input type="number" id="sc_input_${key}" value="${counted}" style="width:85px; padding:6px; text-align:center; font-weight:bold; border-radius:6px; border:1px solid #cbd5e1;" onchange="updateStockCountValue('${key}', this.value)">
@@ -4451,14 +4502,14 @@
                 if (hasProductVariants(p)) {
                     p.variants.forEach(v => {
                         const key = `${p.id}_${v.id}`;
-                        if (stockCountBuffer[key] !== undefined) {
+                        if (stockCountBuffer[key] !== undefined && hasStockValue(v.stock)) {
                             v.stock = stockCountBuffer[key];
                         }
                     });
                     p.stock = getProductTotalStock(p);
                 } else {
                     const key = String(p.id);
-                    if (stockCountBuffer[key] !== undefined) {
+                    if (stockCountBuffer[key] !== undefined && hasStockValue(p.stock)) {
                         p.stock = stockCountBuffer[key];
                     }
                 }
@@ -4586,9 +4637,10 @@
             const content = document.getElementById('purchaseOrderPreview').innerHTML;
             const win = window.open('', '_blank', 'width=500,height=600');
             win.document.write('<html dir="rtl"><body style="font-family:Arial; padding:20px;">');
-            win.document.write('<h2>הזמנת רכש - ' + appData.settings.storeName + '</h2>' + content);
-            win.document.write('<script>window.onload=function(){window.print();};<' + '/script></body></html>');
+            win.document.write('<h2>הזמנת רכש - ' + escapeHtml(appData.settings.storeName) + '</h2>' + content);
+            win.document.write('</body></html>');
             win.document.close();
+            win.onload = function() { win.print(); };
         }
 
         /* ייצוא לאקסל (ממוין לפי א'-ב') */
