@@ -944,7 +944,7 @@
             <button type="button" class="btn btn-info" onclick="syncCloudData(true)">רענן נתונים</button>
             <button type="button" id="openAdminBtn" class="btn btn-secondary" onclick="handleAdminButtonClick()">אזור מנהל</button>
             <button type="button" id="adminLogoutBtn" class="btn btn-danger" style="display:none;" onclick="logoutAdminSession()">התנתק ממנהל</button>
-            <button type="button" id="lockSiteBtn" class="btn btn-secondary" style="display:none; background:#0f172a; border:1px solid #475569;" onclick="lockSiteScreenNow()">נעל מסך</button>
+            <button type="button" id="lockSiteBtn" class="btn btn-secondary" style="background:#0f172a; border:1px solid #475569;" onclick="lockSiteScreenNow()" title="נעל מסך מיידית (Alt+L)">נעל מסך</button>
         </div>
     </header>
 
@@ -1650,14 +1650,12 @@
             if (isAdminLoggedIn) {
                 badge.style.display = 'inline-flex';
                 logoutBtn.style.display = 'inline-block';
-                lockSiteBtn.style.display = 'inline-block';
                 openAdminBtn.innerText = 'אזור מנהל (פתוח)';
                 openAdminBtn.classList.remove('btn-secondary');
                 openAdminBtn.classList.add('btn-success');
             } else {
                 badge.style.display = 'none';
                 logoutBtn.style.display = 'none';
-                lockSiteBtn.style.display = 'none';
                 openAdminBtn.innerText = 'אזור מנהל';
                 openAdminBtn.classList.remove('btn-success');
                 openAdminBtn.classList.add('btn-secondary');
@@ -1683,7 +1681,8 @@
 
         function lockSiteScreenNow() {
             isAdminLoggedIn = false;
-            closeModal('adminModal');
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+            closeAdminLock();
             updateAdminSessionUI();
             document.getElementById('sitePassInput').value = '';
             document.getElementById('siteLockError').style.display = 'none';
@@ -4412,6 +4411,16 @@
             document.getElementById(id).style.display = 'none';
         }
 
+        /* קיצור מקלדת Alt+L לנעילה מיידית ללא רענון הדף */
+        document.addEventListener('keydown', function(e) {
+            if (e.altKey && (e.key === 'l' || e.key === 'L' || e.key === 'ך')) {
+                e.preventDefault();
+                if (document.getElementById('siteLockScreen').style.display === 'none') {
+                    lockSiteScreenNow();
+                }
+            }
+        });
+
         /* הפעלת טיימר נעילה אוטומטית בעת טעינת העמוד אם נותרו שניות נעילה */
         if (Date.now() < siteLockoutUntil) {
             startLockoutCountdown('site');
@@ -4421,7 +4430,3 @@
     </script>
 </body>
 </html>
-
-<!-- Injection By NetFree -->
-<script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
-<script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async ></script>
