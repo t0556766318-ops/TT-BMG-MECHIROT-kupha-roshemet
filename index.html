@@ -2694,11 +2694,9 @@
             });
             lines.push('------------------------');
             lines.push(`*סה"כ לתשלום: ₪${r.total.toFixed(2)}*`);
-            if (s.receiptFooter) lines.push(`
-${s.receiptFooter}`);
+if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
 
-            const textToCopy = lines.join('
-');
+            const textToCopy = lines.join('\n');
             navigator.clipboard.writeText(textToCopy).then(() => {
                 showToast('הקבלה הועתקה כטקסט ללוח!', 'success');
             }).catch(() => {
@@ -3680,8 +3678,7 @@ ${s.receiptFooter}`);
                 lines.push(`• ${i.name} (יתרה במלאי: ${i.stock} יח')`);
             });
 
-            navigator.clipboard.writeText(lines.join('
-')).then(() => {
+navigator.clipboard.writeText(lines.join('\n')).then(() => {
                 showToast('רשימת ההזמנה הועתקה כטקסט!', 'success');
             }).catch(() => {
                 showToast('לא ניתן להעתיק אוטומטית בדפדפן זה', 'error');
@@ -3698,9 +3695,8 @@ ${s.receiptFooter}`);
         }
 
         /* ייצוא לאקסל (ממוין לפי א'-ב' עם שמירה על סדר המידות בכל מוצר) */
-        function downloadCSV(filename, rows) {
-            const csvContent = "﻿" + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("
-");
+function downloadCSV(filename, rows) {
+            const csvContent = "\uFEFF" + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
