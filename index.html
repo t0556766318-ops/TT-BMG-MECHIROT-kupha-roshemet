@@ -640,6 +640,29 @@
             color: white;
         }
 
+        /* כפתורי החלפת סדר תשלום משולב */
+        .mixed-order-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .mixed-order-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #8b5cf6;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #5b21b6;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 0.94em;
+        }
+        .mixed-order-btn.active {
+            background: #8b5cf6;
+            color: #ffffff;
+        }
+
         /* חלונות מודאליים */
         .modal {
             display: none;
@@ -926,7 +949,7 @@
     </header>
 
     <div class="main-container">
-        <!-- קטלוג (נקי מהתראות מלאי נמוך עבור משתמשים רגילים) -->
+        <!-- קטלוג -->
         <div class="catalog-section">
             <div class="unified-search-bar">
                 <label for="unifiedSearchInput" style="font-weight: bold; white-space: nowrap;">חיפוש / ברקוד:</label>
@@ -1034,7 +1057,7 @@
         </div>
     </div>
 
-    <!-- מודאל פרטי קונה, מחשבון עודף ותשלום משולב -->
+    <!-- מודאל פרטי קונה, מחשבון עודף ותשלום משולב גמיש -->
     <div class="modal" id="customerModal">
         <div class="modal-content">
             <h3 id="checkoutModalHeader">פרטי רוכש ותשלום</h3>
@@ -1084,31 +1107,81 @@
                 </div>
             </div>
 
-            <!-- מחשבון תשלום משולב: מזומן + אשראי -->
+            <!-- מחשבון תשלום משולב גמיש: מזומן קודם או אשראי קודם -->
             <div id="mixedPaymentCalculator" style="display:none; background: #f5f3ff; padding: 14px; border-radius: 12px; border: 1.5px solid #c4b5fd; margin-bottom: 16px;">
                 <div style="font-weight: 800; font-size: 1.05em; color: #5b21b6; margin-bottom: 10px;">
                     תשלום משולב: מזומן + אשראי (סה"כ עסקה: ₪<span id="mixedTotalDue">0.00</span>)
                 </div>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-                    <div style="flex: 1; min-width: 140px;">
-                        <label style="font-size: 0.88em; font-weight: 700; display: block; margin-bottom: 4px;">סכום לקיזוז במזומן (₪):</label>
-                        <input type="number" id="mixedCashPortionInput" step="0.1" style="font-size: 1.15em; font-weight: bold; padding: 10px; border-radius: 8px; border: 2px solid #8b5cf6; width: 100%;" placeholder="0.00" oninput="calculateMixedPayment()">
-                    </div>
-                    <div style="flex: 1; min-width: 140px;">
-                        <label style="font-size: 0.88em; font-weight: 700; display: block; margin-bottom: 4px;">מזומן שהתקבל בפועל (לעודף):</label>
-                        <input type="number" id="mixedCashTenderedInput" step="0.1" style="font-size: 1.15em; font-weight: bold; padding: 10px; border-radius: 8px; border: 1.5px solid #cbd5e1; width: 100%;" placeholder="אופציונלי (לעודף)" oninput="calculateMixedPayment()">
+
+                <div class="mixed-order-toggle">
+                    <button type="button" id="btnMixedCashFirst" class="mixed-order-btn active" onclick="setMixedOrder('cash_first')">1. קודם מזומן ← אח"כ אשראי</button>
+                    <button type="button" id="btnMixedCreditFirst" class="mixed-order-btn" onclick="setMixedOrder('credit_first')">1. קודם אשראי ← אח"כ מזומן</button>
+                </div>
+
+                <!-- מצב 1: קודם מזומן -->
+                <div id="mixedCashFirstFields">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.88em; font-weight: 700; display: block; margin-bottom: 4px;">סכום לקיזוז במזומן (₪):</label>
+                            <input type="number" id="mixedCashPortionInput" step="0.1" style="font-size: 1.15em; font-weight: bold; padding: 10px; border-radius: 8px; border: 2px solid #8b5cf6; width: 100%;" placeholder="0.00" oninput="calculateMixedPayment()">
+                        </div>
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.88em; font-weight: 700; display: block; margin-bottom: 4px;">מזומן שהתקבל בפועל (לעודף):</label>
+                            <input type="number" id="mixedCashTenderedInput" step="0.1" style="font-size: 1.15em; font-weight: bold; padding: 10px; border-radius: 8px; border: 1.5px solid #cbd5e1; width: 100%;" placeholder="אופציונלי (לעודף)" oninput="calculateMixedPayment()">
+                        </div>
                     </div>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 14px; border-radius: 10px; border: 1px solid #ddd6fe; font-weight: 800;">
-                    <span style="color: #1e40af; font-size: 1.1em;">יתרה לתשלום באשראי: <span id="mixedCreditDueResult">₪0.00</span></span>
-                    <span style="color: var(--accent-hover);">עודף ממזומן: <span id="mixedCashChangeResult">₪0.00</span></span>
+
+                <!-- מצב 2: קודם אשראי -->
+                <div id="mixedCreditFirstFields" style="display: none;">
+                    <div style="margin-bottom: 10px;">
+                        <label style="font-size: 0.88em; font-weight: 700; display: block; margin-bottom: 4px;">סכום לגבייה ראשונית באשראי (₪):</label>
+                        <input type="number" id="mixedCreditPortionInput" step="0.1" style="font-size: 1.15em; font-weight: bold; padding: 10px; border-radius: 8px; border: 2px solid #3b82f6; width: 100%;" placeholder="0.00" oninput="calculateMixedPayment()">
+                        <div style="font-size: 0.84em; color: #475569; margin-top: 4px;">לאחר אישור הסליקה באשראי, ייפתח חלון קבלת יתרת המזומן וחישוב העודף.</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 14px; border-radius: 10px; border: 1px solid #ddd6fe; font-weight: 800; flex-wrap: wrap; gap: 6px;">
+                    <span style="color: #1e40af; font-size: 1.05em;">חלק אשראי: <span id="mixedCreditDueResult">₪0.00</span></span>
+                    <span style="color: #5b21b6; font-size: 1.05em;">חלק מזומן: <span id="mixedCashDueResult">₪0.00</span></span>
+                    <span style="color: var(--accent-hover);">עודף: <span id="mixedCashChangeResult">₪0.00</span></span>
                 </div>
             </div>
 
             <div style="display: flex; gap: 10px;">
-                <button type="button" class="btn btn-success btn-large-action" style="flex:1" onclick="proceedToPayment()">אישור וסיום עסקה</button>
+                <button type="button" id="proceedCheckoutBtn" class="btn btn-success btn-large-action" style="flex:1" onclick="proceedToPayment()">אישור וסיום עסקה</button>
                 <button type="button" class="btn btn-danger btn-large-action" style="flex:1" onclick="closeModal('customerModal')">ביטול</button>
             </div>
+        </div>
+    </div>
+
+    <!-- מודאל השלמת מזומן לאחר תשלום אשראי (במצב: קודם אשראי ואז מזומן) -->
+    <div class="modal" id="postCreditCashModal">
+        <div class="modal-content" style="width: 480px;">
+            <h3>השלמת יתרת תשלום במזומן</h3>
+            <div style="background: #dbeafe; color: #1e3a8a; padding: 10px 14px; border-radius: 10px; font-weight: 700; margin-bottom: 12px;">
+                ✓ תשלום האשראי על סך ₪<span id="postCreditPaidDisplay">0.00</span> אושר בהצלחה.
+            </div>
+            <div style="background: #ecfdf5; padding: 14px; border-radius: 12px; border: 1.5px solid #a7f3d0; margin-bottom: 16px;">
+                <div style="font-weight: 800; font-size: 1.1em; margin-bottom: 8px; color: #065f46;">
+                    יתרה לתשלום במזומן: ₪<span id="postCreditCashDueDisplay">0.00</span>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <input type="number" id="postCreditCashInput" step="0.1" style="font-size: 1.25em; font-weight: bold; padding: 12px; border-radius: 10px; border: 2px solid #10b981; flex: 1;" placeholder="סכום שהתקבל במזומן" oninput="calculatePostCreditCashChange()">
+                    <div style="white-space: nowrap; font-weight: 800; font-size: 1.2em; background: white; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1;">
+                        עודף: <span id="postCreditChangeResult" style="color: var(--accent-hover);">₪0.00</span>
+                    </div>
+                </div>
+                <div class="quick-cash-grid">
+                    <button type="button" class="quick-cash-btn" onclick="setExactPostCreditCash()">סכום מדויק</button>
+                    <button type="button" class="quick-cash-btn" onclick="addPostCreditCash(10)">+ ₪10</button>
+                    <button type="button" class="quick-cash-btn" onclick="addPostCreditCash(20)">+ ₪20</button>
+                    <button type="button" class="quick-cash-btn" onclick="addPostCreditCash(50)">+ ₪50</button>
+                    <button type="button" class="quick-cash-btn" onclick="addPostCreditCash(100)">+ ₪100</button>
+                    <button type="button" class="quick-cash-btn" onclick="addPostCreditCash(200)">+ ₪200</button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-success btn-large-action" style="width: 100%;" onclick="completePostCreditCashTransaction()">אישור קבלת מזומן והפקת קבלה</button>
         </div>
     </div>
 
@@ -1123,7 +1196,7 @@
             </div>
             <iframe id="creditIframe" src="" style="width: 100%; flex: 1; border: 1px solid #cbd5e1; border-radius: 10px; margin: 6px 0 12px 0;"></iframe>
             <div style="display: flex; justify-content: space-between; gap: 12px;">
-                <button type="button" class="btn btn-success btn-large-action" style="flex:1" onclick="completeCreditTransaction()">אישור סיום תשלום</button>
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1" onclick="completeCreditTransaction()">אישור סיום תשלום באשראי</button>
                 <button type="button" class="btn btn-danger btn-large-action" style="flex:1" onclick="closeModal('creditIframeModal')">ביטול עסקה</button>
             </div>
         </div>
@@ -1142,7 +1215,7 @@
 
             <div class="tab-buttons">
                 <button type="button" class="tab-btn active" onclick="switchTab('reports', this)">דוחות וסיכום יומי</button>
-                <button type="button" class="tab-btn" onclick="switchTab('customers', this)">כרטיס לקוח וחובות</button>
+                <button type="button" class="tab-btn" onclick="switchTab('customers', this)">כרטיס לקוח, חובות וניקוי שמות</button>
                 <button type="button" class="tab-btn" onclick="switchTab('products', this)">מוצרים, מידות ומלאי</button>
                 <button type="button" class="tab-btn" onclick="switchTab('stockcount', this)">ספירת מלאי מהירה</button>
                 <button type="button" class="tab-btn" onclick="switchTab('suppliers', this)">ספקים והזמנות</button>
@@ -1173,17 +1246,29 @@
                 <hr style="margin: 14px 0;">
                 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                    <h4>ניהול קבלות (מחיקה / ביטול מרובה):</h4>
-                    <div style="display: flex; gap: 8px;">
+                    <h4>ניהול קבלות (ביטול מרובה / מחיקה לצמיתות):</h4>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <button type="button" class="btn btn-secondary btn-small" onclick="toggleSelectAllReceipts()">סמן / בטל הכל</button>
-                        <button type="button" class="btn btn-danger btn-small" onclick="bulkCancelReceipts()">בטל ומחק קבלות מסומנות</button>
+                        <button type="button" class="btn btn-warning btn-small" onclick="bulkCancelReceipts()">בטל קבלות מסומנות (החזר מלאי)</button>
+                        <button type="button" class="btn btn-danger btn-small" onclick="bulkPermanentDeleteReceipts()">מחק לצמיתות (ניקוי בדיקות)</button>
                     </div>
                 </div>
                 <div id="receiptsListAdmin" style="max-height: 210px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px;"></div>
             </div>
 
-            <!-- 2. לשונית כרטיס לקוח וחובות -->
+            <!-- 2. לשונית כרטיס לקוח, חובות וניהול רשימת קונים -->
             <div id="tab-customers" class="tab-content" style="display:none;">
+                <div style="background: #f8fafc; padding: 14px; border-radius: 12px; border: 1px solid #cbd5e1; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                        <h4>ניהול רשימת קונים שמורים (להשלמה אוטומטית בקופה):</h4>
+                        <input type="text" id="savedCustomerSearchInput" placeholder="חפש שם למחיקה מהרשימה..." style="width: 230px; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px;" oninput="renderSavedCustomersManager()">
+                    </div>
+                    <p style="font-size: 0.88em; color: var(--text-muted); margin-bottom: 8px;">
+                        הסרת שם מכאן תמחק אותו מרשימת ההשלמה האוטומטית בקופה (ובאפשרותך גם למחוק את עסקאות הניסיון שלו).
+                    </p>
+                    <div id="savedCustomersListContainer" style="max-height: 165px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                </div>
+
                 <h4>דוח מכירות לפי קונים וניהול חובות (הקפה)</h4>
                 <div style="display: flex; gap: 10px; margin: 12px 0;">
                     <input type="text" id="customerFilterInput" placeholder="חפש שם קונה או שיעור..." oninput="renderCustomerReport()">
@@ -1192,7 +1277,7 @@
                         <option value="debt">חובות פתוחים בלבד</option>
                     </select>
                 </div>
-                <div id="customerReportContainer" style="max-height: 360px; overflow-y: auto;"></div>
+                <div id="customerReportContainer" style="max-height: 280px; overflow-y: auto;"></div>
             </div>
 
             <!-- 3. לשונית ניהול מוצרים, מידות, מבצעי כמות והוספת מלאי -->
@@ -1467,6 +1552,7 @@
         let appData = {
             products: [],
             receipts: [],
+            hiddenCustomers: [],
             categories: ['כללי'],
             suppliers: [],
             settings: {
@@ -1485,6 +1571,7 @@
         let cart = [];
         let heldCarts = [];
         let currentPaymentType = '';
+        let mixedOrderMode = 'cash_first'; // 'cash_first' | 'credit_first'
         let activeCategory = 'הכל';
         let adminFilterLowStockOnly = false;
         let tempLogoBase64 = '';
@@ -1494,7 +1581,7 @@
         let stockCountBuffer = {};
         let draggedVariantRow = null;
 
-        /* פרטי תשלום לעסקה הנוכחית (כולל מזומן, עודף ותשלום משולב) */
+        /* פרטי תשלום לעסקה הנוכחית (כולל מזומן, עודף ותשלום משולב גמיש) */
         let pendingPaymentDetails = {
             cashApplied: 0,
             creditApplied: 0,
@@ -1833,6 +1920,7 @@
                     }
                     if (!appData.categories) appData.categories = ['כללי'];
                     if (!appData.suppliers) appData.suppliers = [];
+                    if (!Array.isArray(appData.hiddenCustomers)) appData.hiddenCustomers = [];
                     
                     (appData.products || []).forEach(p => {
                         if (p.category && !appData.categories.includes(p.category)) {
@@ -2046,7 +2134,7 @@
             renderAdminProductsList();
         }
 
-        /* שורת חיפוש מאוחדת (מזהה ברקוד של מוצר רגיל או ברקוד של מידה ספציפית) */
+        /* שורת חיפוש מאוחדת */
         function handleUnifiedSearchInput() {
             renderProducts();
         }
@@ -2537,19 +2625,25 @@
             document.getElementById('cartTotal').innerText = total.toFixed(2);
         }
 
-        /* השלמה אוטומטית ללקוחות חוזרים (מבחינה בין שמות זהים לפי שיעור או טלפון) */
-        function getUniqueCustomerProfiles() {
+        /* השלמה אוטומטית ללקוחות חוזרים (מבחינה בין שמות זהים ומסננת שמות שנמחקו ע"י מנהל) */
+        function getCustomerProfileKey(name, isYeshiva, grade, phone) {
+            return `${String(name || '').trim()}|${isYeshiva ? 'Y:' + String(grade || '').trim() : 'P:' + String(phone || '').trim()}`;
+        }
+
+        function getUniqueCustomerProfiles(includeHidden = false) {
             const map = new Map();
+            const hiddenSet = new Set(appData.hiddenCustomers || []);
             (appData.receipts || []).forEach(r => {
                 if (!r.customer) return;
                 const name = r.customer.trim();
                 const isYeshiva = Boolean(r.isYeshiva);
                 const grade = r.yeshivaGrade || '';
                 const phone = r.phone || '';
-                const uniqueKey = `${name}|${isYeshiva ? 'Y:' + grade : 'P:' + phone}`;
-                map.set(uniqueKey, { name, isYeshiva, grade, phone });
+                const uniqueKey = getCustomerProfileKey(name, isYeshiva, grade, phone);
+                if (!includeHidden && hiddenSet.has(uniqueKey)) return;
+                map.set(uniqueKey, { uniqueKey, name, isYeshiva, grade, phone });
             });
-            return Array.from(map.values());
+            return sortHebrewAlpha(Array.from(map.values()), p => p.name);
         }
 
         function handleCustomerAutocomplete() {
@@ -2560,13 +2654,13 @@
                 return;
             }
 
-            const profiles = getUniqueCustomerProfiles().filter(p => p.name.toLowerCase().includes(input));
+            const profiles = getUniqueCustomerProfiles(false).filter(p => p.name.toLowerCase().includes(input));
             if (profiles.length === 0) {
                 dropdown.style.display = 'none';
                 return;
             }
 
-            dropdown.innerHTML = profiles.slice(0, 8).map((p, idx) => {
+            dropdown.innerHTML = profiles.slice(0, 8).map((p) => {
                 const detailLabel = p.isYeshiva ? (p.grade || 'בן ישיבה') : (p.phone || 'רוכש חיצוני');
                 const encodedData = encodeURIComponent(JSON.stringify(p));
                 return `
@@ -2628,9 +2722,11 @@
             const total = parseFloat(document.getElementById('cartTotal').innerText) || 0;
             const cashCalc = document.getElementById('cashChangeCalculator');
             const mixedCalc = document.getElementById('mixedPaymentCalculator');
+            const proceedBtn = document.getElementById('proceedCheckoutBtn');
 
             cashCalc.style.display = 'none';
             mixedCalc.style.display = 'none';
+            proceedBtn.innerText = 'אישור וסיום עסקה';
 
             if (type === 'cash') {
                 document.getElementById('checkoutModalHeader').innerText = 'פרטי רוכש ותשלום במזומן';
@@ -2645,8 +2741,8 @@
                 document.getElementById('mixedTotalDue').innerText = total.toFixed(2);
                 document.getElementById('mixedCashPortionInput').value = '';
                 document.getElementById('mixedCashTenderedInput').value = '';
-                document.getElementById('mixedCreditDueResult').innerText = `₪${total.toFixed(2)}`;
-                document.getElementById('mixedCashChangeResult').innerText = '₪0.00';
+                document.getElementById('mixedCreditPortionInput').value = '';
+                setMixedOrder('cash_first');
             } else if (type === 'credit') {
                 document.getElementById('checkoutModalHeader').innerText = 'פרטי רוכש ותשלום באשראי';
             } else {
@@ -2655,6 +2751,30 @@
 
             document.getElementById('customerModal').style.display = 'flex';
             document.getElementById('custName').focus();
+        }
+
+        function setMixedOrder(mode) {
+            mixedOrderMode = mode;
+            const btnCashFirst = document.getElementById('btnMixedCashFirst');
+            const btnCreditFirst = document.getElementById('btnMixedCreditFirst');
+            const cashFields = document.getElementById('mixedCashFirstFields');
+            const creditFields = document.getElementById('mixedCreditFirstFields');
+            const proceedBtn = document.getElementById('proceedCheckoutBtn');
+
+            if (mode === 'cash_first') {
+                btnCashFirst.classList.add('active');
+                btnCreditFirst.classList.remove('active');
+                cashFields.style.display = 'block';
+                creditFields.style.display = 'none';
+                proceedBtn.innerText = 'המשך לגביית יתרה באשראי';
+            } else {
+                btnCreditFirst.classList.add('active');
+                btnCashFirst.classList.remove('active');
+                cashFields.style.display = 'none';
+                creditFields.style.display = 'block';
+                proceedBtn.innerText = 'המשך לסליקה באשראי תחילה';
+            }
+            calculateMixedPayment();
         }
 
         function toggleYeshivaFields() {
@@ -2697,21 +2817,32 @@
 
         function calculateMixedPayment() {
             const total = parseFloat(document.getElementById('mixedTotalDue').innerText) || 0;
-            const cashPortion = parseFloat(document.getElementById('mixedCashPortionInput').value) || 0;
-            const cashTenderedRaw = document.getElementById('mixedCashTenderedInput').value.trim();
-            const cashTendered = cashTenderedRaw !== '' ? (parseFloat(cashTenderedRaw) || 0) : cashPortion;
-
-            const creditDue = Math.max(0, Math.round((total - cashPortion) * 100) / 100);
-            const change = Math.round((cashTendered - cashPortion) * 100) / 100;
-
-            document.getElementById('mixedCreditDueResult').innerText = `₪${creditDue.toFixed(2)}`;
             const changeEl = document.getElementById('mixedCashChangeResult');
-            if (change >= 0) {
-                changeEl.innerText = `₪${change.toFixed(2)}`;
-                changeEl.style.color = 'var(--accent-hover)';
+
+            if (mixedOrderMode === 'cash_first') {
+                const cashPortion = parseFloat(document.getElementById('mixedCashPortionInput').value) || 0;
+                const cashTenderedRaw = document.getElementById('mixedCashTenderedInput').value.trim();
+                const cashTendered = cashTenderedRaw !== '' ? (parseFloat(cashTenderedRaw) || 0) : cashPortion;
+
+                const creditDue = Math.max(0, Math.round((total - cashPortion) * 100) / 100);
+                const change = Math.round((cashTendered - cashPortion) * 100) / 100;
+
+                document.getElementById('mixedCreditDueResult').innerText = `₪${creditDue.toFixed(2)}`;
+                document.getElementById('mixedCashDueResult').innerText = `₪${Math.min(total, cashPortion).toFixed(2)}`;
+                if (change >= 0) {
+                    changeEl.innerText = `₪${change.toFixed(2)}`;
+                    changeEl.style.color = 'var(--accent-hover)';
+                } else {
+                    changeEl.innerText = `חסר ₪${Math.abs(change).toFixed(2)}`;
+                    changeEl.style.color = 'var(--danger)';
+                }
             } else {
-                changeEl.innerText = `חסר ₪${Math.abs(change).toFixed(2)}`;
-                changeEl.style.color = 'var(--danger)';
+                const creditPortion = parseFloat(document.getElementById('mixedCreditPortionInput').value) || 0;
+                const cashDue = Math.max(0, Math.round((total - creditPortion) * 100) / 100);
+                document.getElementById('mixedCreditDueResult').innerText = `₪${Math.min(total, creditPortion).toFixed(2)}`;
+                document.getElementById('mixedCashDueResult').innerText = `₪${cashDue.toFixed(2)}`;
+                changeEl.innerText = 'יחושב בשלב המזומן';
+                changeEl.style.color = '#64748b';
             }
         }
 
@@ -2747,28 +2878,48 @@
                     cashChange: Math.round((received - total) * 100) / 100
                 };
             } else if (currentPaymentType === 'mixed') {
-                const cashPortion = parseFloat(document.getElementById('mixedCashPortionInput').value);
-                if (isNaN(cashPortion) || cashPortion <= 0) {
-                    document.getElementById('mixedCashPortionInput').focus();
-                    return showToast('נא להזין סכום מזומן חיובי לקיזוז מהעסקה', 'error');
+                if (mixedOrderMode === 'cash_first') {
+                    const cashPortion = parseFloat(document.getElementById('mixedCashPortionInput').value);
+                    if (isNaN(cashPortion) || cashPortion <= 0) {
+                        document.getElementById('mixedCashPortionInput').focus();
+                        return showToast('נא להזין סכום מזומן חיובי לקיזוז מהעסקה', 'error');
+                    }
+                    if (cashPortion >= total) {
+                        document.getElementById('mixedCashPortionInput').focus();
+                        return showToast('סכום המזומן מכסה את כל העסקה - בחר בתשלום "מזומן" רגיל.', 'warning');
+                    }
+                    const rawTendered = document.getElementById('mixedCashTenderedInput').value.trim();
+                    const cashTendered = rawTendered !== '' ? parseFloat(rawTendered) : cashPortion;
+                    if (isNaN(cashTendered) || cashTendered + 0.001 < cashPortion) {
+                        document.getElementById('mixedCashTenderedInput').focus();
+                        return showToast('המזומן שהתקבל בפועל נמוך מסכום המזומן לקיזוז!', 'error');
+                    }
+                    const creditDue = Math.round((total - cashPortion) * 100) / 100;
+                    pendingPaymentDetails = {
+                        cashApplied: Math.round(cashPortion * 100) / 100,
+                        creditApplied: creditDue,
+                        cashTendered: Math.round(cashTendered * 100) / 100,
+                        cashChange: Math.round((cashTendered - cashPortion) * 100) / 100
+                    };
+                } else {
+                    // מצב: קודם אשראי ואז מזומן
+                    const creditPortion = parseFloat(document.getElementById('mixedCreditPortionInput').value);
+                    if (isNaN(creditPortion) || creditPortion <= 0) {
+                        document.getElementById('mixedCreditPortionInput').focus();
+                        return showToast('נא להזין סכום חיובי לגבייה באשראי', 'error');
+                    }
+                    if (creditPortion >= total) {
+                        document.getElementById('mixedCreditPortionInput').focus();
+                        return showToast('סכום האשראי מכסה את כל העסקה - בחר בתשלום "אשראי" רגיל.', 'warning');
+                    }
+                    const cashDue = Math.round((total - creditPortion) * 100) / 100;
+                    pendingPaymentDetails = {
+                        cashApplied: cashDue,
+                        creditApplied: Math.round(creditPortion * 100) / 100,
+                        cashTendered: 0,
+                        cashChange: 0
+                    };
                 }
-                if (cashPortion >= total) {
-                    document.getElementById('mixedCashPortionInput').focus();
-                    return showToast('סכום המזומן מכסה את כל העסקה - בחר בתשלום "מזומן" רגיל.', 'warning');
-                }
-                const rawTendered = document.getElementById('mixedCashTenderedInput').value.trim();
-                const cashTendered = rawTendered !== '' ? parseFloat(rawTendered) : cashPortion;
-                if (isNaN(cashTendered) || cashTendered + 0.001 < cashPortion) {
-                    document.getElementById('mixedCashTenderedInput').focus();
-                    return showToast('המזומן שהתקבל בפועל נמוך מסכום המזומן לקיזוז!', 'error');
-                }
-                const creditDue = Math.round((total - cashPortion) * 100) / 100;
-                pendingPaymentDetails = {
-                    cashApplied: Math.round(cashPortion * 100) / 100,
-                    creditApplied: creditDue,
-                    cashTendered: Math.round(cashTendered * 100) / 100,
-                    cashChange: Math.round((cashTendered - cashPortion) * 100) / 100
-                };
             } else if (currentPaymentType === 'credit') {
                 pendingPaymentDetails = {
                     cashApplied: 0,
@@ -2799,6 +2950,66 @@
 
         function completeCreditTransaction() {
             closeModal('creditIframeModal');
+            if (currentPaymentType === 'mixed' && mixedOrderMode === 'credit_first') {
+                openPostCreditCashModal();
+            } else {
+                finalizeTransaction();
+            }
+        }
+
+        /* חלון השלמת מזומן לאחר תשלום אשראי */
+        function openPostCreditCashModal() {
+            document.getElementById('postCreditPaidDisplay').innerText = pendingPaymentDetails.creditApplied.toFixed(2);
+            document.getElementById('postCreditCashDueDisplay').innerText = pendingPaymentDetails.cashApplied.toFixed(2);
+            document.getElementById('postCreditCashInput').value = '';
+            document.getElementById('postCreditChangeResult').innerText = '₪0.00';
+            document.getElementById('postCreditChangeResult').style.color = 'var(--accent-hover)';
+            document.getElementById('postCreditCashModal').style.display = 'flex';
+            document.getElementById('postCreditCashInput').focus();
+        }
+
+        function setExactPostCreditCash() {
+            document.getElementById('postCreditCashInput').value = pendingPaymentDetails.cashApplied.toFixed(2);
+            calculatePostCreditCashChange();
+        }
+
+        function addPostCreditCash(amount) {
+            const curr = parseFloat(document.getElementById('postCreditCashInput').value) || 0;
+            document.getElementById('postCreditCashInput').value = curr + amount;
+            calculatePostCreditCashChange();
+        }
+
+        function calculatePostCreditCashChange() {
+            const due = pendingPaymentDetails.cashApplied;
+            const received = parseFloat(document.getElementById('postCreditCashInput').value) || 0;
+            const change = Math.round((received - due) * 100) / 100;
+            const resEl = document.getElementById('postCreditChangeResult');
+            if (change >= 0) {
+                resEl.innerText = '₪' + change.toFixed(2);
+                resEl.style.color = 'var(--accent-hover)';
+            } else {
+                resEl.innerText = 'חסר ₪' + Math.abs(change).toFixed(2);
+                resEl.style.color = 'var(--danger)';
+            }
+        }
+
+        function completePostCreditCashTransaction() {
+            const due = pendingPaymentDetails.cashApplied;
+            const rawVal = document.getElementById('postCreditCashInput').value.trim();
+            const received = parseFloat(rawVal);
+            if (rawVal === '' || isNaN(received)) {
+                document.getElementById('postCreditCashInput').focus();
+                return showToast('חובה להזין את סכום המזומן שהתקבל מהלקוח!', 'error');
+            }
+            if (received + 0.001 < due) {
+                const missing = (due - received).toFixed(2);
+                document.getElementById('postCreditCashInput').focus();
+                return showToast(`שגיאה: חסרים ₪${missing} להשלמת התשלום במזומן!`, 'error');
+            }
+
+            pendingPaymentDetails.cashTendered = Math.round(received * 100) / 100;
+            pendingPaymentDetails.cashChange = Math.round((received - due) * 100) / 100;
+            closeModal('postCreditCashModal');
             finalizeTransaction();
         }
 
@@ -2808,6 +3019,12 @@
             const phone = document.getElementById('custPhone').value.trim();
             const selectedGradeEl = document.querySelector('input[name="yeshivaGrade"]:checked');
             const yeshivaGrade = selectedGradeEl ? selectedGradeEl.value : '';
+
+            /* אם השם הוסתר בעבר מרשימת ההשלמה האוטומטית ונרכש מחדש - נחזיר אותו לרשימה */
+            const profKey = getCustomerProfileKey(name, isYeshiva, yeshivaGrade, phone);
+            if (Array.isArray(appData.hiddenCustomers) && appData.hiddenCustomers.includes(profKey)) {
+                appData.hiddenCustomers = appData.hiddenCustomers.filter(k => k !== profKey);
+            }
 
             const calculatedLines = getCartCalculatedLines();
 
@@ -2840,7 +3057,9 @@
             if (currentPaymentType === 'credit') payLabel = 'אשראי';
             if (currentPaymentType === 'debt') payLabel = 'חוב / הקפה';
             if (currentPaymentType === 'mixed') {
-                payLabel = `משולב (מזומן ₪${pendingPaymentDetails.cashApplied.toFixed(2)} + אשראי ₪${pendingPaymentDetails.creditApplied.toFixed(2)})`;
+                payLabel = mixedOrderMode === 'credit_first'
+                    ? `משולב (אשראי ₪${pendingPaymentDetails.creditApplied.toFixed(2)} + מזומן ₪${pendingPaymentDetails.cashApplied.toFixed(2)})`
+                    : `משולב (מזומן ₪${pendingPaymentDetails.cashApplied.toFixed(2)} + אשראי ₪${pendingPaymentDetails.creditApplied.toFixed(2)})`;
             }
 
             const receipt = {
@@ -2991,9 +3210,11 @@
                 lines.push(`התקבל במזומן: ₪${Number(r.cashTendered).toFixed(2)}`);
                 lines.push(`עודף שניתן: ₪${Number(r.cashChange || 0).toFixed(2)}`);
             }
-            if (s.receiptFooter) lines.push(`\n${s.receiptFooter}`);
+            if (s.receiptFooter) lines.push(`
+${s.receiptFooter}`);
 
-            const textToCopy = lines.join('\n');
+            const textToCopy = lines.join('
+');
             navigator.clipboard.writeText(textToCopy).then(() => {
                 showToast('הקבלה הועתקה כטקסט ללוח!', 'success');
             }).catch(() => {
@@ -3001,7 +3222,7 @@
             });
         }
 
-        /* היסטוריית קבלות והחזרת פריט בודד (מזהה גם מידה ספציפית ומחזיר אליה את המלאי) */
+        /* היסטוריית קבלות והחזרת פריט בודד */
         function openPartialReturnModal() {
             document.getElementById('returnSearchInput').value = '';
             renderReturnReceipts();
@@ -3094,6 +3315,10 @@
             if (tabName === 'products') {
                 renderAdminLowStockPanel();
             }
+            if (tabName === 'customers') {
+                renderSavedCustomersManager();
+                renderCustomerReport();
+            }
         }
 
         function loadAdminData() {
@@ -3116,6 +3341,7 @@
             setTodaySummary();
             renderSalesAndProfitReport();
             renderAdminReceiptsList();
+            renderSavedCustomersManager();
             renderCustomerReport();
             renderAdminLowStockPanel();
             populateProductDropdowns();
@@ -3183,12 +3409,12 @@
             document.getElementById('salesSummaryReport').innerHTML = sumHtml;
         }
 
-        /* ניהול ומחיקה מרובה של קבלות */
+        /* ניהול, ביטול ומחיקה לצמיתות של קבלות */
         function renderAdminReceiptsList() {
             const receiptsHtml = (appData.receipts || []).slice().reverse().map(r => `
                 <div style="padding: 8px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                        ${r.active ? `<input type="checkbox" class="receipt-bulk-cb" value="${r.id}">` : ''}
+                        <input type="checkbox" class="receipt-bulk-cb" value="${r.id}">
                         <span>#${r.id} | ${r.date} | ${r.customer} | ₪${r.total.toFixed(2)} (${r.type}) ${r.active ? '' : '<strong style="color:red;">(מבוטלת)</strong>'}</span>
                     </label>
                     <div>
@@ -3196,7 +3422,7 @@
                     </div>
                 </div>
             `).join('');
-            document.getElementById('receiptsListAdmin').innerHTML = receiptsHtml;
+            document.getElementById('receiptsListAdmin').innerHTML = receiptsHtml || '<p style="padding:8px;">אין קבלות במערכת.</p>';
         }
 
         function toggleSelectAllReceipts() {
@@ -3233,7 +3459,80 @@
             await saveCloudData();
             loadAdminData();
             renderProducts();
-            showToast(`${checkedIds.length} קבלות בוטלו והמלאי הוחזר!`, 'success');
+            showToast(`הקבלות המסומנות בוטלו והמלאי הוחזר!`, 'success');
+        }
+
+        async function bulkPermanentDeleteReceipts() {
+            if (!isAdminLoggedIn) return showToast('פעולה זו מותרת למנהל בלבד', 'error');
+            const checkedIds = Array.from(document.querySelectorAll('.receipt-bulk-cb:checked')).map(cb => Number(cb.value));
+            if (checkedIds.length === 0) return showToast('לא סומנו קבלות למחיקה', 'warning');
+
+            // אם קבלה מסומנת עדיין פעילה, נחזיר קודם את המלאי לפני המחיקה לצמיתות
+            checkedIds.forEach(id => {
+                const r = appData.receipts.find(item => item.id === id);
+                if (r && r.active) {
+                    r.items.forEach(i => {
+                        if (!i.isFreeItem) {
+                            const p = appData.products.find(prod => prod.id === (i.productId || i.id));
+                            if (p) {
+                                if (i.variantId && hasProductVariants(p)) {
+                                    const v = p.variants.find(vr => String(vr.id) === String(i.variantId));
+                                    if (v) v.stock = (parseInt(v.stock) || 0) + i.qty;
+                                    p.stock = getProductTotalStock(p);
+                                } else {
+                                    p.stock += i.qty;
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+            appData.receipts = (appData.receipts || []).filter(r => !checkedIds.includes(r.id));
+            await saveCloudData();
+            loadAdminData();
+            renderProducts();
+            showToast(`${checkedIds.length} קבלות נמחקו לצמיתות והמלאי הוחזר!`, 'success');
+        }
+
+        /* ניהול ומחיקת קונים שמורים (למנהל בלבד) */
+        function renderSavedCustomersManager() {
+            const container = document.getElementById('savedCustomersListContainer');
+            if (!container) return;
+            const q = (document.getElementById('savedCustomerSearchInput') ? document.getElementById('savedCustomerSearchInput').value.trim().toLowerCase() : '');
+            let profiles = getUniqueCustomerProfiles(false);
+            if (q) {
+                profiles = profiles.filter(p => p.name.toLowerCase().includes(q) || (p.grade && p.grade.toLowerCase().includes(q)));
+            }
+
+            if (profiles.length === 0) {
+                container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.92em;">אין שמות שמורים ברשימת ההשלמה האוטומטית.</span>';
+                return;
+            }
+
+            container.innerHTML = profiles.map(p => {
+                const badge = p.isYeshiva ? (p.grade || 'בן ישיבה') : (p.phone || 'חיצוני');
+                const encodedKey = encodeURIComponent(p.uniqueKey);
+                return `
+                    <div style="display: inline-flex; align-items: center; gap: 6px; background: white; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 20px; font-size: 0.9em;">
+                        <strong>${p.name}</strong>
+                        <span style="color: #475569; font-size: 0.85em;">(${badge})</span>
+                        <button type="button" class="btn btn-danger btn-tiny" style="padding: 2px 7px; border-radius: 12px;" title="מחק שם מרשימת הקונים" onclick="deleteSavedCustomerProfile('${encodedKey}')">×</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function deleteSavedCustomerProfile(encodedKey) {
+            if (!isAdminLoggedIn) return showToast('פעולה זו מותרת למנהל בלבד', 'error');
+            const uniqueKey = decodeURIComponent(encodedKey);
+            if (!Array.isArray(appData.hiddenCustomers)) appData.hiddenCustomers = [];
+            if (!appData.hiddenCustomers.includes(uniqueKey)) {
+                appData.hiddenCustomers.push(uniqueKey);
+            }
+            await saveCloudData();
+            renderSavedCustomersManager();
+            showToast('השם הוסר מרשימת ההשלמה האוטומטית של הקונים!', 'success');
         }
 
         /* כרטיס לקוח וחובות */
@@ -3734,7 +4033,7 @@
             toggleVariantsEditor();
         }
 
-        /* ספירת מלאי מהירה (ממוינת לפי א'-ב', תומכת בכל מידה בנפרד ובסריקת ברקוד למידה) */
+        /* ספירת מלאי מהירה (ממוינת לפי א'-ב') */
         function initStockCountTab() {
             stockCountBuffer = {};
             getSortedProducts().forEach(p => {
@@ -3989,7 +4288,8 @@
                 lines.push(`• ${i.name} (יתרה במלאי: ${i.stock} יח')`);
             });
 
-            navigator.clipboard.writeText(lines.join('\n')).then(() => {
+            navigator.clipboard.writeText(lines.join('
+')).then(() => {
                 showToast('רשימת ההזמנה הועתקה כטקסט!', 'success');
             }).catch(() => {
                 showToast('לא ניתן להעתיק אוטומטית בדפדפן זה', 'error');
@@ -4005,9 +4305,10 @@
             win.document.close();
         }
 
-        /* ייצוא לאקסל (ממוין לפי א'-ב' עם שמירה על סדר המידות בכל מוצר) */
+        /* ייצוא לאקסל (ממוין לפי א'-ב') */
         function downloadCSV(filename, rows) {
-            const csvContent = "\uFEFF" + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+            const csvContent = "﻿" + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("
+");
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
