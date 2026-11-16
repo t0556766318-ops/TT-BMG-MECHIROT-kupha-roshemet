@@ -1089,7 +1089,7 @@
             
             <div class="cart-top-tools">
                 <button type="button" class="btn btn-secondary btn-small" onclick="openFreeItemModal()">+ פריט חופשי</button>
-                <button type="button" class="btn btn-purple btn-small" onclick="requestWholeCartDiscount()">% הנחה</button>
+                <button type="button" class="btn btn-purple btn-small" onclick="requestWholeCartDiscount()">% הנחה / מחיר עלות</button>
                 <button type="button" class="btn btn-warning btn-small" onclick="openHoldCartPrompt()">השהה עגלה</button>
                 <button type="button" class="btn btn-info btn-small" onclick="openHeldCartsModal()">עגלות מושהות (<span id="heldCount">0</span>)</button>
             </div>
@@ -1933,6 +1933,18 @@
             <div style="display: flex; gap: 10px; margin-top: 12px;">
                 <button type="button" class="btn btn-success btn-large-action" style="flex:1;" onclick="printThermalZReport()">הדפס דוח Z</button>
                 <button type="button" class="btn btn-danger btn-large-action" style="flex:1;" onclick="closeModal('dailyZReportModal')">סגור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- מודאל פירוט עסקאות ופריטים לפי אמצעי תשלום בסיכום יומי -->
+    <div class="modal" id="dailyMethodDetailsModal">
+        <div class="modal-content" style="width: 640px;">
+            <h3 id="dailyMethodDetailsTitle">פירוט עסקאות</h3>
+            <div id="dailyMethodDetailsSummary" style="background: #f1f5f9; padding: 10px 14px; border-radius: 10px; font-weight: 800; margin-bottom: 12px;"></div>
+            <div id="dailyMethodDetailsBody" style="max-height: 410px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;"></div>
+            <div style="margin-top: 14px;">
+                <button type="button" class="btn btn-danger btn-large-action" style="width: 100%;" onclick="closeModal('dailyMethodDetailsModal')">סגור</button>
             </div>
         </div>
     </div>
@@ -3226,11 +3238,7 @@
         function startCheckout(type) {
             if (cart.length === 0) return showToast('העגלה ריקה, הוסף מוצרים לפני תשלום', 'warning');
             if (type === 'debt') {
-                if (isAdminLoggedIn) {
-                    openCustomerCheckoutModal('debt');
-                } else {
-                    openAdminLock('debt');
-                }
+                openAdminLock('debt');
                 return;
             }
             openCustomerCheckoutModal(type);
@@ -3464,8 +3472,10 @@
 
             if (currentPaymentType === 'credit' || currentPaymentType === 'mixed') {
                 const creditAmount = pendingPaymentDetails.creditApplied;
+                const encodedBuyerName = encodeURIComponent(name);
+                const encodedGroup = encodeURIComponent('מכירת ביגוד');
                 document.getElementById('creditModalAmountDisplay').innerText = creditAmount.toFixed(2);
-                document.getElementById('creditIframe').src = `https://www.matara.pro/nedarimplus/online/?mosad=1000858&Amount=${creditAmount.toFixed(2)}`;
+                document.getElementById('creditIframe').src = `https://www.matara.pro/nedarimplus/online/?mosad=1000858&Amount=${creditAmount.toFixed(2)}&Name=${encodedBuyerName}&Groupe=${encodedGroup}`;
                 document.getElementById('creditIframeModal').style.display = 'flex';
             } else {
                 finalizeTransaction();
@@ -3960,11 +3970,163 @@
             });
 
             document.getElementById('dailySummaryBox').innerHTML = `
-                <div style="background: #d1fae5; color: #065f46; padding: 10px 16px; border-radius: 8px;">מזומן במגירה: ₪${cashSum.toFixed(2)}</div>
-                <div style="background: #dbeafe; color: #1e40af; padding: 10px 16px; border-radius: 8px;">אשראי: ₪${creditSum.toFixed(2)}</div>
-                <div style="background: #fef3c7; color: #92400e; padding: 10px 16px; border-radius: 8px;">הקפה / חוב: ₪${debtSum.toFixed(2)}</div>
-                <div style="background: #e2e8f0; color: #1e293b; padding: 10px 16px; border-radius: 8px;">סה"כ יומי: ₪${(cashSum + creditSum + debtSum).toFixed(2)}</div>
+                <div onclick="openDailyMethodDetails('cash')" title="לחץ לפירוט כל מה שנקנה במזומן" style="background: #d1fae5; color: #065f46; padding: 10px 16px; border-radius: 8px; cursor: pointer; border: 1.5px solid #6ee7b7; transition: transform 0.1s;">מזומן במגירה: ₪${cashSum.toFixed(2)} 🔍</div>
+                <div onclick="openDailyMethodDetails('credit')" title="לחץ לפירוט כל מה שנקנה באשראי" style="background: #dbeafe; color: #1e40af; padding: 10px 16px; border-radius: 8px; cursor: pointer; border: 1.5px solid #93c5fd; transition: transform 0.1s;">אשראי: ₪${creditSum.toFixed(2)} 🔍</div>
+                <div onclick="openDailyMethodDetails('debt')" title="לחץ לפירוט כל מה שנרשם בהקפה / חוב" style="background: #fef3c7; color: #92400e; padding: 10px 16px; border-radius: 8px; cursor: pointer; border: 1.5px solid #fcd34d; transition: transform 0.1s;">הקפה / חוב: ₪${debtSum.toFixed(2)} 🔍</div>
+                <div onclick="openDailyMethodDetails('all')" title="לחץ לפירוט כל העסקאות היומיות" style="background: #e2e8f0; color: #1e293b; padding: 10px 16px; border-radius: 8px; cursor: pointer; border: 1.5px solid #cbd5e1; transition: transform 0.1s;">סה"כ יומי: ₪${(cashSum + creditSum + debtSum).toFixed(2)} 🔍</div>
             `;
+        }
+
+        function openDailyMethodDetails(method) {
+            const selectedDate = document.getElementById('dailySummaryDate').value;
+            const dateHe = selectedDate ? selectedDate.split('-').reverse().join('.') : '';
+            const dayReceipts = (appData.receipts || []).filter(r => r.active && (r.isoDate === selectedDate || (r.date && r.date.includes(dateHe))));
+            const dayDebtPayments = (appData.debtPayments || []).filter(dp => dp.isoDate === selectedDate);
+
+            const methodTitles = {
+                cash: 'פירוט רכישות ותקבולים במזומן',
+                credit: 'פירוט רכישות ותקבולים באשראי',
+                debt: 'פירוט רכישות בהקפה / חוב',
+                all: 'פירוט כל העסקאות היומיות'
+            };
+
+            const entries = [];
+            let totalAmount = 0;
+            const itemAgg = {};
+
+            dayReceipts.forEach(r => {
+                const isMixed = r.paymentMode === 'mixed' || (r.cashApplied > 0 && r.creditApplied > 0);
+                let matchedAmount = 0;
+                let includeReceipt = false;
+                let noteTag = '';
+
+                if (method === 'cash') {
+                    if (isMixed && Number(r.cashApplied) > 0) {
+                        matchedAmount = Number(r.cashApplied) || 0;
+                        includeReceipt = true;
+                        noteTag = `חלק מזומן מתוך עסקה משולבת (סה"כ עסקה ₪${r.total.toFixed(2)})`;
+                    } else if (!isMixed && r.type && r.type.includes('מזומן')) {
+                        matchedAmount = r.total;
+                        includeReceipt = true;
+                    }
+                } else if (method === 'credit') {
+                    if (isMixed && Number(r.creditApplied) > 0) {
+                        matchedAmount = Number(r.creditApplied) || 0;
+                        includeReceipt = true;
+                        noteTag = `חלק אשראי מתוך עסקה משולבת (סה"כ עסקה ₪${r.total.toFixed(2)})`;
+                    } else if (!isMixed && r.type && r.type.includes('אשראי')) {
+                        matchedAmount = r.total;
+                        includeReceipt = true;
+                    }
+                } else if (method === 'debt') {
+                    if (!isMixed && !r.type.includes('מזומן') && !r.type.includes('אשראי')) {
+                        const paidPart = Number(r.debtPaidAmount) || 0;
+                        const remDebt = Math.max(0, r.total - paidPart);
+                        matchedAmount = remDebt;
+                        includeReceipt = true;
+                        if (paidPart > 0) {
+                            noteTag = `מתוך ₪${r.total.toFixed(2)} (שולם ₪${paidPart.toFixed(2)})`;
+                        }
+                    }
+                } else if (method === 'all') {
+                    matchedAmount = r.total;
+                    includeReceipt = true;
+                    noteTag = r.type;
+                }
+
+                if (includeReceipt) {
+                    totalAmount += matchedAmount;
+                    entries.push({
+                        kind: 'receipt',
+                        receipt: r,
+                        amount: matchedAmount,
+                        noteTag
+                    });
+                    (r.items || []).forEach(it => {
+                        if (!itemAgg[it.name]) itemAgg[it.name] = 0;
+                        itemAgg[it.name] += it.qty;
+                    });
+                }
+            });
+
+            dayDebtPayments.forEach(dp => {
+                const dpMethod = dp.method === 'credit' ? 'credit' : 'cash';
+                if (method === dpMethod || method === 'all') {
+                    const amt = Number(dp.amount) || 0;
+                    totalAmount += amt;
+                    entries.push({
+                        kind: 'debtPayment',
+                        label: dp.label,
+                        amount: amt,
+                        methodLabel: dpMethod === 'credit' ? 'אשראי' : 'מזומן'
+                    });
+                }
+            });
+
+            document.getElementById('dailyMethodDetailsTitle').innerText = `${methodTitles[method] || 'פירוט'} (${dateHe})`;
+            document.getElementById('dailyMethodDetailsSummary').innerHTML = `סה"כ בקטגוריה זו: <span style="color:#059669; font-size:1.15em;">₪${totalAmount.toFixed(2)}</span> (${entries.length} פעולות)`;
+
+            const bodyEl = document.getElementById('dailyMethodDetailsBody');
+            if (entries.length === 0) {
+                bodyEl.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">אין עסקאות בקטגוריה זו בתאריך הנבחר.</p>';
+                document.getElementById('dailyMethodDetailsModal').style.display = 'flex';
+                return;
+            }
+
+            const aggKeys = Object.keys(itemAgg);
+            let aggHtml = '';
+            if (aggKeys.length > 0) {
+                const chips = sortHebrewAlpha(aggKeys, k => k).map(k =>
+                    `<span style="background:#e0f2fe; color:#0369a1; padding:3px 10px; border-radius:14px; font-size:0.86em; font-weight:700;">${escapeHtml(k)}: ${itemAgg[k]} יח'</span>`
+                ).join(' ');
+                aggHtml = `<div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:10px;">
+                    <div style="font-weight:800; font-size:0.9em; margin-bottom:6px; color:#334155;">ריכוז מוצרים שנמכרו:</div>
+                    <div style="display:flex; flex-wrap:wrap; gap:6px;">${chips}</div>
+                </div>`;
+            }
+
+            const listHtml = entries.map(entry => {
+                if (entry.kind === 'debtPayment') {
+                    return `
+                        <div style="border:1px solid #a7f3d0; background:#ecfdf5; border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <strong>גביית חוב: ${escapeHtml(entry.label)}</strong>
+                                <div style="font-size:0.86em; color:#065f46;">תשלום על חשבון חוב קודם (${entry.methodLabel})</div>
+                            </div>
+                            <strong style="color:#059669; font-size:1.05em;">₪${entry.amount.toFixed(2)}</strong>
+                        </div>
+                    `;
+                }
+                const r = entry.receipt;
+                const info = r.isYeshiva ? (r.yeshivaGrade || 'בן ישיבה') : (r.phone || 'חיצוני');
+                const itemsRows = (r.items || []).map(it => {
+                    const lTotal = it.lineTotal !== undefined ? it.lineTotal : (it.price * it.qty);
+                    return `<div style="display:flex; justify-content:space-between; font-size:0.9em; padding:2px 0; border-top:1px dashed #e2e8f0;">
+                        <span>• ${escapeHtml(it.name)} (x${it.qty})</span>
+                        <span>₪${Number(lTotal).toFixed(2)}</span>
+                    </div>`;
+                }).join('');
+
+                return `
+                    <div style="border:1px solid #cbd5e1; background:#fff; border-radius:10px; padding:10px 12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-wrap:wrap; gap:6px;">
+                            <div>
+                                <strong>${escapeHtml(r.customer)}</strong> <span style="color:#64748b; font-size:0.9em;">(${escapeHtml(info)})</span>
+                                <span style="color:#64748b; font-size:0.85em; margin-right:6px;">| שעה ${escapeHtml(r.timeOnly || '')} | #${r.id}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <strong style="color:#0f172a; font-size:1.05em;">₪${entry.amount.toFixed(2)}</strong>
+                                <button type="button" class="btn btn-info btn-tiny" onclick="showReceiptById(${r.id})">קבלה</button>
+                            </div>
+                        </div>
+                        ${entry.noteTag ? `<div style="font-size:0.83em; color:#7c3aed; font-weight:700; margin-bottom:4px;">${escapeHtml(entry.noteTag)}</div>` : ''}
+                        <div style="margin-top:4px;">${itemsRows}</div>
+                    </div>
+                `;
+            }).join('');
+
+            bodyEl.innerHTML = aggHtml + listHtml;
+            document.getElementById('dailyMethodDetailsModal').style.display = 'flex';
         }
 
         /* דוח מכירות ורווח גולמי (ממוין לפי א'-ב' עם סינון טווח תאריכים) */
@@ -6670,6 +6832,10 @@
 
 <script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async ></script>
 
+<script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async ></script>
+
+<!-- Injection By NetFree -->
+<script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
 <script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async ></script>
 
 <!-- Injection By NetFree -->
