@@ -702,11 +702,18 @@
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.68);
-            backdrop-filter: blur(3px);
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(2px);
             justify-content: center;
             align-items: center;
             z-index: 1000;
+        }
+
+        /* חלון תשלום עם רקע שקוף וברור ללא טשטוש כדי שהלוגו והרקע ייראו בבירור */
+        #customerModal, #creditIframeModal, #postCreditCashModal {
+            background: rgba(15, 23, 42, 0.16);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
         }
 
         .modal-content {
@@ -1082,6 +1089,7 @@
             
             <div class="cart-top-tools">
                 <button type="button" class="btn btn-secondary btn-small" onclick="openFreeItemModal()">+ פריט חופשי</button>
+                <button type="button" class="btn btn-purple btn-small" onclick="requestWholeCartDiscount()">% הנחה / מחיר עלות</button>
                 <button type="button" class="btn btn-warning btn-small" onclick="openHoldCartPrompt()">השהה עגלה</button>
                 <button type="button" class="btn btn-info btn-small" onclick="openHeldCartsModal()">עגלות מושהות (<span id="heldCount">0</span>)</button>
             </div>
@@ -1801,32 +1809,39 @@
     </div>
 
 
-    <!-- מודאל הנחה / התאמת מחיר נקודתית בעגלה (באישור מנהל) -->
+    <!-- מודאל הנחה / התאמת מחיר בעגלה (מחייב אישור סיסמת מנהל בכל פעם) -->
     <div class="modal" id="cartItemDiscountModal">
-        <div class="modal-content" style="width: 420px;">
-            <h3>עדכון מחיר / הנחה נקודתית לפריט</h3>
-            <p id="discountItemNameDisplay" style="font-weight: 800; color: var(--primary); margin-bottom: 10px;"></p>
-            <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 12px;">
-                מחיר מקורי ליחידה: <strong>₪<span id="discountOrigPriceDisplay">0.00</span></strong>
-            </div>
+        <div class="modal-content" style="width: 450px;">
+            <h3 id="discountModalHeader">הנחה / עדכון מחיר (באישור מנהל)</h3>
             <div class="form-group">
-                <label>אופן ההתאמה:</label>
-                <select id="discountModeSelect" onchange="updateDiscountPreview()">
-                    <option value="fixed_price">קביעת מחיר חדש ליחידה (₪)</option>
-                    <option value="amount_off">הנחה בשקלים ליחידה (₪)</option>
-                    <option value="percent_off">הנחה באחוזים (%)</option>
+                <label>החל הנחה על:</label>
+                <select id="discountTargetSelect" onchange="onDiscountTargetChange()">
+                    <option value="ALL_CART">כל העגלה יחד</option>
                 </select>
             </div>
+            <div id="discountInfoBanner" style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 12px; font-size: 0.95em;">
+                סכום מקורי: <strong>₪<span id="discountOrigPriceDisplay">0.00</span></strong>
+                <span id="discountCostInfoSpan" style="margin-right: 12px; color: #64748b;">| מחיר עלות: <strong>₪<span id="discountCostPriceDisplay">0.00</span></strong></span>
+            </div>
             <div class="form-group">
-                <label id="discountValueLabel">מחיר חדש ליחידה (₪):</label>
+                <label>סוג ההנחה / המחיר:</label>
+                <select id="discountModeSelect" onchange="updateDiscountPreview()">
+                    <option value="amount_off">הנחה בסכום קבוע (₪)</option>
+                    <option value="percent_off">הנחה באחוזים (%)</option>
+                    <option value="cost_price">מכירה במחיר עלות</option>
+                    <option value="fixed_price">קביעת מחיר סופי חדש (₪)</option>
+                </select>
+            </div>
+            <div class="form-group" id="discountValueInputGroup">
+                <label id="discountValueLabel">סכום הנחה (₪):</label>
                 <input type="number" id="discountValueInput" step="0.1" placeholder="0.00" oninput="updateDiscountPreview()" onkeyup="if(event.key==='Enter') applyCartItemDiscount()">
             </div>
             <div style="background: #ecfdf5; padding: 10px; border-radius: 8px; font-weight: 800; color: #065f46; margin-bottom: 14px;">
-                מחיר מעודכן ליחידה: ₪<span id="discountFinalPricePreview">0.00</span>
+                מחיר סופי לאחר הנחה: ₪<span id="discountFinalPricePreview">0.00</span>
             </div>
             <div style="display: flex; gap: 10px;">
-                <button type="button" class="btn btn-success btn-large-action" style="flex:1;" onclick="applyCartItemDiscount()">אשר מחיר</button>
-                <button type="button" class="btn btn-secondary btn-large-action" onclick="resetCartItemDiscount()">אפס למחיר מקורי</button>
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1;" onclick="applyCartItemDiscount()">אשר הנחה</button>
+                <button type="button" class="btn btn-secondary btn-large-action" onclick="resetCartItemDiscount()">אפס הנחות</button>
                 <button type="button" class="btn btn-danger btn-large-action" onclick="closeModal('cartItemDiscountModal')">ביטול</button>
             </div>
         </div>
@@ -5410,83 +5425,150 @@
         });
 
         /* 3. הנחה / עדכון מחיר נקודתי בעגלה (דורש קוד מנהל) */
-        let discountTargetCartKey = null;
+        /* 3. הנחה / עדכון מחיר בעגלה (סכום / אחוזים / מחיר עלות - מחייב סיסמת מנהל בכל פעם) */
+        let discountTargetCartKey = 'ALL_CART';
+
+        function requestWholeCartDiscount() {
+            if (cart.length === 0) return showToast('העגלה ריקה, הוסף מוצרים תחילה', 'warning');
+            discountTargetCartKey = 'ALL_CART';
+            openAdminLock('discount');
+        }
 
         function requestCartItemDiscount(cartKey) {
             const item = cart.find(i => String(i.cartKey || i.id) === String(cartKey));
             if (!item) return;
-            discountTargetCartKey = cartKey;
-            if (isAdminLoggedIn) {
-                openCartItemDiscountModal();
-            } else {
-                openAdminLock('discount');
-            }
+            discountTargetCartKey = String(cartKey);
+            openAdminLock('discount');
         }
 
         function openCartItemDiscountModal() {
-            const item = cart.find(i => String(i.cartKey || i.id) === String(discountTargetCartKey));
-            if (!item) return;
-            const basePrice = item.originalPrice !== undefined ? item.originalPrice : item.price;
-            document.getElementById('discountItemNameDisplay').innerText = `${item.name} (כמות בעגלה: ${item.qty})`;
-            document.getElementById('discountOrigPriceDisplay').innerText = Number(basePrice).toFixed(2);
-            document.getElementById('discountModeSelect').value = 'fixed_price';
-            document.getElementById('discountValueLabel').innerText = 'מחיר חדש ליחידה (₪):';
-            document.getElementById('discountValueInput').value = Number(item.price).toFixed(2);
-            document.getElementById('discountFinalPricePreview').innerText = Number(item.price).toFixed(2);
+            if (cart.length === 0) return;
+            const targetSelect = document.getElementById('discountTargetSelect');
+            let opts = `<option value="ALL_CART">כל העגלה יחד (${cart.length} שורות)</option>`;
+            cart.forEach(it => {
+                const key = String(it.cartKey || it.id);
+                opts += `<option value="${escapeHtml(key)}">${escapeHtml(it.name)} (x${it.qty})</option>`;
+            });
+            targetSelect.innerHTML = opts;
+            targetSelect.value = discountTargetCartKey || 'ALL_CART';
+
+            document.getElementById('discountModeSelect').value = 'amount_off';
+            document.getElementById('discountValueInput').value = '';
+            onDiscountTargetChange();
+
             document.getElementById('cartItemDiscountModal').style.display = 'flex';
             const inp = document.getElementById('discountValueInput');
             inp.focus();
-            inp.select();
+        }
+
+        function getCartOriginalAndCostTotals(targetKey) {
+            if (targetKey === 'ALL_CART') {
+                let origSum = 0;
+                let costSum = 0;
+                cart.forEach(it => {
+                    const baseP = it.originalPrice !== undefined ? it.originalPrice : it.price;
+                    const unitC = getItemResolvedUnitCost(it);
+                    origSum += baseP * it.qty;
+                    costSum += unitC * it.qty;
+                });
+                return { orig: Math.round(origSum * 100) / 100, cost: Math.round(costSum * 100) / 100, isWholeCart: true };
+            } else {
+                const item = cart.find(i => String(i.cartKey || i.id) === String(targetKey));
+                if (!item) return { orig: 0, cost: 0, isWholeCart: false };
+                const baseP = item.originalPrice !== undefined ? item.originalPrice : item.price;
+                const unitC = getItemResolvedUnitCost(item);
+                return { orig: Math.round(baseP * 100) / 100, cost: Math.round(unitC * 100) / 100, isWholeCart: false, item };
+            }
+        }
+
+        function onDiscountTargetChange() {
+            discountTargetCartKey = document.getElementById('discountTargetSelect').value;
+            const info = getCartOriginalAndCostTotals(discountTargetCartKey);
+            document.getElementById('discountOrigPriceDisplay').innerText = info.orig.toFixed(2);
+            document.getElementById('discountCostPriceDisplay').innerText = info.cost.toFixed(2);
+            updateDiscountPreview();
         }
 
         function updateDiscountPreview() {
-            const item = cart.find(i => String(i.cartKey || i.id) === String(discountTargetCartKey));
-            if (!item) return;
-            const basePrice = item.originalPrice !== undefined ? item.originalPrice : item.price;
+            const info = getCartOriginalAndCostTotals(discountTargetCartKey);
             const mode = document.getElementById('discountModeSelect').value;
             const val = parseFloat(document.getElementById('discountValueInput').value) || 0;
             const labelEl = document.getElementById('discountValueLabel');
+            const valGroup = document.getElementById('discountValueInputGroup');
 
-            let finalUnit = basePrice;
-            if (mode === 'fixed_price') {
-                labelEl.innerText = 'מחיר חדש ליחידה (₪):';
-                finalUnit = Math.max(0, val);
-            } else if (mode === 'amount_off') {
-                labelEl.innerText = 'סכום הנחה ליחידה (₪):';
-                finalUnit = Math.max(0, basePrice - val);
+            valGroup.style.display = mode === 'cost_price' ? 'none' : 'block';
+
+            let finalAmount = info.orig;
+            if (mode === 'amount_off') {
+                labelEl.innerText = info.isWholeCart ? 'סכום הנחה מכל העגלה (₪):' : 'סכום הנחה ליחידה (₪):';
+                finalAmount = Math.max(0, info.orig - val);
             } else if (mode === 'percent_off') {
                 labelEl.innerText = 'אחוז הנחה (%):';
-                finalUnit = Math.max(0, basePrice * (1 - (val / 100)));
+                finalAmount = Math.max(0, info.orig * (1 - (val / 100)));
+            } else if (mode === 'cost_price') {
+                finalAmount = info.cost;
+            } else if (mode === 'fixed_price') {
+                labelEl.innerText = info.isWholeCart ? 'סכום סופי חדש לכל העגלה (₪):' : 'מחיר חדש ליחידה (₪):';
+                finalAmount = Math.max(0, val);
             }
-            document.getElementById('discountFinalPricePreview').innerText = (Math.round(finalUnit * 100) / 100).toFixed(2);
+            document.getElementById('discountFinalPricePreview').innerText = (Math.round(finalAmount * 100) / 100).toFixed(2);
         }
 
         function applyCartItemDiscount() {
-            const item = cart.find(i => String(i.cartKey || i.id) === String(discountTargetCartKey));
-            if (!item) return;
-            const finalUnit = parseFloat(document.getElementById('discountFinalPricePreview').innerText);
-            if (isNaN(finalUnit) || finalUnit < 0) {
-                return showToast('נא להזין מחיר תקין', 'error');
+            const info = getCartOriginalAndCostTotals(discountTargetCartKey);
+            const mode = document.getElementById('discountModeSelect').value;
+            const finalTarget = parseFloat(document.getElementById('discountFinalPricePreview').innerText);
+
+            if (isNaN(finalTarget) || finalTarget < 0) {
+                return showToast('נא להזין ערך תקין להנחה', 'error');
             }
-            if (item.originalPrice === undefined) {
-                item.originalPrice = item.price;
+
+            if (info.isWholeCart) {
+                if (mode === 'cost_price') {
+                    cart.forEach(it => {
+                        if (it.originalPrice === undefined) it.originalPrice = it.price;
+                        it.price = Math.round(getItemResolvedUnitCost(it) * 100) / 100;
+                    });
+                } else {
+                    const ratio = info.orig > 0 ? (finalTarget / info.orig) : 0;
+                    cart.forEach(it => {
+                        const baseP = it.originalPrice !== undefined ? it.originalPrice : it.price;
+                        if (it.originalPrice === undefined) it.originalPrice = baseP;
+                        it.price = Math.round((baseP * ratio) * 100) / 100;
+                    });
+                }
+                closeModal('cartItemDiscountModal');
+                renderCart();
+                showToast(`הנחת מנהל הוחלה על כל העגלה! סה"כ מעודכן: ₪${finalTarget.toFixed(2)}`, 'success');
+            } else if (info.item) {
+                if (info.item.originalPrice === undefined) {
+                    info.item.originalPrice = info.item.price;
+                }
+                info.item.price = Math.round(finalTarget * 100) / 100;
+                closeModal('cartItemDiscountModal');
+                renderCart();
+                showToast(`המחיר עבור "${info.item.name}" עודכן ל-₪${info.item.price.toFixed(2)} ליחידה`, 'success');
             }
-            item.price = Math.round(finalUnit * 100) / 100;
-            closeModal('cartItemDiscountModal');
-            renderCart();
-            showToast(`המחיר עבור "${item.name}" עודכן ל-₪${item.price.toFixed(2)} ליחידה`, 'success');
         }
 
         function resetCartItemDiscount() {
-            const item = cart.find(i => String(i.cartKey || i.id) === String(discountTargetCartKey));
-            if (!item) return;
-            if (item.originalPrice !== undefined) {
-                item.price = item.originalPrice;
-                delete item.originalPrice;
+            if (discountTargetCartKey === 'ALL_CART') {
+                cart.forEach(it => {
+                    if (it.originalPrice !== undefined) {
+                        it.price = it.originalPrice;
+                        delete it.originalPrice;
+                    }
+                });
+            } else {
+                const item = cart.find(i => String(i.cartKey || i.id) === String(discountTargetCartKey));
+                if (item && item.originalPrice !== undefined) {
+                    item.price = item.originalPrice;
+                    delete item.originalPrice;
+                }
             }
             closeModal('cartItemDiscountModal');
             renderCart();
-            showToast('המחיר הוחזר למחיר המקורי', 'info');
+            showToast('המחירים הוחזרו למחיר המקורי', 'info');
         }
 
         /* 4. מחולל ברקודים אוטומטי והדפסת מדבקות + דף ברקודים לקופה */
@@ -6206,18 +6288,18 @@
                 if (hasProductVariants(p)) {
                     p.variants.forEach(v => {
                         options.push({
-                            key: `${p.id}_${v.id}`,
+                            key: `${p.id}::${v.id}`,
                             label: `${p.name} - ${v.name}`
                         });
                     });
                 } else {
                     options.push({
-                        key: `${p.id}_`,
+                        key: `${p.id}::`,
                         label: p.name
                     });
                 }
             });
-            picker.innerHTML = options.map(o => `<option value="${o.key}">${escapeHtml(o.label)}</option>`).join('');
+            picker.innerHTML = options.map(o => `<option value="${escapeHtml(o.key)}">${escapeHtml(o.label)}</option>`).join('');
             renderReceivingItemsList();
         }
 
@@ -6265,10 +6347,10 @@
                 dropdown.style.display = 'none';
                 return;
             }
-            dropdown.innerHTML = matches.slice(0, 12).map(m => {
+            dropdown.innerHTML = matches.slice(0, 15).map(m => {
                 const bInfo = m.barcodes.length > 0 ? m.barcodes[0] : 'ללא ברקוד';
                 return `
-                    <div class="autocomplete-item" onmousedown="selectReceivingSearchItem('${m.prodId}', '${m.varId || ''}')">
+                    <div class="autocomplete-item" data-prod-id="${escapeHtml(String(m.prodId))}" data-var-id="${escapeHtml(String(m.varId || ''))}" onmousedown="event.preventDefault(); selectReceivingSearchItem(this.dataset.prodId, this.dataset.varId)" onclick="selectReceivingSearchItem(this.dataset.prodId, this.dataset.varId)">
                         <strong>${escapeHtml(m.label)}</strong>
                         <span class="autocomplete-badge">${escapeHtml(bInfo)}</span>
                     </div>
@@ -6357,7 +6439,9 @@
         function addSelectedProductToReceiving() {
             const val = document.getElementById('receivingProductPicker').value;
             if (!val) return;
-            const [prodId, varId] = val.split('_');
+            const sepIdx = val.indexOf('::');
+            const prodId = sepIdx !== -1 ? val.slice(0, sepIdx) : val;
+            const varId = sepIdx !== -1 ? val.slice(sepIdx + 2) : '';
             addItemToReceiving(prodId, varId || null, 1);
         }
 
@@ -6584,8 +6668,8 @@
 </body>
 </html>
 
-<!-- Injection By NetFree -->
-<script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
+<script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async ></script>
+
 <script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async ></script>
 
 <!-- Injection By NetFree -->
