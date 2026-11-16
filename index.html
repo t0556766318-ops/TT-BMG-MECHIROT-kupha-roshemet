@@ -1589,9 +1589,12 @@
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
-                    <input type="text" id="receivingBarcodeInput" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 8px; border: 2px solid var(--info);" placeholder="סרוק ברקוד מוצר או מידה להוספה למשלוח (Enter)..." onkeyup="if(event.key==='Enter') handleReceivingBarcodeScan()">
-                    <select id="receivingProductPicker" style="flex: 1.5; min-width: 220px; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;"></select>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; position: relative;">
+                    <div style="flex: 1.3; min-width: 220px; position: relative;">
+                        <input type="text" id="receivingBarcodeInput" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid var(--info);" placeholder="סרוק ברקוד או הקלד שם מוצר / מידה (Enter)..." oninput="handleReceivingSearchInput()" onkeyup="if(event.key==='Enter') handleReceivingBarcodeScan()" onblur="setTimeout(hideReceivingSearchDropdown, 200)">
+                        <div id="receivingSearchDropdown" class="autocomplete-dropdown"></div>
+                    </div>
+                    <select id="receivingProductPicker" style="flex: 1.4; min-width: 220px; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;"></select>
                     <button type="button" class="btn btn-info" onclick="addSelectedProductToReceiving()">+ הוסף לרשימה</button>
                 </div>
 
@@ -1644,11 +1647,15 @@
                 </div>
                 <div id="suppliersListContainer" style="margin-bottom: 15px;"></div>
                 <hr>
-                <h4 style="margin-top: 12px;">הפקת רשימת הזמנה לפי ספק (מוצרים ומידות במלאי נמוך):</h4>
-                <div style="display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap;">
+                <h4 style="margin-top: 12px;">הפקת רשימת הזמנה וצפייה ביתרות מלאי לפי ספק:</h4>
+                <div style="display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; align-items: center;">
                     <select id="orderSupplierFilter" style="flex: 1; min-width: 200px;" onchange="renderPurchaseOrder()"></select>
-                    <button type="button" class="btn btn-info btn-large-action" onclick="printPurchaseOrder()">הדפס הזמנת רכש</button>
-                    <button type="button" class="btn btn-success btn-large-action" onclick="copyPurchaseOrderAsText()">העתק הזמנה כטקסט</button>
+                    <label class="checkbox-row" style="margin: 0; background: #fffbeb; padding: 8px 12px; border-radius: 8px; border: 1px solid #fde68a;">
+                        <input type="checkbox" id="orderOnlyLowStockCheck" onchange="renderPurchaseOrder()">
+                        <span>הצג רק פריטים במלאי נמוך (מתחת לרף)</span>
+                    </label>
+                    <button type="button" class="btn btn-info btn-large-action" onclick="printPurchaseOrder()">הדפס רשימה / הזמנה</button>
+                    <button type="button" class="btn btn-success btn-large-action" onclick="copyPurchaseOrderAsText()">העתק כטקסט</button>
                 </div>
                 <div id="purchaseOrderPreview" style="background: #f8fafc; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px;"></div>
             </div>
@@ -1706,13 +1713,16 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>העלאת לוגו מהמחשב (ללא צורך בקישור - יופיע באתר ובקבלה):</label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
+                <div class="form-group" style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1;">
+                    <label>לוגו העסק (יופיע באתר ובקבלה - ניתן לבחור קובץ מהמחשב או להזין קישור):</label>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
                         <input type="file" id="logoFileInput" accept="image/*" onchange="handleLogoFileUpload(event)">
                         <button type="button" class="btn btn-danger btn-small" onclick="removeLogo()">הסר לוגו</button>
                     </div>
-                    <img id="settingsLogoPreview" src="" style="max-height: 50px; margin-top: 6px; display: none; border: 1px solid #ccc; border-radius: 4px;">
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <input type="text" id="settingLogoUrlInput" placeholder="או הדבק כאן קישור ישיר לתמונת לוגו (https://...)" style="flex: 1; min-width: 220px;" oninput="handleLogoUrlInput()">
+                    </div>
+                    <img id="settingsLogoPreview" src="" style="max-height: 55px; margin-top: 8px; display: none; border: 1px solid #ccc; border-radius: 4px; background: white; padding: 3px;">
                 </div>
 
                 <div class="form-group">
@@ -2650,6 +2660,8 @@
                         compressed = canvas.toDataURL('image/jpeg', 0.55);
                     }
                     tempLogoBase64 = compressed;
+                    const urlInp = document.getElementById('settingLogoUrlInput');
+                    if (urlInp) urlInp.value = '';
                     const preview = document.getElementById('settingsLogoPreview');
                     preview.src = tempLogoBase64;
                     preview.style.display = 'block';
@@ -2660,9 +2672,25 @@
             reader.readAsDataURL(file);
         }
 
+        function handleLogoUrlInput() {
+            const urlVal = document.getElementById('settingLogoUrlInput').value.trim();
+            const preview = document.getElementById('settingsLogoPreview');
+            if (urlVal) {
+                document.getElementById('logoFileInput').value = '';
+                tempLogoBase64 = urlVal;
+                preview.src = urlVal;
+                preview.style.display = 'block';
+            } else {
+                tempLogoBase64 = '';
+                preview.style.display = 'none';
+            }
+        }
+
         function removeLogo() {
             tempLogoBase64 = '';
             document.getElementById('logoFileInput').value = '';
+            const urlInp = document.getElementById('settingLogoUrlInput');
+            if (urlInp) urlInp.value = '';
             document.getElementById('settingsLogoPreview').style.display = 'none';
             showToast('הלוגו הוסר (לחץ שמור הגדרות לאישור סופי)', 'info');
         }
@@ -2714,7 +2742,12 @@
             appData.settings.autoLockEnabled = document.getElementById('settingAutoLockEnabled').checked;
             appData.settings.autoLockMinutes = Math.max(1, parseInt(document.getElementById('settingAutoLockMinutes').value) || 10);
             resetInactivityTimer();
+            const typedUrl = (document.getElementById('settingLogoUrlInput')?.value || '').trim();
+            if (typedUrl) {
+                tempLogoBase64 = typedUrl;
+            }
             appData.settings.logoData = tempLogoBase64;
+            appData.settings.logoUrl = typedUrl;
             appData.settings.cardSize = document.getElementById('settingCardSize').value;
             appData.settings.receiptHeader = document.getElementById('settingReceiptHeader').value;
             appData.settings.receiptSub = document.getElementById('settingReceiptSub').value;
@@ -2889,6 +2922,7 @@
             let cartKey = String(prod.id);
             let displayName = prod.name;
             let unitPrice = parseFloat(prod.price) || 0;
+            let unitCost = parseFloat(prod.cost) || 0;
             let variantName = '';
 
             if (variantId && hasProductVariants(prod)) {
@@ -2899,6 +2933,9 @@
                 displayName = `${prod.name} - ${variant.name}`;
                 if (variant.price !== undefined && variant.price !== null && variant.price !== '') {
                     unitPrice = parseFloat(variant.price);
+                }
+                if (variant.cost !== undefined && variant.cost !== null && variant.cost !== '') {
+                    unitCost = parseFloat(variant.cost);
                 }
             }
 
@@ -2916,7 +2953,7 @@
                     variantName: variantName,
                     name: displayName,
                     price: unitPrice,
-                    cost: parseFloat(prod.cost) || 0,
+                    cost: unitCost,
                     promoQty: prod.promoQty || 0,
                     promoPrice: prod.promoPrice || 0,
                     qty: 1
@@ -3849,11 +3886,16 @@
             document.getElementById('settingReceiptFooter').value = s.receiptFooter || '';
 
             const preview = document.getElementById('settingsLogoPreview');
+            const urlInp = document.getElementById('settingLogoUrlInput');
             if (tempLogoBase64) {
                 preview.src = tempLogoBase64;
                 preview.style.display = 'block';
+                if (urlInp) {
+                    urlInp.value = tempLogoBase64.startsWith('data:') ? '' : tempLogoBase64;
+                }
             } else {
                 preview.style.display = 'none';
+                if (urlInp) urlInp.value = '';
             }
 
             setTodaySummary();
@@ -3947,6 +3989,22 @@
             return '';
         }
 
+                function getItemResolvedUnitCost(i) {
+            const prod = (appData.products || []).find(p => p.id === (i.productId || i.id));
+            if (prod) {
+                if (i.variantId && hasProductVariants(prod)) {
+                    const v = prod.variants.find(vr => String(vr.id) === String(i.variantId));
+                    if (v && v.cost !== undefined && v.cost !== null && v.cost !== '') {
+                        return parseFloat(v.cost) || 0;
+                    }
+                }
+                if (prod.cost !== undefined && prod.cost !== null && prod.cost !== '') {
+                    return parseFloat(prod.cost) || 0;
+                }
+            }
+            return parseFloat(i.cost) || 0;
+        }
+
         function renderSalesAndProfitReport() {
             const fromDate = document.getElementById('profitFromDate') ? document.getElementById('profitFromDate').value : '';
             const toDate = document.getElementById('profitToDate') ? document.getElementById('profitToDate').value : '';
@@ -3960,8 +4018,7 @@
             }).forEach(r => {
                 r.items.forEach(i => {
                     if (!summary[i.name]) summary[i.name] = { qty: 0, rev: 0, profit: 0 };
-                    const prod = (appData.products || []).find(p => p.id === (i.productId || i.id));
-                    const unitCost = prod && prod.cost ? prod.cost : (i.cost || 0);
+                    const unitCost = getItemResolvedUnitCost(i);
                     const lTotal = i.lineTotal !== undefined ? i.lineTotal : (i.price * i.qty);
                     summary[i.name].qty += i.qty;
                     summary[i.name].rev += lTotal;
@@ -4260,6 +4317,7 @@
             const vId = (vData && vData.id) ? vData.id : ('var_' + Date.now() + '_' + Math.floor(Math.random() * 10000));
             const vName = (vData && vData.name) ? vData.name : '';
             const vStock = (vData && hasStockValue(vData.stock)) ? vData.stock : '';
+            const vCost = (vData && vData.cost !== undefined && vData.cost !== null && vData.cost !== '') ? vData.cost : '';
             const vPrice = (vData && vData.price !== undefined && vData.price !== null) ? vData.price : '';
             const vBarcodes = (vData && vData.barcodes) ? parseBarcodeList(vData.barcodes).join(', ') : '';
 
@@ -4274,10 +4332,11 @@
                     <button type="button" class="btn btn-secondary btn-tiny" style="padding:2px 6px; font-size:0.72em;" title="הזז למעלה" onclick="moveVariantRow(this, -1)">▲</button>
                     <button type="button" class="btn btn-secondary btn-tiny" style="padding:2px 6px; font-size:0.72em;" title="הזז למטה" onclick="moveVariantRow(this, 1)">▼</button>
                 </div>
-                <input type="text" class="var-name" placeholder="שם מידה (למשל: M)" value="${vName}" style="flex: 1.2; min-width: 105px;">
-                <input type="number" class="var-stock" placeholder="מלאי (אופציונלי)" value="${vStock}" style="flex: 0.85; min-width: 85px;">
-                <input type="number" class="var-price" step="0.1" placeholder="מחיר (אופציונלי)" value="${vPrice}" style="flex: 0.95; min-width: 100px;">
-                <input type="text" class="var-barcodes" placeholder="ברקודים למידה זו..." value="${vBarcodes}" style="flex: 2; min-width: 140px;" onkeydown="handleBarcodeAutoCommaKeydown(event, this)" onblur="cleanTrailingBarcodeComma(this)">
+                <input type="text" class="var-name" placeholder="שם מידה (למשל: M)" value="${vName}" style="flex: 1.1; min-width: 95px;">
+                <input type="number" class="var-stock" placeholder="מלאי (אופציונלי)" value="${vStock}" style="flex: 0.8; min-width: 80px;">
+                <input type="number" class="var-cost" step="0.1" placeholder="עלות (אופציונלי)" value="${vCost}" style="flex: 0.85; min-width: 90px;">
+                <input type="number" class="var-price" step="0.1" placeholder="מחיר (אופציונלי)" value="${vPrice}" style="flex: 0.85; min-width: 90px;">
+                <input type="text" class="var-barcodes" placeholder="ברקודים למידה זו..." value="${vBarcodes}" style="flex: 1.8; min-width: 130px;" onkeydown="handleBarcodeAutoCommaKeydown(event, this)" onblur="cleanTrailingBarcodeComma(this)">
                 <button type="button" class="btn btn-purple btn-tiny" title="צור ברקוד למידה זו" onclick="generateBarcodeForVariantRow(this)">צור ברקוד</button>
                 <button type="button" class="btn btn-info btn-tiny" title="הדפס מדבקות למידה זו" onclick="printSingleVariantRowLabel(this)">מדבקה</button>
                 <button type="button" class="btn btn-danger btn-small" onclick="this.parentElement.remove()">הסר</button>
@@ -4492,6 +4551,8 @@
                     const vName = row.querySelector('.var-name').value.trim();
                     const vStockRaw = row.querySelector('.var-stock').value.trim();
                     const vStock = vStockRaw !== '' ? parseInt(vStockRaw) : null;
+                    const vCostRaw = row.querySelector('.var-cost').value.trim();
+                    const vCost = vCostRaw !== '' ? parseFloat(vCostRaw) : null;
                     const vPriceRaw = row.querySelector('.var-price').value.trim();
                     const vPrice = vPriceRaw !== '' ? parseFloat(vPriceRaw) : null;
                     const vBarcodes = [...new Set(parseBarcodeList(row.querySelector('.var-barcodes').value))];
@@ -4504,6 +4565,7 @@
                         id: row.dataset.variantId,
                         name: vName,
                         stock: vStock,
+                        cost: vCost,
                         price: vPrice,
                         barcodes: vBarcodes
                     });
@@ -5118,6 +5180,7 @@
 
         function getLowStockOrderItems() {
             const sup = document.getElementById('orderSupplierFilter').value;
+            const onlyLow = Boolean(document.getElementById('orderOnlyLowStockCheck')?.checked);
             const threshold = parseInt(appData.settings.lowStockThreshold) || 5;
             let prods = getSortedProducts();
             if (sup !== 'ALL') {
@@ -5129,54 +5192,69 @@
                 if (p.hidden) return;
                 if (hasProductVariants(p)) {
                     p.variants.forEach(v => {
-                        if (!hasStockValue(v.stock)) return;
-                        const vStock = parseInt(v.stock) || 0;
-                        if (vStock <= threshold) {
-                            lowList.push({
-                                name: `${p.name} - מידה ${v.name}`,
-                                stock: vStock,
-                                supplier: p.supplier || 'כללי'
-                            });
-                        }
-                    });
-                } else {
-                    if (!hasStockValue(p.stock)) return;
-                    const pStock = parseInt(p.stock) || 0;
-                    if (pStock <= threshold) {
+                        const tracked = hasStockValue(v.stock);
+                        const vStock = tracked ? (parseInt(v.stock) || 0) : null;
+                        const isLow = tracked && vStock <= threshold;
+                        if (onlyLow && !isLow) return;
                         lowList.push({
-                            name: p.name,
-                            stock: pStock,
+                            name: `${p.name} - מידה ${v.name}`,
+                            stock: vStock,
+                            tracked: tracked,
+                            isLow: isLow,
                             supplier: p.supplier || 'כללי'
                         });
-                    }
+                    });
+                } else {
+                    const tracked = hasStockValue(p.stock);
+                    const pStock = tracked ? (parseInt(p.stock) || 0) : null;
+                    const isLow = tracked && pStock <= threshold;
+                    if (onlyLow && !isLow) return;
+                    lowList.push({
+                        name: p.name,
+                        stock: pStock,
+                        tracked: tracked,
+                        isLow: isLow,
+                        supplier: p.supplier || 'כללי'
+                    });
                 }
             });
-            return { sup, lowList };
+            return { sup, lowList, onlyLow };
         }
 
         function renderPurchaseOrder() {
-            const { sup, lowList } = getLowStockOrderItems();
+            const { sup, lowList, onlyLow } = getLowStockOrderItems();
             const preview = document.getElementById('purchaseOrderPreview');
             if (lowList.length === 0) {
-                preview.innerHTML = 'אין מוצרים או מידות מתחת לרף המלאי עבור ספק זה.';
+                preview.innerHTML = onlyLow
+                    ? 'אין מוצרים או מידות מתחת לרף המלאי עבור ספק זה.'
+                    : 'אין מוצרים המשויכים לספק זה.';
                 return;
             }
-            preview.innerHTML = `<strong>רשימת הזמנה (${sup === 'ALL' ? 'כל הספקים' : sup}):</strong><ul>` +
-                lowList.map(i => `<li>${i.name} - יתרה נוכחית: ${i.stock} יח' (ספק: ${i.supplier})</li>`).join('') + '</ul>';
+            const titleTxt = onlyLow ? 'רשימת הזמנה (מלאי נמוך בלבד)' : 'כל המוצרים ויתרות המלאי הנוכחיות';
+            preview.innerHTML = `<strong>${titleTxt} (${sup === 'ALL' ? 'כל הספקים' : sup}):</strong><ul style="margin-top:8px; padding-right:18px;">` +
+                lowList.map(i => {
+                    const stockTxt = i.tracked ? `${i.stock} יח'` : 'ללא מעקב מלאי';
+                    const badge = i.isLow
+                        ? `<span style="background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:10px; font-weight:700; font-size:0.85em; margin-right:6px;">מומלץ להזמין</span>`
+                        : `<span style="background:#dcfce7; color:#166534; padding:2px 8px; border-radius:10px; font-weight:600; font-size:0.85em; margin-right:6px;">תקין</span>`;
+                    return `<li style="margin-bottom:5px;"><strong>${escapeHtml(i.name)}</strong> — מלאי נוכחי: <strong>${stockTxt}</strong> ${i.tracked ? badge : ''} <span style="color:#64748b; font-size:0.9em;">(ספק: ${escapeHtml(i.supplier)})</span></li>`;
+                }).join('') + '</ul>';
         }
 
         function copyPurchaseOrderAsText() {
-            const { sup, lowList } = getLowStockOrderItems();
-            if (lowList.length === 0) return showToast('אין פריטים חסרים להעתקה', 'warning');
+            const { sup, lowList, onlyLow } = getLowStockOrderItems();
+            if (lowList.length === 0) return showToast('אין פריטים ברשימה להעתקה', 'warning');
 
             const lines = [
-                `*הזמנת רכש - ${appData.settings.storeName || 'ת"ת ישיבת בית מדרש גבוה'}*`,
+                `*${onlyLow ? 'הזמנת רכש' : 'דוח מלאי והזמנה לפי ספק'} - ${appData.settings.storeName || 'ת"ת ישיבת בית מדרש גבוה'}*`,
                 `ספק: ${sup === 'ALL' ? 'כל הספקים' : sup}`,
                 `תאריך: ${new Date().toLocaleDateString('he-IL')}`,
                 '------------------------'
             ];
             lowList.forEach(i => {
-                lines.push(`• ${i.name} (יתרה במלאי: ${i.stock} יח')`);
+                const stockTxt = i.tracked ? `${i.stock} יח'` : 'ללא מעקב';
+                const tag = i.isLow ? ' [חוסר / להזמנה]' : '';
+                lines.push(`• ${i.name} (יתרה במלאי: ${stockTxt})${tag}`);
             });
 
             navigator.clipboard.writeText(lines.join('\n')).then(() => {
@@ -5214,8 +5292,7 @@
             (appData.receipts || []).filter(r => r.active).forEach(r => {
                 r.items.forEach(i => {
                     if (!soldMap[i.name]) soldMap[i.name] = { qty: 0, totalSum: 0, profit: 0 };
-                    const prod = (appData.products || []).find(p => p.id === (i.productId || i.id));
-                    const unitCost = prod && prod.cost ? prod.cost : (i.cost || 0);
+                    const unitCost = getItemResolvedUnitCost(i);
                     const lTotal = i.lineTotal !== undefined ? i.lineTotal : (i.price * i.qty);
                     soldMap[i.name].qty += i.qty;
                     soldMap[i.name].totalSum += lTotal;
@@ -5967,7 +6044,7 @@
                 `;
             });
 
-textLines.push('------------------------');
+            textLines.push('------------------------');
             textLines.push(`*סה"כ יתרת חוב לתשלום: ₪${totalDebt.toFixed(2)}*`);
             currentStudentDebtStatementText = textLines.join('\n');
 
@@ -6016,12 +6093,13 @@ textLines.push('------------------------');
             list.forEach(p => {
                 if (hasProductVariants(p)) {
                     p.variants.forEach(v => {
+                        const vCost = (v.cost !== undefined && v.cost !== null && v.cost !== '') ? v.cost : (p.cost || 0);
                         const vPrice = (v.price !== undefined && v.price !== null && v.price !== '') ? v.price : p.price;
                         const vStock = hasStockValue(v.stock) ? v.stock : '';
                         html += `<tr style="border-bottom:1px solid #e2e8f0;" data-be-prod="${p.id}" data-be-var="${v.id}">
                             <td style="padding:8px; font-weight:bold;">${escapeHtml(p.name)} - <span style="color:#6b21a8;">${escapeHtml(v.name)}</span></td>
                             <td style="padding:8px; color:#64748b;">${escapeHtml(p.category || 'כללי')}</td>
-                            <td style="padding:8px;"><input type="number" step="0.1" class="be-cost" value="${p.cost || 0}" style="width:85px; padding:5px; border:1px solid #cbd5e1; border-radius:6px;"></td>
+                            <td style="padding:8px;"><input type="number" step="0.1" class="be-cost" value="${vCost}" style="width:85px; padding:5px; border:1px solid #cbd5e1; border-radius:6px;"></td>
                             <td style="padding:8px;"><input type="number" step="0.1" class="be-price" value="${vPrice}" style="width:85px; padding:5px; border:1px solid #cbd5e1; border-radius:6px;"></td>
                             <td style="padding:8px;"><input type="number" class="be-stock" placeholder="ללא מעקב" value="${vStock}" style="width:90px; padding:5px; border:1px solid #cbd5e1; border-radius:6px;"></td>
                         </tr>`;
@@ -6057,14 +6135,14 @@ textLines.push('------------------------');
                 const rawStock = row.querySelector('.be-stock').value.trim();
                 const newStock = rawStock !== '' ? parseInt(rawStock) : null;
 
-                if (p.cost !== newCost) {
-                    p.cost = newCost;
-                    changedCount++;
-                }
-
                 if (varId && hasProductVariants(p)) {
                     const v = p.variants.find(vr => String(vr.id) === String(varId));
                     if (v) {
+                        const oldVCost = (v.cost !== undefined && v.cost !== null && v.cost !== '') ? parseFloat(v.cost) : (parseFloat(p.cost) || 0);
+                        if (oldVCost !== newCost) {
+                            v.cost = newCost;
+                            changedCount++;
+                        }
                         const oldVPrice = (v.price !== undefined && v.price !== null && v.price !== '') ? parseFloat(v.price) : parseFloat(p.price);
                         if (!isNaN(newPrice) && oldVPrice !== newPrice) {
                             v.price = newPrice;
@@ -6084,6 +6162,10 @@ textLines.push('------------------------');
                     }
                     p.stock = getProductTotalStock(p);
                 } else {
+                    if ((parseFloat(p.cost) || 0) !== newCost) {
+                        p.cost = newCost;
+                        changedCount++;
+                    }
                     if (!isNaN(newPrice) && parseFloat(p.price) !== newPrice) {
                         p.price = newPrice;
                         changedCount++;
@@ -6139,14 +6221,89 @@ textLines.push('------------------------');
             renderReceivingItemsList();
         }
 
+        function getAllReceivingCatalogEntries() {
+            const entries = [];
+            getSortedProducts().forEach(p => {
+                if (hasProductVariants(p)) {
+                    p.variants.forEach(v => {
+                        const vCost = (v.cost !== undefined && v.cost !== null && v.cost !== '') ? parseFloat(v.cost) : (parseFloat(p.cost) || 0);
+                        entries.push({
+                            prodId: p.id,
+                            varId: v.id,
+                            label: `${p.name} - ${v.name}`,
+                            barcodes: parseBarcodeList(v.barcodes),
+                            unitCost: vCost
+                        });
+                    });
+                } else {
+                    entries.push({
+                        prodId: p.id,
+                        varId: null,
+                        label: p.name,
+                        barcodes: parseBarcodeList(p.barcodes),
+                        unitCost: parseFloat(p.cost) || 0
+                    });
+                }
+            });
+            return entries;
+        }
+
+        function handleReceivingSearchInput() {
+            const inp = document.getElementById('receivingBarcodeInput');
+            const dropdown = document.getElementById('receivingSearchDropdown');
+            if (!inp || !dropdown) return;
+            const q = inp.value.trim().toLowerCase();
+            if (!q) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            const matches = getAllReceivingCatalogEntries().filter(e =>
+                e.label.toLowerCase().includes(q) ||
+                e.barcodes.some(b => b.toLowerCase().includes(q))
+            );
+            if (matches.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            dropdown.innerHTML = matches.slice(0, 12).map(m => {
+                const bInfo = m.barcodes.length > 0 ? m.barcodes[0] : 'ללא ברקוד';
+                return `
+                    <div class="autocomplete-item" onmousedown="selectReceivingSearchItem('${m.prodId}', '${m.varId || ''}')">
+                        <strong>${escapeHtml(m.label)}</strong>
+                        <span class="autocomplete-badge">${escapeHtml(bInfo)}</span>
+                    </div>
+                `;
+            }).join('');
+            dropdown.style.display = 'block';
+        }
+
+        function selectReceivingSearchItem(prodId, varId) {
+            addItemToReceiving(prodId, varId || null, 1);
+            const inp = document.getElementById('receivingBarcodeInput');
+            if (inp) {
+                inp.value = '';
+                inp.focus();
+            }
+            hideReceivingSearchDropdown();
+        }
+
+        function hideReceivingSearchDropdown() {
+            const dropdown = document.getElementById('receivingSearchDropdown');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
         function addItemToReceiving(prodId, varId = null, qtyToAdd = 1) {
             const p = appData.products.find(item => String(item.id) === String(prodId));
             if (!p) return;
             let label = p.name;
+            let unitCost = parseFloat(p.cost) || 0;
             if (varId && hasProductVariants(p)) {
                 const v = p.variants.find(vr => String(vr.id) === String(varId));
                 if (!v) return;
                 label = `${p.name} - ${v.name}`;
+                if (v.cost !== undefined && v.cost !== null && v.cost !== '') {
+                    unitCost = parseFloat(v.cost) || 0;
+                }
             }
 
             const key = `${p.id}_${varId || ''}`;
@@ -6160,34 +6317,40 @@ textLines.push('------------------------');
                     variantId: varId || null,
                     label,
                     qty: qtyToAdd,
-                    unitCost: parseFloat(p.cost) || 0
+                    unitCost: unitCost
                 });
             }
             renderReceivingItemsList();
+            showToast(`נוסף למשלוח: ${label}`, 'success', 1400);
         }
 
         function handleReceivingBarcodeScan() {
             const inp = document.getElementById('receivingBarcodeInput');
-            const code = inp.value.trim();
-            if (!code) return;
+            const query = inp.value.trim();
+            if (!query) return;
 
-            for (const p of getSortedProducts()) {
-                if (hasProductVariants(p)) {
-                    const v = p.variants.find(vr => parseBarcodeList(vr.barcodes).includes(code));
-                    if (v) {
-                        addItemToReceiving(p.id, v.id, 1);
-                        inp.value = '';
-                        showToast(`נוסף למשלוח: ${p.name} - ${v.name}`, 'success', 1400);
-                        return;
-                    }
-                } else if (parseBarcodeList(p.barcodes).includes(code)) {
-                    addItemToReceiving(p.id, null, 1);
-                    inp.value = '';
-                    showToast(`נוסף למשלוח: ${p.name}`, 'success', 1400);
-                    return;
-                }
+            const entries = getAllReceivingCatalogEntries();
+            const exactBarcodeMatch = entries.find(e => e.barcodes.includes(query));
+            if (exactBarcodeMatch) {
+                addItemToReceiving(exactBarcodeMatch.prodId, exactBarcodeMatch.varId, 1);
+                inp.value = '';
+                hideReceivingSearchDropdown();
+                return;
             }
-            showToast(`ברקוד לא נמצא: ${code}`, 'error');
+
+            const nameMatches = entries.filter(e => e.label.toLowerCase().includes(query.toLowerCase()));
+            if (nameMatches.length === 1) {
+                addItemToReceiving(nameMatches[0].prodId, nameMatches[0].varId, 1);
+                inp.value = '';
+                hideReceivingSearchDropdown();
+                return;
+            } else if (nameMatches.length > 1) {
+                handleReceivingSearchInput();
+                showToast(`נמצאו ${nameMatches.length} התאמות — בחר מהרשימה שנפתחה`, 'info', 2000);
+                return;
+            }
+
+            showToast(`לא נמצא מוצר או ברקוד תואם ל-"${query}"`, 'error');
             inp.select();
         }
 
@@ -6261,17 +6424,18 @@ textLines.push('------------------------');
             receivingItemsList.forEach(it => {
                 const p = appData.products.find(prod => String(prod.id) === String(it.productId));
                 if (!p) return;
-                p.cost = it.unitCost;
                 let newStockVal = 0;
 
                 if (it.variantId && hasProductVariants(p)) {
                     const v = p.variants.find(vr => String(vr.id) === String(it.variantId));
                     if (v) {
                         v.stock = (hasStockValue(v.stock) ? (parseInt(v.stock) || 0) : 0) + it.qty;
+                        v.cost = it.unitCost;
                         newStockVal = v.stock;
                     }
                     p.stock = getProductTotalStock(p);
                 } else {
+                    p.cost = it.unitCost;
                     p.stock = (hasStockValue(p.stock) ? (parseInt(p.stock) || 0) : 0) + it.qty;
                     newStockVal = p.stock;
                 }
@@ -6419,6 +6583,10 @@ textLines.push('------------------------');
     </script>
 </body>
 </html>
+
+<!-- Injection By NetFree -->
+<script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
+<script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async ></script>
 
 <!-- Injection By NetFree -->
 <script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
