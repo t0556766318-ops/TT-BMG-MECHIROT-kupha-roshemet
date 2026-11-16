@@ -1089,7 +1089,7 @@
             
             <div class="cart-top-tools">
                 <button type="button" class="btn btn-secondary btn-small" onclick="openFreeItemModal()">+ פריט חופשי</button>
-                <button type="button" class="btn btn-purple btn-small" onclick="requestWholeCartDiscount()">% הנחה / מחיר עלות</button>
+                <button type="button" class="btn btn-purple btn-small" onclick="requestWholeCartDiscount()">% הנחה</button>
                 <button type="button" class="btn btn-warning btn-small" onclick="openHoldCartPrompt()">השהה עגלה</button>
                 <button type="button" class="btn btn-info btn-small" onclick="openHeldCartsModal()">עגלות מושהות (<span id="heldCount">0</span>)</button>
             </div>
@@ -1314,7 +1314,7 @@
                     סכום לגבייה באשראי: ₪<span id="creditModalAmountDisplay">0.00</span>
                 </div>
             </div>
-            <iframe id="creditIframe" src="" style="width: 100%; flex: 1; border: 1px solid #cbd5e1; border-radius: 10px; margin: 6px 0 12px 0;"></iframe>
+            <iframe id="creditIframe" src="" autocomplete="off" style="width: 100%; flex: 1; border: 1px solid #cbd5e1; border-radius: 10px; margin: 6px 0 12px 0;"></iframe>
             <div style="display: flex; justify-content: space-between; gap: 12px;">
                 <button type="button" class="btn btn-success btn-large-action" style="flex:1" onclick="completeCreditTransaction()">אישור סיום תשלום באשראי</button>
                 <button type="button" class="btn btn-danger btn-large-action" style="flex:1" onclick="closeModal('creditIframeModal')">ביטול עסקה</button>
@@ -3472,10 +3472,15 @@
 
             if (currentPaymentType === 'credit' || currentPaymentType === 'mixed') {
                 const creditAmount = pendingPaymentDetails.creditApplied;
+                const nameParts = name.trim().split(/\s+/);
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
                 const encodedBuyerName = encodeURIComponent(name);
+                const encodedFirstName = encodeURIComponent(firstName);
+                const encodedLastName = encodeURIComponent(lastName);
                 const encodedGroup = encodeURIComponent('מכירת ביגוד');
                 document.getElementById('creditModalAmountDisplay').innerText = creditAmount.toFixed(2);
-                document.getElementById('creditIframe').src = `https://www.matara.pro/nedarimplus/online/?mosad=1000858&Amount=${creditAmount.toFixed(2)}&Name=${encodedBuyerName}&Groupe=${encodedGroup}`;
+                document.getElementById('creditIframe').src = `https://www.matara.pro/nedarimplus/online/?mosad=1000858&Amount=${creditAmount.toFixed(2)}&Name=${encodedBuyerName}&FirstName=${encodedFirstName}&LastName=${encodedLastName}&Groupe=${encodedGroup}`;
                 document.getElementById('creditIframeModal').style.display = 'flex';
             } else {
                 finalizeTransaction();
@@ -6837,6 +6842,46 @@
 <!-- Injection By NetFree -->
 <script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
 <script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async ></script>
+
+<!-- Injection By NetFree -->
+<script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
+<script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async >
+        /* חסימת השלמה אוטומטית של גוגל כרום (שמות, מספרים, כתובות וכו') בכל שדות האתר */
+        function disableBrowserAutofillAll() {
+            document.querySelectorAll('form').forEach(f => {
+                f.setAttribute('autocomplete', 'off');
+            });
+            document.querySelectorAll('input, textarea, select').forEach((el, idx) => {
+                if (el.type === 'checkbox' || el.type === 'radio' || el.type === 'file' || el.type === 'hidden') return;
+                el.setAttribute('autocomplete', 'new-password');
+                el.setAttribute('autocorrect', 'off');
+                el.setAttribute('autocapitalize', 'off');
+                el.setAttribute('spellcheck', 'false');
+                if (!el.getAttribute('name') || /^(name|cust|phone|tel|address|email|card|cc)/i.test(el.getAttribute('name'))) {
+                    el.setAttribute('data-orig-name', el.getAttribute('name') || '');
+                    el.setAttribute('name', 'no_autofill_' + idx + '_' + Math.random().toString(36).slice(2, 6));
+                }
+                if (!el.dataset.noAutofillBound) {
+                    el.dataset.noAutofillBound = '1';
+                    el.setAttribute('readonly', 'readonly');
+                    const unlockField = () => {
+                        el.removeAttribute('readonly');
+                    };
+                    el.addEventListener('focus', unlockField);
+                    el.addEventListener('pointerdown', unlockField);
+                    el.addEventListener('keydown', unlockField);
+                    el.addEventListener('blur', () => {
+                        if (!el.disabled) el.setAttribute('readonly', 'readonly');
+                    });
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', disableBrowserAutofillAll);
+        const autofillObserver = new MutationObserver(() => disableBrowserAutofillAll());
+        autofillObserver.observe(document.body, { childList: true, subtree: true });
+        disableBrowserAutofillAll();
+
+    </script>
 
 <!-- Injection By NetFree -->
 <script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
