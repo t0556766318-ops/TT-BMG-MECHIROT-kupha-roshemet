@@ -933,7 +933,85 @@
                 margin: 0;
             }
         }
+    
+        /* שיפורי תצוגה ברשימת מוצרים - כפתורים תמיד בשמאל */
+        .admin-prod-row {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: flex-start !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+        }
+        .admin-prod-info-col {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            flex: 1 1 240px;
+            min-width: 220px;
+            word-break: break-word;
+        }
+        .admin-prod-actions-col {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-right: auto;
+            flex-shrink: 0;
+        }
+
+        /* מחיר לחיץ בעגלה להנחה באישור מנהל */
+        .cart-price-clickable {
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 6px;
+            border: 1px dashed transparent;
+            transition: all 0.15s;
+        }
+        .cart-price-clickable:hover {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+
+        /* עיצוב מדבקות ודף ברקודים */
+        .barcode-label-card {
+            border: 1px dashed #64748b;
+            border-radius: 6px;
+            padding: 8px 10px;
+            text-align: center;
+            background: #fff;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            page-break-inside: avoid;
+        }
+        .barcode-sheet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        /* הדפסת Z תרמי */
+        @media print {
+            body.printing-z * { visibility: hidden; }
+            body.printing-z #printableZReport, body.printing-z #printableZReport * { visibility: visible; }
+            body.printing-z #printableZReport {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 72mm;
+                max-width: 100%;
+                border: none;
+                padding: 2mm;
+                margin: 0;
+            }
+        }
+
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
 
@@ -987,7 +1065,7 @@
         <div class="catalog-section">
             <div class="unified-search-bar">
                 <label for="unifiedSearchInput" style="font-weight: bold; white-space: nowrap;">חיפוש / ברקוד:</label>
-                <input type="text" id="unifiedSearchInput" placeholder="סרוק ברקוד (Enter) או הקלד שם מוצר לסינון..." oninput="handleUnifiedSearchInput()" onkeyup="if(event.key==='Enter') handleUnifiedSearchEnter()">
+                <input type="text" id="unifiedSearchInput" placeholder="סרוק ברקוד מוצר / קבלה (Enter) או הקלד שם מוצר לסינון..." oninput="handleUnifiedSearchInput()" onkeyup="if(event.key==='Enter') handleUnifiedSearchEnter()">
                 <button type="button" class="btn btn-secondary btn-small" onclick="clearUnifiedSearch()">נקה</button>
             </div>
 
@@ -1083,7 +1161,7 @@
             <h3>היסטוריית קבלות והחזרת פריט (זיכוי)</h3>
             <p style="font-size: 0.92em; color: var(--text-muted); margin-bottom: 10px;">ניתן להציג/להדפיס מחדש קבלה פעילה או לזכות פריט בודד ולהחזירו למלאי:</p>
             <div class="form-group">
-                <input type="text" id="returnSearchInput" placeholder="חפש לפי שם לקוח, שיעור או מספר קבלה..." oninput="renderReturnReceipts()">
+                <input type="text" id="returnSearchInput" placeholder="חפש לפי שם לקוח, שיעור, מספר קבלה או סרוק ברקוד קבלה..." oninput="renderReturnReceipts()">
             </div>
             <div id="returnReceiptsContainer" style="max-height: 380px; overflow-y: auto;"></div>
             <br>
@@ -1251,7 +1329,10 @@
                 <button type="button" class="tab-btn active" onclick="switchTab('reports', this)">דוחות וסיכום יומי</button>
                 <button type="button" class="tab-btn" onclick="switchTab('customers', this)">כרטיס לקוח, חובות וניקוי שמות</button>
                 <button type="button" class="tab-btn" onclick="switchTab('products', this)">מוצרים, מידות ומלאי</button>
+                <button type="button" class="tab-btn" onclick="switchTab('bulkedit', this)">עריכת מחירים ומלאי בטבלה</button>
+                <button type="button" class="tab-btn" onclick="switchTab('receiving', this)">קליטת סחורה מספק</button>
                 <button type="button" class="tab-btn" onclick="switchTab('stockcount', this)">ספירת מלאי מהירה</button>
+                <button type="button" class="tab-btn" onclick="switchTab('stocklog', this)">יומן תנועות מלאי</button>
                 <button type="button" class="tab-btn" onclick="switchTab('suppliers', this)">ספקים והזמנות</button>
                 <button type="button" class="tab-btn" onclick="switchTab('settings', this)">הגדרות וסיסמאות</button>
             </div>
@@ -1266,16 +1347,31 @@
                 <!-- סיכום קופה יומי -->
                 <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
                     <h4>סיכום קופה יומי (כולל פיצול עסקאות משולבות):</h4>
-                    <div style="display: flex; gap: 10px; align-items: center; margin: 10px 0;">
+                    <div style="display: flex; gap: 10px; align-items: center; margin: 10px 0; flex-wrap: wrap;">
                         <label>בחר תאריך:</label>
                         <input type="date" id="dailySummaryDate" style="width: auto;" onchange="renderDailySummary()">
                         <button type="button" class="btn btn-small" onclick="setTodaySummary()">היום</button>
+                        <button type="button" class="btn btn-purple btn-small" onclick="openDailyZReportModal()">הדפס דוח סגירת קופה (Z)</button>
                     </div>
                     <div id="dailySummaryBox" style="display: flex; gap: 12px; flex-wrap: wrap; font-weight: bold; margin-top: 8px;"></div>
                 </div>
 
-                <h4>סיכום מכירות ורווח גולמי (כלל המכירות הפעילות - ממוין לפי א'-ב'):</h4>
-                <div id="salesSummaryReport" style="margin: 10px 0; max-height: 150px; overflow-y: auto;"></div>
+                <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                        <h4 style="margin:0;">סיכום מכירות ורווח גולמי (ממוין לפי א'-ב'):</h4>
+                        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 0.9em;">
+                            <label>מתאריך:</label>
+                            <input type="date" id="profitFromDate" style="width: auto; padding: 5px 8px;" onchange="renderSalesAndProfitReport()">
+                            <label>עד תאריך:</label>
+                            <input type="date" id="profitToDate" style="width: auto; padding: 5px 8px;" onchange="renderSalesAndProfitReport()">
+                            <button type="button" class="btn btn-secondary btn-tiny" onclick="setProfitRangePreset('today')">היום</button>
+                            <button type="button" class="btn btn-secondary btn-tiny" onclick="setProfitRangePreset('week')">השבוע</button>
+                            <button type="button" class="btn btn-secondary btn-tiny" onclick="setProfitRangePreset('month')">החודש</button>
+                            <button type="button" class="btn btn-secondary btn-tiny" onclick="setProfitRangePreset('all')">הכל</button>
+                        </div>
+                    </div>
+                    <div id="salesSummaryReport" style="margin: 6px 0; max-height: 165px; overflow-y: auto;"></div>
+                </div>
                 
                 <hr style="margin: 14px 0;">
                 
@@ -1305,6 +1401,14 @@
                         סמן מספר שמות למחיקה מרובה או לחץ על × ליד שם בודד כדי להסירו מרשימת ההשלמה האוטומטית בקופה.
                     </p>
                     <div id="savedCustomersListContainer" style="max-height: 165px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                </div>
+
+                <div id="debtSummaryByPersonSection" style="background: #fffbeb; padding: 14px; border-radius: 12px; border: 1.5px solid #fcd34d; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                        <h4 style="margin:0; color:#92400e;">ריכוז חובות פתוחים לפי בחור / לקוח (יתרה מצטברת):</h4>
+                        <span id="totalOpenDebtsBadge" style="background:#ef4444; color:white; padding:4px 12px; border-radius:14px; font-weight:800; font-size:0.9em;">סה"כ חובות פתוחים: ₪0.00</span>
+                    </div>
+                    <div id="aggregatedDebtsContainer" style="max-height: 210px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
                 <h4>דוח מכירות לפי קונים וניהול חובות (הקפה)</h4>
@@ -1363,6 +1467,8 @@
                             <span>למוצר זה יש מידות / גדלים נפרדים (כגון: S, M, L, XL)</span>
                         </label>
                         <div id="variantActionBtns" style="display: none; gap: 6px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-purple btn-small" onclick="generateBarcodesForAllVariants()">צור ברקודים לכל המידות יחד</button>
+                            <button type="button" class="btn btn-info btn-small" onclick="printProductVariantsLabels()">הדפס מדבקות לכל המידות</button>
                             <button type="button" class="btn btn-secondary btn-small" onclick="autoSortVariantRows()">סדר מידות אוטומטית</button>
                             <button type="button" class="btn btn-info btn-small" onclick="addVariantRow()">+ הוסף מידה</button>
                         </div>
@@ -1417,7 +1523,11 @@
 
                 <div class="form-group" id="prodSingleBarcodesGroup">
                     <label>ברקודים (סרוק ברצף - יתווסף פסיק אוטומטית בין ברקוד לברקוד):</label>
-                    <input type="text" id="prodBarcodes" placeholder="סרוק ברקוד או הקלד..." onkeydown="handleBarcodeAutoCommaKeydown(event, this)" onblur="cleanTrailingBarcodeComma(this)">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <input type="text" id="prodBarcodes" style="flex: 1; min-width: 200px;" placeholder="סרוק ברקוד או הקלד..." onkeydown="handleBarcodeAutoCommaKeydown(event, this)" onblur="cleanTrailingBarcodeComma(this)">
+                        <button type="button" class="btn btn-purple btn-small" onclick="generateSingleProductBarcode()">צור ברקוד אוטומטי</button>
+                        <button type="button" class="btn btn-info btn-small" onclick="printSingleProductLabelsFromForm()">הדפס מדבקות למוצר</button>
+                    </div>
                 </div>
 
                 <div style="display: flex; gap: 10px;">
@@ -1425,6 +1535,14 @@
                     <button type="button" class="btn btn-secondary btn-large-action" onclick="resetProdForm()">איפוס טופס</button>
                 </div>
                 <hr style="margin: 14px 0;">
+                <div style="background: #f3e8ff; border: 1px solid #d8b4fe; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <strong style="color: #6b21a8;">כלי ברקודים ומדבקות:</strong>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-purple btn-small" onclick="generateMissingBarcodesBulk()">צור ברקודים לכל המוצרים/מידות שחסר להם</button>
+                        <button type="button" class="btn btn-info btn-small" onclick="openCounterBarcodeSheetModal()">הדפס דף ברקודים לסריקה ליד הקופה</button>
+                    </div>
+                </div>
+
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
                     <div>
                         <h4 style="margin-bottom: 2px;">רשימת מוצרים קיימים וסידור תצוגה בקופה:</h4>
@@ -1432,10 +1550,74 @@
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                         <button type="button" class="btn btn-secondary btn-small" onclick="resetProductsAlphaOrder()">אפס סדר לא'-ב'</button>
-                        <input type="text" id="adminProdSearchInput" placeholder="חפש מוצר ברשימה..." style="width: 220px; padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 8px;" oninput="renderAdminProductsList()">
+                        <input type="text" id="adminProdSearchInput" placeholder="חפש לפי שם מוצר, מידה או ברקוד..." style="width: 240px; padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 8px;" oninput="renderAdminProductsList()">
                     </div>
                 </div>
                 <div id="adminProductsList" style="max-height: 260px; overflow-y: auto; margin-top: 8px;"></div>
+            </div>
+
+
+            <!-- לשונית עריכת מחירים ומלאי גורפת בטבלה -->
+            <div id="tab-bulkedit" class="tab-content" style="display:none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                    <div>
+                        <h4 style="margin-bottom: 2px;">עריכה מהירה בטבלה (עלות, מחיר מכירה ומלאי)</h4>
+                        <span style="font-size: 0.88em; color: var(--text-muted);">ערוך מספר מוצרים או מידות ברצף ולחץ על "שמור את כל השינויים" בסיום.</span>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <input type="text" id="bulkEditSearchInput" placeholder="סנן לפי שם מוצר או קטגוריה..." style="width: 220px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px;" oninput="renderBulkEditTable()">
+                        <button type="button" class="btn btn-success btn-large-action" onclick="saveBulkEditChanges()">שמור את כל השינויים</button>
+                    </div>
+                </div>
+                <div id="bulkEditTableContainer" style="max-height: 410px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 10px;"></div>
+            </div>
+
+            <!-- לשונית קליטת סחורה מספק מסודרת -->
+            <div id="tab-receiving" class="tab-content" style="display:none;">
+                <h4>קליטת משלוח / סחורה מספק</h4>
+                <p style="font-size: 0.92em; color: var(--text-muted); margin-bottom: 12px;">
+                    בחר ספק, סרוק ברקודים ברצף או הוסף פריטים מהרשימה, הזן כמויות שהתקבלו (ואופציונלית עדכן מחיר עלות) וקלוט הכל למלאי בלחיצה אחת.
+                </p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; margin-bottom: 12px;">
+                    <div style="flex: 1; min-width: 180px;">
+                        <label style="font-weight: 700; display: block; margin-bottom: 4px;">ספק שולח:</label>
+                        <select id="receivingSupplierSelect" style="width: 100%; padding: 9px; border-radius: 8px; border: 1px solid #cbd5e1;"></select>
+                    </div>
+                    <div style="flex: 1; min-width: 180px;">
+                        <label style="font-weight: 700; display: block; margin-bottom: 4px;">הערה / מס' תעודת משלוח:</label>
+                        <input type="text" id="receivingNoteInput" placeholder="לדוגמה: חשבונית 4021" style="width: 100%; padding: 9px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                    <input type="text" id="receivingBarcodeInput" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 8px; border: 2px solid var(--info);" placeholder="סרוק ברקוד מוצר או מידה להוספה למשלוח (Enter)..." onkeyup="if(event.key==='Enter') handleReceivingBarcodeScan()">
+                    <select id="receivingProductPicker" style="flex: 1.5; min-width: 220px; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;"></select>
+                    <button type="button" class="btn btn-info" onclick="addSelectedProductToReceiving()">+ הוסף לרשימה</button>
+                </div>
+
+                <div id="receivingItemsContainer" style="max-height: 260px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 10px; padding: 8px; margin-bottom: 12px;"></div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="font-weight: 800; font-size: 1.1em; color: var(--primary);">
+                        סה"כ יחידות לקליטה: <span id="receivingTotalUnits">0</span> | שווי עלות משלוח: ₪<span id="receivingTotalCost">0.00</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-secondary" onclick="clearReceivingList()">נקה רשימה</button>
+                        <button type="button" class="btn btn-success btn-large-action" onclick="commitGoodsReceiving()">קלוט סחורה ועדכן מלאי</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- לשונית יומן תנועות מלאי -->
+            <div id="tab-stocklog" class="tab-content" style="display:none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                    <div>
+                        <h4 style="margin-bottom: 2px;">יומן תנועות מלאי (היסטוריית שינויים)</h4>
+                        <span style="font-size: 0.88em; color: var(--text-muted);">מעקב אוטומטי אחר הוספות מלאי, קליטות מספק, ספירות מלאי והחזרות פריטים.</span>
+                    </div>
+                    <input type="text" id="stockLogSearchInput" placeholder="חפש לפי מוצר, פעולה או ספק..." style="width: 240px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px;" oninput="renderStockLogTable()">
+                </div>
+                <div id="stockLogContainer" style="max-height: 410px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 10px;"></div>
             </div>
 
             <!-- 4. לשונית ספירת מלאי מהירה -->
@@ -1512,6 +1694,18 @@
                     </div>
                 </div>
 
+                <div style="background: #f8fafc; padding: 14px; border-radius: 10px; margin-bottom: 14px; border: 1px solid #cbd5e1;">
+                    <h4 style="margin-bottom: 8px;">נעילה אוטומטית בעת חוסר פעילות</h4>
+                    <label class="checkbox-row" style="margin-bottom: 8px;">
+                        <input type="checkbox" id="settingAutoLockEnabled">
+                        <span>הפעל נעילת מסך אוטומטית כאשר אין פעילות במחשב</span>
+                    </label>
+                    <div class="form-group" style="margin-bottom: 0; max-width: 280px;">
+                        <label>זמן המתנה לפני נעילה (בדקות):</label>
+                        <input type="number" id="settingAutoLockMinutes" min="1" max="240" value="10">
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>העלאת לוגו מהמחשב (ללא צורך בקישור - יופיע באתר ובקבלה):</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
@@ -1583,12 +1777,137 @@
                 </div>
                 <div style="border-top: 1px dashed #000; margin: 4px 0;"></div>
                 <div id="receiptFooterTitle" style="font-size: 11px; margin-top: 5px;"></div>
+                <div style="margin-top: 6px; text-align: center;">
+                    <svg id="receiptBarcodeSvg" style="max-width: 100%; height: 42px;"></svg>
+                </div>
             </div>
             <br>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <button type="button" class="btn btn-success btn-large-action" style="flex:1" onclick="window.print()">הדפס קבלה</button>
                 <button type="button" class="btn btn-info btn-large-action" style="flex:1" onclick="copyReceiptAsText()">העתק קבלה כטקסט</button>
                 <button type="button" class="btn btn-danger btn-large-action" style="width:100%; margin-top:4px;" onclick="closeModal('receiptViewModal')">סגור</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- מודאל הנחה / התאמת מחיר נקודתית בעגלה (באישור מנהל) -->
+    <div class="modal" id="cartItemDiscountModal">
+        <div class="modal-content" style="width: 420px;">
+            <h3>עדכון מחיר / הנחה נקודתית לפריט</h3>
+            <p id="discountItemNameDisplay" style="font-weight: 800; color: var(--primary); margin-bottom: 10px;"></p>
+            <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 12px;">
+                מחיר מקורי ליחידה: <strong>₪<span id="discountOrigPriceDisplay">0.00</span></strong>
+            </div>
+            <div class="form-group">
+                <label>אופן ההתאמה:</label>
+                <select id="discountModeSelect" onchange="updateDiscountPreview()">
+                    <option value="fixed_price">קביעת מחיר חדש ליחידה (₪)</option>
+                    <option value="amount_off">הנחה בשקלים ליחידה (₪)</option>
+                    <option value="percent_off">הנחה באחוזים (%)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label id="discountValueLabel">מחיר חדש ליחידה (₪):</label>
+                <input type="number" id="discountValueInput" step="0.1" placeholder="0.00" oninput="updateDiscountPreview()" onkeyup="if(event.key==='Enter') applyCartItemDiscount()">
+            </div>
+            <div style="background: #ecfdf5; padding: 10px; border-radius: 8px; font-weight: 800; color: #065f46; margin-bottom: 14px;">
+                מחיר מעודכן ליחידה: ₪<span id="discountFinalPricePreview">0.00</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1;" onclick="applyCartItemDiscount()">אשר מחיר</button>
+                <button type="button" class="btn btn-secondary btn-large-action" onclick="resetCartItemDiscount()">אפס למחיר מקורי</button>
+                <button type="button" class="btn btn-danger btn-large-action" onclick="closeModal('cartItemDiscountModal')">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- מודאל סגירת חוב (מלא או חלקי, במזומן או באשראי) -->
+    <div class="modal" id="settleDebtModal">
+        <div class="modal-content" style="width: 460px;">
+            <h3>סגירת חוב / תשלום על חשבון</h3>
+            <div id="settleDebtInfoBox" style="background: #fef2f2; border: 1px solid #fecaca; padding: 12px; border-radius: 10px; margin-bottom: 14px;"></div>
+            <div class="form-group">
+                <label>סכום לתשלום כעת (₪):</label>
+                <input type="number" id="settleDebtAmountInput" step="0.1" style="font-size: 1.2em; font-weight: bold;">
+            </div>
+            <div class="form-group">
+                <label>אמצעי תשלום לסגירת החוב:</label>
+                <select id="settleDebtMethodSelect">
+                    <option value="cash">מזומן (נכנס למגירה היום)</option>
+                    <option value="credit">אשראי (נדרים פלוס)</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1;" onclick="confirmSettleDebt()">אשר תשלום חוב</button>
+                <button type="button" class="btn btn-danger btn-large-action" style="flex:1;" onclick="closeModal('settleDebtModal')">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- מודאל פירוט חובות מרוכז לבחור -->
+    <div class="modal" id="studentDebtStatementModal">
+        <div class="modal-content" style="width: 560px;">
+            <div id="studentDebtStatementPrintArea">
+                <h3 id="studentDebtStatementTitle">פירוט חובות פתוחים</h3>
+                <div id="studentDebtStatementBody" style="margin: 12px 0; max-height: 360px; overflow-y: auto;"></div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+                <button type="button" class="btn btn-info btn-large-action" style="flex:1;" onclick="copyStudentDebtStatement()">העתק פירוט כטקסט</button>
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1;" onclick="printStudentDebtStatement()">הדפס פירוט</button>
+                <button type="button" class="btn btn-danger btn-large-action" style="width:100%;" onclick="closeModal('studentDebtStatementModal')">סגור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- מודאל תצוגה והדפסת מדבקות ברקוד -->
+    <div class="modal" id="barcodeLabelsModal">
+        <div class="modal-content" style="width: 720px;">
+            <h3>תצוגה והדפסת מדבקות ברקוד</h3>
+            <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 10px;">ניתן להתאים את כמות המדבקות לכל פריט לפני ההדפסה:</p>
+            <div id="barcodeLabelsConfigList" style="max-height: 180px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; margin-bottom: 12px;"></div>
+            <div id="barcodeLabelsPreviewArea" style="max-height: 280px; overflow-y: auto; background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1;"></div>
+            <div style="display: flex; gap: 10px; margin-top: 12px;">
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1;" onclick="printGeneratedLabelsWindow()">הדפס מדבקות</button>
+                <button type="button" class="btn btn-danger btn-large-action" style="flex:1;" onclick="closeModal('barcodeLabelsModal')">סגור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- מודאל דף ברקודים לסריקה ליד הקופה -->
+    <div class="modal" id="counterBarcodeSheetModal">
+        <div class="modal-content" style="width: 820px;">
+            <h3>דף ברקודים מרוכז לסריקה ליד הקופה</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+                <label style="font-weight: 700;">סנן לפי קטגוריה:</label>
+                <select id="counterSheetCategoryFilter" style="width: 180px; padding: 7px; border-radius: 8px; border: 1px solid #cbd5e1;" onchange="renderCounterBarcodeSheetPreview()"></select>
+                <label class="checkbox-row" style="margin: 0;">
+                    <input type="checkbox" id="counterSheetOnlyGenerated" onchange="renderCounterBarcodeSheetPreview()">
+                    <span>הצג רק ברקודים שנוצרו במערכת (ללא ברקודי יצרן)</span>
+                </label>
+            </div>
+            <div id="counterBarcodeSheetPreview" style="max-height: 390px; overflow-y: auto; background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1;"></div>
+            <div style="display: flex; gap: 10px; margin-top: 12px;">
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1;" onclick="printCounterBarcodeSheetWindow()">הדפס דף ברקודים לקופה</button>
+                <button type="button" class="btn btn-danger btn-large-action" style="flex:1;" onclick="closeModal('counterBarcodeSheetModal')">סגור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- מודאל הדפסת דוח סגירת קופה יומי (Z) -->
+    <div class="modal" id="dailyZReportModal">
+        <div class="modal-content" style="width: 380px;">
+            <div class="receipt-box" id="printableZReport">
+                <div style="font-weight: bold; font-size: 15px;" id="zStoreHeader"></div>
+                <div style="font-weight: bold; font-size: 13px; margin-top: 2px;">דוח סגירת קופה יומי (Z)</div>
+                <div style="border-top: 1px dashed #000; margin: 5px 0;"></div>
+                <div style="text-align: right; font-size: 12px;" id="zReportBody"></div>
+                <div style="border-top: 1px dashed #000; margin: 5px 0;"></div>
+                <div style="font-size: 11px;">הופק בתאריך: <span id="zPrintedAt"></span></div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 12px;">
+                <button type="button" class="btn btn-success btn-large-action" style="flex:1;" onclick="printThermalZReport()">הדפס דוח Z</button>
+                <button type="button" class="btn btn-danger btn-large-action" style="flex:1;" onclick="closeModal('dailyZReportModal')">סגור</button>
             </div>
         </div>
     </div>
@@ -1603,6 +1922,8 @@
             products: [],
             receipts: [],
             hiddenCustomers: [],
+            stockLogs: [],
+            debtPayments: [],
             categories: ['כללי'],
             suppliers: [],
             settings: {
@@ -1612,6 +1933,8 @@
                 logoData: '',
                 cardSize: '145px',
                 lowStockThreshold: 5,
+                autoLockEnabled: false,
+                autoLockMinutes: 10,
                 receiptHeader: 'ת"ת ישיבת בית מדרש גבוה',
                 receiptSub: 'היכל הישיבה',
                 receiptFooter: 'תודה רבה ותזכו למצוות!'
@@ -2003,6 +2326,10 @@
                     if (!appData.categories) appData.categories = ['כללי'];
                     if (!appData.suppliers) appData.suppliers = [];
                     if (!Array.isArray(appData.hiddenCustomers)) appData.hiddenCustomers = [];
+                    if (!Array.isArray(appData.stockLogs)) appData.stockLogs = [];
+                    if (!Array.isArray(appData.debtPayments)) appData.debtPayments = [];
+                    if (appData.settings.autoLockEnabled === undefined) appData.settings.autoLockEnabled = false;
+                    if (!appData.settings.autoLockMinutes) appData.settings.autoLockMinutes = 10;
                     
                     (appData.products || []).forEach(p => {
                         if (p.category && !appData.categories.includes(p.category)) {
@@ -2107,6 +2434,9 @@
             if (purpose === 'debt') {
                 document.getElementById('adminLockTitle').innerText = 'אישור מנהל לרישום חוב / הקפה';
                 document.getElementById('adminLockSubtitle').innerText = 'רישום בהקפה מחייב הזנת סיסמת מנהל';
+            } else if (purpose === 'discount') {
+                document.getElementById('adminLockTitle').innerText = 'אישור מנהל לעדכון מחיר / הנחה';
+                document.getElementById('adminLockSubtitle').innerText = 'מתן הנחה נקודתית בעגלה מחייב סיסמת מנהל';
             } else {
                 document.getElementById('adminLockTitle').innerText = 'כניסה לאזור מנהל';
                 document.getElementById('adminLockSubtitle').innerText = 'הזן סיסמת מנהל';
@@ -2143,6 +2473,8 @@
                 document.getElementById('adminLockScreen').style.display = 'none';
                 if (adminAuthPurpose === 'debt') {
                     openCustomerCheckoutModal('debt');
+                } else if (adminAuthPurpose === 'discount') {
+                    openCartItemDiscountModal();
                 } else {
                     isAdminLoggedIn = true;
                     updateAdminSessionUI();
@@ -2236,6 +2568,24 @@
             const inputEl = document.getElementById('unifiedSearchInput');
             const query = inputEl.value.trim();
             if (!query) return;
+
+            // בדיקה אם נסרק ברקוד קבלה (מתחיל ב-REC- או תואם למזהה קבלה)
+            const upperQ = query.toUpperCase();
+            if (upperQ.startsWith('REC-')) {
+                const recIdStr = upperQ.replace('REC-', '').trim();
+                const matchedReceipt = (appData.receipts || []).find(r => String(r.id) === recIdStr);
+                if (matchedReceipt) {
+                    inputEl.value = '';
+                    renderProducts();
+                    openPartialReturnModalWithQuery(recIdStr);
+                    showToast(`אותרה קבלה #${matchedReceipt.id} של ${matchedReceipt.customer}`, 'info');
+                    return;
+                } else {
+                    showToast(`לא נמצאה קבלה עם ברקוד ${query}`, 'warning');
+                    inputEl.select();
+                    return;
+                }
+            }
 
             for (const p of getSortedProducts().filter(item => !item.hidden)) {
                 if (hasProductVariants(p)) {
@@ -2361,6 +2711,9 @@
 
             appData.settings.storeName = document.getElementById('settingStoreName').value || 'ת"ת ישיבת בית מדרש גבוה';
             appData.settings.lowStockThreshold = parseInt(document.getElementById('settingLowStockThreshold').value) || 5;
+            appData.settings.autoLockEnabled = document.getElementById('settingAutoLockEnabled').checked;
+            appData.settings.autoLockMinutes = Math.max(1, parseInt(document.getElementById('settingAutoLockMinutes').value) || 10);
+            resetInactivityTimer();
             appData.settings.logoData = tempLogoBase64;
             appData.settings.cardSize = document.getElementById('settingCardSize').value;
             appData.settings.receiptHeader = document.getElementById('settingReceiptHeader').value;
@@ -2720,19 +3073,23 @@
                 const key = item.cartKey || item.id;
                 const lineInfo = calculatedLines[idx] || { lineTotal: item.price * item.qty, promoApplied: false };
                 total += lineInfo.lineTotal;
+                const hasCustomPrice = item.originalPrice !== undefined && Math.abs(item.originalPrice - item.price) > 0.001;
 
                 container.innerHTML += `
                     <div class="cart-item">
                         <div class="cart-item-info">
                             <div class="cart-item-name">${item.name}</div>
                             ${lineInfo.promoApplied ? `<div class="cart-promo-applied">הופעל מבצע (${item.promoQty} ב-₪${item.promoPrice})</div>` : ''}
+                            ${hasCustomPrice ? `<div style="font-size:0.78em; color:#d97706; font-weight:700;">מחיר מותאם (במקום ₪${Number(item.originalPrice).toFixed(2)})</div>` : ''}
                         </div>
                         <div class="cart-controls">
                             <button type="button" onclick="updateCartQty('${key}', -1)">-</button>
                             <input type="number" class="cart-qty-input" min="1" value="${item.qty}" onchange="setCartQtyDirect('${key}', this.value)">
                             <button type="button" onclick="updateCartQty('${key}', 1)">+</button>
                         </div>
-                        <div style="min-width: 58px; text-align: left; font-weight: bold;">₪${lineInfo.lineTotal.toFixed(2)}</div>
+                        <div class="cart-price-clickable" title="לחץ להנחה / עדכון מחיר נקודתי (דורש אישור מנהל)" style="min-width: 64px; text-align: left; font-weight: bold;" onclick="requestCartItemDiscount('${key}')">
+                            ₪${lineInfo.lineTotal.toFixed(2)}
+                        </div>
                         <button type="button" class="cart-remove-btn" title="הסר מוצר" onclick="removeCartItem('${key}')">×</button>
                     </div>
                 `;
@@ -3283,6 +3640,21 @@
                 `;
             }).join('');
 
+            try {
+                if (typeof JsBarcode !== 'undefined') {
+                    JsBarcode("#receiptBarcodeSvg", `REC-${receipt.id}`, {
+                        format: "CODE128",
+                        width: 1.5,
+                        height: 36,
+                        displayValue: true,
+                        fontSize: 11,
+                        margin: 2
+                    });
+                }
+            } catch (e) {
+                console.error("Receipt barcode render error:", e);
+            }
+
             document.getElementById('receiptViewModal').style.display = 'flex';
         }
 
@@ -3347,11 +3719,12 @@
             const container = document.getElementById('returnReceiptsContainer');
             const activeReceipts = (appData.receipts || []).filter(r => r.active && r.items.length > 0).reverse();
             
-            const filtered = q 
+            const cleanQ = q.replace(/^rec-/i, '').trim();
+            const filtered = cleanQ 
                 ? activeReceipts.filter(r => 
-                    r.customer.toLowerCase().includes(q) || 
-                    String(r.id).includes(q) ||
-                    (r.yeshivaGrade && r.yeshivaGrade.toLowerCase().includes(q))
+                    r.customer.toLowerCase().includes(cleanQ) || 
+                    String(r.id).includes(cleanQ) ||
+                    (r.yeshivaGrade && r.yeshivaGrade.toLowerCase().includes(cleanQ))
                   )
                 : activeReceipts.slice(0, 25);
 
@@ -3420,6 +3793,14 @@
                 r.active = false;
             }
 
+            if (!item.isFreeItem) {
+                recordStockMovement({
+                    productName: item.name,
+                    change: 1,
+                    newStock: '-',
+                    reason: `החזרת פריט מקבלה #${r.id} (${r.customer})`
+                });
+            }
             await saveCloudData();
             if (isAdminLoggedIn) {
                 renderAdminLowStockPanel();
@@ -3445,12 +3826,23 @@
                 renderSavedCustomersManager();
                 renderCustomerReport();
             }
+            if (tabName === 'bulkedit') {
+                renderBulkEditTable();
+            }
+            if (tabName === 'receiving') {
+                initReceivingTab();
+            }
+            if (tabName === 'stocklog') {
+                renderStockLogTable();
+            }
         }
 
         function loadAdminData() {
             const s = appData.settings || {};
             document.getElementById('settingStoreName').value = s.storeName || '';
             document.getElementById('settingLowStockThreshold').value = s.lowStockThreshold || 5;
+            document.getElementById('settingAutoLockEnabled').checked = Boolean(s.autoLockEnabled);
+            document.getElementById('settingAutoLockMinutes').value = s.autoLockMinutes || 10;
             document.getElementById('settingCardSize').value = s.cardSize || '145px';
             document.getElementById('settingReceiptHeader').value = s.receiptHeader || '';
             document.getElementById('settingReceiptSub').value = s.receiptSub || '';
@@ -3493,10 +3885,20 @@
                     creditSum += Number(r.creditApplied) || 0;
                 } else if (r.type.includes('מזומן')) {
                     cashSum += r.total;
-                } else if (r.type === 'אשראי') {
+                } else if (r.type.includes('אשראי')) {
                     creditSum += r.total;
                 } else {
-                    debtSum += r.total;
+                    const paidPart = Number(r.debtPaidAmount) || 0;
+                    const remDebt = Math.max(0, r.total - paidPart);
+                    debtSum += remDebt;
+                }
+            });
+            // תוספת גביית חובות שבוצעה באותו תאריך
+            (appData.debtPayments || []).filter(dp => dp.isoDate === selectedDate).forEach(dp => {
+                if (dp.method === 'credit') {
+                    creditSum += Number(dp.amount) || 0;
+                } else {
+                    cashSum += Number(dp.amount) || 0;
                 }
             });
 
@@ -3508,10 +3910,54 @@
             `;
         }
 
-        /* דוח מכירות ורווח גולמי (ממוין לפי א'-ב') */
+        /* דוח מכירות ורווח גולמי (ממוין לפי א'-ב' עם סינון טווח תאריכים) */
+        function setProfitRangePreset(preset) {
+            const fromEl = document.getElementById('profitFromDate');
+            const toEl = document.getElementById('profitToDate');
+            const now = new Date();
+            const toIso = now.toISOString().split('T')[0];
+
+            if (preset === 'all') {
+                fromEl.value = '';
+                toEl.value = '';
+            } else if (preset === 'today') {
+                fromEl.value = toIso;
+                toEl.value = toIso;
+            } else if (preset === 'week') {
+                const weekAgo = new Date(now);
+                weekAgo.setDate(now.getDate() - 7);
+                fromEl.value = weekAgo.toISOString().split('T')[0];
+                toEl.value = toIso;
+            } else if (preset === 'month') {
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                fromEl.value = monthStart.toISOString().split('T')[0];
+                toEl.value = toIso;
+            }
+            renderSalesAndProfitReport();
+        }
+
+        function getReceiptIsoDate(r) {
+            if (r.isoDate) return r.isoDate;
+            if (r.dateOnly) {
+                const parts = r.dateOnly.split('.');
+                if (parts.length === 3) {
+                    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                }
+            }
+            return '';
+        }
+
         function renderSalesAndProfitReport() {
+            const fromDate = document.getElementById('profitFromDate') ? document.getElementById('profitFromDate').value : '';
+            const toDate = document.getElementById('profitToDate') ? document.getElementById('profitToDate').value : '';
             const summary = {};
-            (appData.receipts || []).filter(r => r.active).forEach(r => {
+            (appData.receipts || []).filter(r => {
+                if (!r.active) return false;
+                const rIso = getReceiptIsoDate(r);
+                if (fromDate && rIso && rIso < fromDate) return false;
+                if (toDate && rIso && rIso > toDate) return false;
+                return true;
+            }).forEach(r => {
                 r.items.forEach(i => {
                     if (!summary[i.name]) summary[i.name] = { qty: 0, rev: 0, profit: 0 };
                     const prod = (appData.products || []).find(p => p.id === (i.productId || i.id));
@@ -3687,15 +4133,79 @@
             showToast('השם הוסר מרשימת ההשלמה האוטומטית של הקונים!', 'success');
         }
 
-        /* כרטיס לקוח וחובות */
+        /* כרטיס לקוח, ריכוז חובות לפי בחור וסגירת חוב גמישה */
+        function getRemainingDebtForReceipt(r) {
+            if (!r.active || r.isDebtPaid) return 0;
+            if (r.paymentMode !== 'debt' && !String(r.type || '').includes('חוב')) return 0;
+            const paid = Number(r.debtPaidAmount) || 0;
+            return Math.max(0, Math.round((r.total - paid) * 100) / 100);
+        }
+
+        function renderAggregatedDebts() {
+            const container = document.getElementById('aggregatedDebtsContainer');
+            const badge = document.getElementById('totalOpenDebtsBadge');
+            if (!container) return;
+
+            const grouped = new Map();
+            let grandTotal = 0;
+
+            (appData.receipts || []).filter(r => r.active).forEach(r => {
+                const rem = getRemainingDebtForReceipt(r);
+                if (rem <= 0.001) return;
+                grandTotal += rem;
+                const info = r.isYeshiva ? (r.yeshivaGrade || 'בן ישיבה') : (r.phone || 'חיצוני');
+                const key = `${r.customer.trim()}|${info}`;
+                if (!grouped.has(key)) {
+                    grouped.set(key, {
+                        key,
+                        customer: r.customer.trim(),
+                        info,
+                        totalDebt: 0,
+                        receipts: []
+                    });
+                }
+                const entry = grouped.get(key);
+                entry.totalDebt = Math.round((entry.totalDebt + rem) * 100) / 100;
+                entry.receipts.push({ receipt: r, remaining: rem });
+            });
+
+            if (badge) {
+                badge.innerText = `סה"כ חובות פתוחים: ₪${grandTotal.toFixed(2)}`;
+            }
+
+            if (grouped.size === 0) {
+                container.innerHTML = '<span style="color:#64748b; font-size:0.92em;">אין חובות פתוחים במערכת כרגע.</span>';
+                return;
+            }
+
+            const sortedDebtors = sortHebrewAlpha(Array.from(grouped.values()), d => d.customer);
+            container.innerHTML = sortedDebtors.map(d => {
+                const encodedKey = encodeURIComponent(d.key);
+                return `
+                    <div style="background:white; border:1px solid #f59e0b; border-radius:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <div>
+                            <strong style="font-size:1.05em;">${escapeHtml(d.customer)}</strong> <span style="color:#64748b;">(${escapeHtml(d.info)})</span>
+                            <span style="margin-right:10px; background:#fee2e2; color:#991b1b; padding:2px 9px; border-radius:12px; font-weight:800;">יתרת חוב: ₪${d.totalDebt.toFixed(2)}</span>
+                            <span style="font-size:0.85em; color:#64748b; margin-right:6px;">(${d.receipts.length} עסקאות פתוחות)</span>
+                        </div>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-info btn-small" onclick="openStudentDebtStatement('${encodedKey}')">פירוט חובות</button>
+                            <button type="button" class="btn btn-success btn-small" onclick="openSettleDebtModalForPerson('${encodedKey}')">תשלום / סגירת חוב</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         function renderCustomerReport() {
+            renderAggregatedDebts();
             const q = document.getElementById('customerFilterInput').value.trim().toLowerCase();
             const filterMode = document.getElementById('debtFilterSelect').value;
             const container = document.getElementById('customerReportContainer');
 
             let list = (appData.receipts || []).filter(r => r.active);
             if (filterMode === 'debt') {
-                list = list.filter(r => r.type === 'חוב / הקפה' && !r.isDebtPaid);
+                list = list.filter(r => getRemainingDebtForReceipt(r) > 0.001);
             }
             if (q) {
                 list = list.filter(r => r.customer.toLowerCase().includes(q) || (r.yeshivaGrade && r.yeshivaGrade.includes(q)));
@@ -3708,28 +4218,28 @@
 
             container.innerHTML = list.slice().reverse().map(r => {
                 const info = r.isYeshiva ? r.yeshivaGrade : r.phone;
-                const isUnpaidDebt = r.type === 'חוב / הקפה' && !r.isDebtPaid;
+                const remDebt = getRemainingDebtForReceipt(r);
+                const isUnpaidDebt = remDebt > 0.001;
+                const paidSoFar = Number(r.debtPaidAmount) || 0;
+                const debtStatusText = (r.paymentMode === 'debt' || String(r.type || '').includes('חוב'))
+                    ? (isUnpaidDebt
+                        ? (paidSoFar > 0 ? `(שולם ₪${paidSoFar.toFixed(2)}, נותר חוב: ₪${remDebt.toFixed(2)})` : '(פתוח לגבייה)')
+                        : '(שולם במלואו)')
+                    : '';
+
                 return `
-                    <div style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: ${isUnpaidDebt ? '#fef2f2' : '#fff'};">
+                    <div style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; background: ${isUnpaidDebt ? '#fef2f2' : '#fff'};">
                         <div>
-                            <strong>${r.customer}</strong> (${info}) | ${r.date}<br>
-                            <span>סכום: ₪${r.total.toFixed(2)} | אמצעי תשלום: <strong>${r.type}</strong> ${r.type === 'חוב / הקפה' ? (r.isDebtPaid ? '(שולם)' : '(פתוח לגבייה)') : ''}</span>
+                            <strong>${escapeHtml(r.customer)}</strong> (${escapeHtml(info)}) | ${r.date}<br>
+                            <span>סכום עסקה: ₪${r.total.toFixed(2)} | אמצעי תשלום: <strong>${escapeHtml(r.type)}</strong> ${debtStatusText}</span>
                         </div>
-                        ${isUnpaidDebt ? `<button type="button" class="btn btn-success btn-small" onclick="markDebtAsPaid(${r.id})">סמן חוב כשולם</button>` : ''}
+                        <div style="display:flex; gap:6px;">
+                            <button type="button" class="btn btn-info btn-small" onclick="showReceiptById(${r.id})">קבלה</button>
+                            ${isUnpaidDebt ? `<button type="button" class="btn btn-success btn-small" onclick="openSettleDebtModalForReceipt(${r.id})">תשלום / סגירת חוב</button>` : ''}
+                        </div>
                     </div>
                 `;
             }).join('');
-        }
-
-        async function markDebtAsPaid(receiptId) {
-            const r = appData.receipts.find(rec => rec.id === receiptId);
-            if (!r) return;
-            r.isDebtPaid = true;
-            r.type = 'מזומן (סגירת חוב)';
-            await saveCloudData();
-            renderCustomerReport();
-            renderDailySummary();
-            showToast('החוב סומן כשולם!', 'success');
         }
 
         /* עורך מידות למוצר עם גרירה (Drag & Drop), חצי סידור ומיון אוטומטי */
@@ -3767,7 +4277,9 @@
                 <input type="text" class="var-name" placeholder="שם מידה (למשל: M)" value="${vName}" style="flex: 1.2; min-width: 105px;">
                 <input type="number" class="var-stock" placeholder="מלאי (אופציונלי)" value="${vStock}" style="flex: 0.85; min-width: 85px;">
                 <input type="number" class="var-price" step="0.1" placeholder="מחיר (אופציונלי)" value="${vPrice}" style="flex: 0.95; min-width: 100px;">
-                <input type="text" class="var-barcodes" placeholder="ברקודים למידה זו..." value="${vBarcodes}" style="flex: 2; min-width: 150px;" onkeydown="handleBarcodeAutoCommaKeydown(event, this)" onblur="cleanTrailingBarcodeComma(this)">
+                <input type="text" class="var-barcodes" placeholder="ברקודים למידה זו..." value="${vBarcodes}" style="flex: 2; min-width: 140px;" onkeydown="handleBarcodeAutoCommaKeydown(event, this)" onblur="cleanTrailingBarcodeComma(this)">
+                <button type="button" class="btn btn-purple btn-tiny" title="צור ברקוד למידה זו" onclick="generateBarcodeForVariantRow(this)">צור ברקוד</button>
+                <button type="button" class="btn btn-info btn-tiny" title="הדפס מדבקות למידה זו" onclick="printSingleVariantRowLabel(this)">מדבקה</button>
                 <button type="button" class="btn btn-danger btn-small" onclick="this.parentElement.remove()">הסר</button>
             `;
 
@@ -4096,7 +4608,15 @@
                 });
             }
             if (searchQ) {
-                list = list.filter(p => p.name.toLowerCase().includes(searchQ));
+                list = list.filter(p => {
+                    const matchName = p.name.toLowerCase().includes(searchQ);
+                    const matchProdCode = parseBarcodeList(p.barcodes).some(b => b.toLowerCase().includes(searchQ));
+                    const matchVar = hasProductVariants(p) && p.variants.some(v =>
+                        v.name.toLowerCase().includes(searchQ) ||
+                        parseBarcodeList(v.barcodes).some(b => b.toLowerCase().includes(searchQ))
+                    );
+                    return matchName || matchProdCode || matchVar;
+                });
             }
 
             const container = document.getElementById('adminProductsList');
@@ -4128,19 +4648,20 @@
 
                 return `
                     <div class="admin-prod-row ${p.hidden ? 'hidden-prod-row' : ''}" data-product-id="${p.id}">
-                        <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:220px;">
+                        <div class="admin-prod-info-col">
                             ${reorderControlsHtml}
-                            <div>
+                            <div style="flex:1; min-width:0;">
                                 <strong>${p.name}</strong>${p.hidden ? '<span class="hidden-prod-badge">מוסתר מהקופה</span>' : ''} | מחיר: ₪${p.price}${promoTxt}<br>
                                 <span style="color: var(--primary); font-weight: bold;">מלאי במחשב: ${stockDisplayTxt}</span> | <span style="font-size:0.88em; color:#64748b;">ספק: ${p.supplier || 'כללי'} | ${bText}</span>
                             </div>
                         </div>
-                        <div style="display:flex; gap:6px; align-items: center; flex-wrap: wrap;">
+                        <div class="admin-prod-actions-col">
                             <div class="quick-add-stock-box">
                                 ${variantSelectHtml}
                                 <input type="number" id="addStockInput_${p.id}" class="quick-add-stock-input" placeholder="+ כמות" onkeyup="if(event.key==='Enter') applyQuickStockAddition(${p.id})">
                                 <button type="button" class="btn btn-success btn-small" onclick="applyQuickStockAddition(${p.id})">הוסף למלאי</button>
                             </div>
+                            <button type="button" class="btn btn-purple btn-small" title="הדפס מדבקות ברקוד" onclick="openBarcodeLabelsModalForProduct(${p.id})">מדבקות</button>
                             <button type="button" class="btn ${p.hidden ? 'btn-info' : 'btn-warning'} btn-small" onclick="toggleProductHidden(${p.id})">${p.hidden ? 'הצג בקופה' : 'הסתר'}</button>
                             <button type="button" class="btn btn-small" onclick="editProduct(${p.id})">ערוך</button>
                             <button type="button" class="btn btn-danger btn-small" onclick="deleteProduct(${p.id})">מחק</button>
@@ -4285,12 +4806,24 @@
                 newStockVal = p.stock;
             }
 
+            recordStockMovement({
+                productName: targetLabel,
+                change: addQty,
+                newStock: newStockVal,
+                reason: 'הוספת מלאי מהירה'
+            });
+
             inputEl.value = '';
             await saveCloudData();
             renderAdminProductsList();
             renderAdminLowStockPanel();
             renderProducts();
             showToast(`נוספו ${addQty} יח' ל-"${targetLabel}". מלאי מעודכן: ${newStockVal} יח'!`, 'success');
+
+            if (addQty > 0) {
+                const selectedVarId = hasProductVariants(p) ? (document.getElementById(`addStockVarSelect_${id}`)?.value || null) : null;
+                offerQuickAddedStockLabels(p.id, selectedVarId, addQty);
+            }
         }
 
         function editProduct(id) {
@@ -4503,14 +5036,34 @@
                     p.variants.forEach(v => {
                         const key = `${p.id}_${v.id}`;
                         if (stockCountBuffer[key] !== undefined && hasStockValue(v.stock)) {
-                            v.stock = stockCountBuffer[key];
+                            const oldVal = parseInt(v.stock) || 0;
+                            const newVal = parseInt(stockCountBuffer[key]) || 0;
+                            if (oldVal !== newVal) {
+                                recordStockMovement({
+                                    productName: `${p.name} - ${v.name}`,
+                                    change: newVal - oldVal,
+                                    newStock: newVal,
+                                    reason: 'עדכון מספירת מלאי'
+                                });
+                            }
+                            v.stock = newVal;
                         }
                     });
                     p.stock = getProductTotalStock(p);
                 } else {
                     const key = String(p.id);
                     if (stockCountBuffer[key] !== undefined && hasStockValue(p.stock)) {
-                        p.stock = stockCountBuffer[key];
+                        const oldVal = parseInt(p.stock) || 0;
+                        const newVal = parseInt(stockCountBuffer[key]) || 0;
+                        if (oldVal !== newVal) {
+                            recordStockMovement({
+                                productName: p.name,
+                                change: newVal - oldVal,
+                                newStock: newVal,
+                                reason: 'עדכון מספירת מלאי'
+                            });
+                        }
+                        p.stock = newVal;
                     }
                 }
             });
@@ -4738,7 +5291,1132 @@
             startLockoutCountdown('site');
         }
 
-        syncCloudData();
+
+        /* =====================================================================
+           מודולים חדשים: ברקודים, מדבקות, דף קופה, הנחה בעגלה, סגירת חוב,
+           עריכה גורפת, קליטת סחורה מספק, יומן מלאי, דוח Z, נעילה אוטומטית ואזהרת רענון
+           ===================================================================== */
+
+        function openPartialReturnModalWithQuery(queryStr) {
+            document.getElementById('returnSearchInput').value = queryStr || '';
+            renderReturnReceipts();
+            document.getElementById('partialReturnModal').style.display = 'flex';
+        }
+
+        /* 1. אזהרה לפני יציאה או רענון דף כשהעגלה מלאה */
+        window.addEventListener('beforeunload', function(e) {
+            if (Array.isArray(cart) && cart.length > 0) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        /* 2. נעילה אוטומטית בעת חוסר פעילות (לפי הגדרת מנהל) */
+        let inactivityTimerId = null;
+
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimerId);
+            const s = appData.settings || {};
+            if (!s.autoLockEnabled) return;
+            const mins = Math.max(1, parseInt(s.autoLockMinutes) || 10);
+            inactivityTimerId = setTimeout(() => {
+                const lockScreen = document.getElementById('siteLockScreen');
+                if (lockScreen && lockScreen.style.display === 'none') {
+                    lockSiteScreenNow();
+                    showToast(`המערכת ננעלה אוטומטית לאחר ${mins} דקות של חוסר פעילות`, 'warning', 5000);
+                }
+            }, mins * 60 * 1000);
+        }
+
+        ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evtName => {
+            document.addEventListener(evtName, resetInactivityTimer, { passive: true });
+        });
+
+        /* 3. הנחה / עדכון מחיר נקודתי בעגלה (דורש קוד מנהל) */
+        let discountTargetCartKey = null;
+
+        function requestCartItemDiscount(cartKey) {
+            const item = cart.find(i => String(i.cartKey || i.id) === String(cartKey));
+            if (!item) return;
+            discountTargetCartKey = cartKey;
+            if (isAdminLoggedIn) {
+                openCartItemDiscountModal();
+            } else {
+                openAdminLock('discount');
+            }
+        }
+
+        function openCartItemDiscountModal() {
+            const item = cart.find(i => String(i.cartKey || i.id) === String(discountTargetCartKey));
+            if (!item) return;
+            const basePrice = item.originalPrice !== undefined ? item.originalPrice : item.price;
+            document.getElementById('discountItemNameDisplay').innerText = `${item.name} (כמות בעגלה: ${item.qty})`;
+            document.getElementById('discountOrigPriceDisplay').innerText = Number(basePrice).toFixed(2);
+            document.getElementById('discountModeSelect').value = 'fixed_price';
+            document.getElementById('discountValueLabel').innerText = 'מחיר חדש ליחידה (₪):';
+            document.getElementById('discountValueInput').value = Number(item.price).toFixed(2);
+            document.getElementById('discountFinalPricePreview').innerText = Number(item.price).toFixed(2);
+            document.getElementById('cartItemDiscountModal').style.display = 'flex';
+            const inp = document.getElementById('discountValueInput');
+            inp.focus();
+            inp.select();
+        }
+
+        function updateDiscountPreview() {
+            const item = cart.find(i => String(i.cartKey || i.id) === String(discountTargetCartKey));
+            if (!item) return;
+            const basePrice = item.originalPrice !== undefined ? item.originalPrice : item.price;
+            const mode = document.getElementById('discountModeSelect').value;
+            const val = parseFloat(document.getElementById('discountValueInput').value) || 0;
+            const labelEl = document.getElementById('discountValueLabel');
+
+            let finalUnit = basePrice;
+            if (mode === 'fixed_price') {
+                labelEl.innerText = 'מחיר חדש ליחידה (₪):';
+                finalUnit = Math.max(0, val);
+            } else if (mode === 'amount_off') {
+                labelEl.innerText = 'סכום הנחה ליחידה (₪):';
+                finalUnit = Math.max(0, basePrice - val);
+            } else if (mode === 'percent_off') {
+                labelEl.innerText = 'אחוז הנחה (%):';
+                finalUnit = Math.max(0, basePrice * (1 - (val / 100)));
+            }
+            document.getElementById('discountFinalPricePreview').innerText = (Math.round(finalUnit * 100) / 100).toFixed(2);
+        }
+
+        function applyCartItemDiscount() {
+            const item = cart.find(i => String(i.cartKey || i.id) === String(discountTargetCartKey));
+            if (!item) return;
+            const finalUnit = parseFloat(document.getElementById('discountFinalPricePreview').innerText);
+            if (isNaN(finalUnit) || finalUnit < 0) {
+                return showToast('נא להזין מחיר תקין', 'error');
+            }
+            if (item.originalPrice === undefined) {
+                item.originalPrice = item.price;
+            }
+            item.price = Math.round(finalUnit * 100) / 100;
+            closeModal('cartItemDiscountModal');
+            renderCart();
+            showToast(`המחיר עבור "${item.name}" עודכן ל-₪${item.price.toFixed(2)} ליחידה`, 'success');
+        }
+
+        function resetCartItemDiscount() {
+            const item = cart.find(i => String(i.cartKey || i.id) === String(discountTargetCartKey));
+            if (!item) return;
+            if (item.originalPrice !== undefined) {
+                item.price = item.originalPrice;
+                delete item.originalPrice;
+            }
+            closeModal('cartItemDiscountModal');
+            renderCart();
+            showToast('המחיר הוחזר למחיר המקורי', 'info');
+        }
+
+        /* 4. מחולל ברקודים אוטומטי והדפסת מדבקות + דף ברקודים לקופה */
+        function getAllExistingBarcodesSet() {
+            const set = new Set();
+            (appData.products || []).forEach(p => {
+                parseBarcodeList(p.barcodes).forEach(b => set.add(b));
+                if (hasProductVariants(p)) {
+                    p.variants.forEach(v => parseBarcodeList(v.barcodes).forEach(b => set.add(b)));
+                }
+            });
+            document.querySelectorAll('#variantsRowsList .var-barcodes').forEach(inp => {
+                parseBarcodeList(inp.value).forEach(b => set.add(b));
+            });
+            const formSingleInp = document.getElementById('prodBarcodes');
+            if (formSingleInp) {
+                parseBarcodeList(formSingleInp.value).forEach(b => set.add(b));
+            }
+            return set;
+        }
+
+        function generateUniqueBarcodeNumber(usedSet) {
+            let candidate = '';
+            do {
+                candidate = String(Math.floor(100000 + Math.random() * 900000));
+            } while (usedSet.has(candidate));
+            usedSet.add(candidate);
+            return candidate;
+        }
+
+        function generateSingleProductBarcode() {
+            const usedSet = getAllExistingBarcodesSet();
+            const inp = document.getElementById('prodBarcodes');
+            const existing = parseBarcodeList(inp.value);
+            const newCode = generateUniqueBarcodeNumber(usedSet);
+            existing.push(newCode);
+            inp.value = existing.join(', ');
+            showToast(`נוצר ברקוד חדש: ${newCode}`, 'success');
+        }
+
+        function generateBarcodeForVariantRow(btnEl) {
+            const row = btnEl.closest('.variant-row');
+            if (!row) return;
+            const usedSet = getAllExistingBarcodesSet();
+            const inp = row.querySelector('.var-barcodes');
+            const existing = parseBarcodeList(inp.value);
+            const newCode = generateUniqueBarcodeNumber(usedSet);
+            existing.push(newCode);
+            inp.value = existing.join(', ');
+            showToast(`נוצר ברקוד למידה: ${newCode}`, 'success');
+        }
+
+        function generateBarcodesForAllVariants() {
+            const rows = document.querySelectorAll('#variantsRowsList .variant-row');
+            if (rows.length === 0) return showToast('אין שורות מידות ליצירת ברקוד', 'warning');
+            const usedSet = getAllExistingBarcodesSet();
+            const basePrefix = String(Math.floor(1000 + Math.random() * 9000));
+            let createdCount = 0;
+
+            rows.forEach((row, idx) => {
+                const inp = row.querySelector('.var-barcodes');
+                const existing = parseBarcodeList(inp.value);
+                if (existing.length === 0) {
+                    let code = `${basePrefix}${idx + 1}`;
+                    if (usedSet.has(code)) {
+                        code = generateUniqueBarcodeNumber(usedSet);
+                    } else {
+                        usedSet.add(code);
+                    }
+                    inp.value = code;
+                    createdCount++;
+                }
+            });
+
+            if (createdCount === 0) {
+                showToast('לכל המידות כבר מוגדרים ברקודים', 'info');
+            } else {
+                showToast(`נוצרו ברקודים עבור ${createdCount} מידות! אל תשכח ללחוץ "שמור מוצר"`, 'success');
+            }
+        }
+
+        async function generateMissingBarcodesBulk() {
+            const usedSet = getAllExistingBarcodesSet();
+            let count = 0;
+
+            (appData.products || []).forEach(p => {
+                if (hasProductVariants(p)) {
+                    const basePrefix = String(Math.floor(1000 + Math.random() * 9000));
+                    p.variants.forEach((v, idx) => {
+                        const codes = parseBarcodeList(v.barcodes);
+                        if (codes.length === 0) {
+                            let code = `${basePrefix}${idx + 1}`;
+                            if (usedSet.has(code)) {
+                                code = generateUniqueBarcodeNumber(usedSet);
+                            } else {
+                                usedSet.add(code);
+                            }
+                            v.barcodes = [code];
+                            v.isSystemGeneratedBarcode = true;
+                            count++;
+                        }
+                    });
+                } else {
+                    const codes = parseBarcodeList(p.barcodes);
+                    if (codes.length === 0) {
+                        const code = generateUniqueBarcodeNumber(usedSet);
+                        p.barcodes = [code];
+                        p.isSystemGeneratedBarcode = true;
+                        count++;
+                    }
+                }
+            });
+
+            if (count === 0) {
+                return showToast('לכל המוצרים והמידות במערכת כבר יש ברקודים!', 'info');
+            }
+
+            await saveCloudData();
+            renderAdminProductsList();
+            showToast(`נוצרו בהצלחה ${count} ברקודים חדשים לכל הפריטים שהיו חסרים!`, 'success');
+        }
+
+        /* תצוגה והדפסת מדבקות ברקוד */
+        let currentLabelItemsList = [];
+
+        function openBarcodeLabelsModalWithItems(items) {
+            if (!items || items.length === 0) {
+                return showToast('לא נמצאו ברקודים להדפסה עבור פריט זה', 'warning');
+            }
+            currentLabelItemsList = items.map(it => ({
+                ...it,
+                copies: Math.max(1, parseInt(it.copies) || 1)
+            }));
+            renderBarcodeLabelsConfigAndPreview();
+            document.getElementById('barcodeLabelsModal').style.display = 'flex';
+        }
+
+        function openBarcodeLabelsModalForProduct(productId, specificVariantId = null, defaultCopies = 1) {
+            const p = appData.products.find(item => String(item.id) === String(productId));
+            if (!p) return;
+            const items = [];
+
+            if (hasProductVariants(p)) {
+                p.variants.forEach(v => {
+                    if (specificVariantId && String(v.id) !== String(specificVariantId)) return;
+                    const codes = parseBarcodeList(v.barcodes);
+                    if (codes.length > 0) {
+                        const vPrice = (v.price !== undefined && v.price !== null && v.price !== '') ? parseFloat(v.price) : parseFloat(p.price);
+                        items.push({
+                            title: `${p.name} - ${v.name}`,
+                            price: vPrice,
+                            barcode: codes[0],
+                            copies: defaultCopies
+                        });
+                    }
+                });
+            } else {
+                const codes = parseBarcodeList(p.barcodes);
+                if (codes.length > 0) {
+                    items.push({
+                        title: p.name,
+                        price: parseFloat(p.price) || 0,
+                        barcode: codes[0],
+                        copies: defaultCopies
+                    });
+                }
+            }
+
+            openBarcodeLabelsModalWithItems(items);
+        }
+
+        function printSingleProductLabelsFromForm() {
+            const name = document.getElementById('prodName').value.trim() || 'מוצר';
+            const price = parseFloat(document.getElementById('prodPrice').value) || 0;
+            const codes = parseBarcodeList(document.getElementById('prodBarcodes').value);
+            if (codes.length === 0) {
+                return showToast('נא ליצור או להזין ברקוד תחילה', 'warning');
+            }
+            openBarcodeLabelsModalWithItems([{
+                title: name,
+                price: price,
+                barcode: codes[0],
+                copies: 1
+            }]);
+        }
+
+        function printSingleVariantRowLabel(btnEl) {
+            const row = btnEl.closest('.variant-row');
+            if (!row) return;
+            const prodName = document.getElementById('prodName').value.trim() || 'מוצר';
+            const basePrice = parseFloat(document.getElementById('prodPrice').value) || 0;
+            const vName = row.querySelector('.var-name').value.trim() || 'מידה';
+            const vPriceRaw = row.querySelector('.var-price').value.trim();
+            const vPrice = vPriceRaw !== '' ? (parseFloat(vPriceRaw) || 0) : basePrice;
+            const codes = parseBarcodeList(row.querySelector('.var-barcodes').value);
+            if (codes.length === 0) {
+                return showToast('נא ליצור או להזין ברקוד למידה זו תחילה', 'warning');
+            }
+            openBarcodeLabelsModalWithItems([{
+                title: `${prodName} - ${vName}`,
+                price: vPrice,
+                barcode: codes[0],
+                copies: 1
+            }]);
+        }
+
+        function printProductVariantsLabels() {
+            const prodName = document.getElementById('prodName').value.trim() || 'מוצר';
+            const basePrice = parseFloat(document.getElementById('prodPrice').value) || 0;
+            const rows = document.querySelectorAll('#variantsRowsList .variant-row');
+            const items = [];
+
+            rows.forEach(row => {
+                const vName = row.querySelector('.var-name').value.trim() || 'מידה';
+                const vPriceRaw = row.querySelector('.var-price').value.trim();
+                const vPrice = vPriceRaw !== '' ? (parseFloat(vPriceRaw) || 0) : basePrice;
+                const codes = parseBarcodeList(row.querySelector('.var-barcodes').value);
+                if (codes.length > 0) {
+                    items.push({
+                        title: `${prodName} - ${vName}`,
+                        price: vPrice,
+                        barcode: codes[0],
+                        copies: 1
+                    });
+                }
+            });
+
+            openBarcodeLabelsModalWithItems(items);
+        }
+
+        function offerQuickAddedStockLabels(productId, variantId, addedQty) {
+            const p = appData.products.find(item => String(item.id) === String(productId));
+            if (!p) return;
+            let hasCode = false;
+            if (variantId && hasProductVariants(p)) {
+                const v = p.variants.find(vr => String(vr.id) === String(variantId));
+                hasCode = v && parseBarcodeList(v.barcodes).length > 0;
+            } else {
+                hasCode = parseBarcodeList(p.barcodes).length > 0;
+            }
+            if (!hasCode) return;
+            openBarcodeLabelsModalForProduct(productId, variantId, addedQty);
+        }
+
+        function updateLabelCopiesCount(idx, val) {
+            const num = Math.max(0, parseInt(val) || 0);
+            if (currentLabelItemsList[idx]) {
+                currentLabelItemsList[idx].copies = num;
+                renderBarcodeLabelsPreviewOnly();
+            }
+        }
+
+        function renderBarcodeLabelsConfigAndPreview() {
+            const cfg = document.getElementById('barcodeLabelsConfigList');
+            cfg.innerHTML = currentLabelItemsList.map((it, idx) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid #e2e8f0;">
+                    <span><strong>${escapeHtml(it.title)}</strong> (ברקוד: ${escapeHtml(it.barcode)} | ₪${it.price.toFixed(2)})</span>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <label style="font-size:0.88em;">כמות מדבקות:</label>
+                        <input type="number" min="0" max="500" value="${it.copies}" style="width:70px; padding:4px; text-align:center; font-weight:bold; border-radius:6px; border:1px solid #cbd5e1;" oninput="updateLabelCopiesCount(${idx}, this.value)">
+                    </div>
+                </div>
+            `).join('');
+            renderBarcodeLabelsPreviewOnly();
+        }
+
+        function renderBarcodeLabelsPreviewOnly() {
+            const area = document.getElementById('barcodeLabelsPreviewArea');
+            let html = '<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">';
+            let svgCounter = 0;
+
+            currentLabelItemsList.forEach(it => {
+                for (let c = 0; c < it.copies; c++) {
+                    const svgId = `lbl_svg_${svgCounter++}`;
+                    html += `
+                        <div class="barcode-label-card" data-code="${escapeHtml(it.barcode)}" data-svg-id="${svgId}">
+                            <div style="font-weight:800; font-size:0.88em; margin-bottom:2px;">${escapeHtml(it.title)}</div>
+                            <svg id="${svgId}"></svg>
+                            <div style="font-weight:800; font-size:0.95em; margin-top:2px;">₪${it.price.toFixed(2)}</div>
+                        </div>
+                    `;
+                }
+            });
+            html += '</div>';
+            area.innerHTML = html;
+
+            if (typeof JsBarcode !== 'undefined') {
+                area.querySelectorAll('.barcode-label-card').forEach(card => {
+                    try {
+                        JsBarcode(`#${card.dataset.svgId}`, card.dataset.code, {
+                            format: "CODE128",
+                            width: 1.5,
+                            height: 36,
+                            displayValue: true,
+                            fontSize: 11,
+                            margin: 2
+                        });
+                    } catch (e) {}
+                });
+            }
+        }
+
+        function printGeneratedLabelsWindow() {
+            const content = document.getElementById('barcodeLabelsPreviewArea').innerHTML;
+            const win = window.open('', '_blank', 'width=800,height=650');
+            win.document.write('<html dir="rtl"><head><title>הדפסת מדבקות ברקוד</title><style>');
+            win.document.write('body { font-family: Arial, sans-serif; padding: 10px; }');
+            win.document.write('.barcode-label-card { border: 1px dashed #888; border-radius: 6px; padding: 6px 10px; text-align: center; display: inline-flex; flex-direction: column; align-items: center; page-break-inside: avoid; margin: 4px; }');
+            win.document.write('</style></head><body>');
+            win.document.write(content);
+            win.document.write('</body></html>');
+            win.document.close();
+            win.onload = function() { win.print(); };
+        }
+
+        /* דף ברקודים מרוכז ליד הקופה */
+        function openCounterBarcodeSheetModal() {
+            const catSelect = document.getElementById('counterSheetCategoryFilter');
+            const rawCats = (appData.categories || ['כללי']).filter(c => c !== 'כללי');
+            const sortedCats = ['הכל', 'כללי', ...sortHebrewAlpha(rawCats, c => c)];
+            catSelect.innerHTML = sortedCats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+            document.getElementById('counterSheetOnlyGenerated').checked = false;
+            renderCounterBarcodeSheetPreview();
+            document.getElementById('counterBarcodeSheetModal').style.display = 'flex';
+        }
+
+        function renderCounterBarcodeSheetPreview() {
+            const selectedCat = document.getElementById('counterSheetCategoryFilter').value;
+            const onlyGen = document.getElementById('counterSheetOnlyGenerated').checked;
+            const preview = document.getElementById('counterBarcodeSheetPreview');
+
+            const entries = [];
+            getSortedProducts().filter(p => !p.hidden).forEach(p => {
+                if (selectedCat !== 'הכל' && (p.category || 'כללי') !== selectedCat) return;
+
+                if (hasProductVariants(p)) {
+                    p.variants.forEach(v => {
+                        const codes = parseBarcodeList(v.barcodes);
+                        if (codes.length === 0) return;
+                        if (onlyGen && !v.isSystemGeneratedBarcode && codes[0].length > 8) return;
+                        const vPrice = (v.price !== undefined && v.price !== null && v.price !== '') ? parseFloat(v.price) : parseFloat(p.price);
+                        entries.push({
+                            title: `${p.name} (${v.name})`,
+                            price: vPrice,
+                            barcode: codes[0]
+                        });
+                    });
+                } else {
+                    const codes = parseBarcodeList(p.barcodes);
+                    if (codes.length === 0) return;
+                    if (onlyGen && !p.isSystemGeneratedBarcode && codes[0].length > 8) return;
+                    entries.push({
+                        title: p.name,
+                        price: parseFloat(p.price) || 0,
+                        barcode: codes[0]
+                    });
+                }
+            });
+
+            if (entries.length === 0) {
+                preview.innerHTML = '<p style="text-align:center; padding:20px;">אין מוצרים עם ברקוד בסינון הנבחר.</p>';
+                return;
+            }
+
+            let html = '<div class="barcode-sheet-grid">';
+            entries.forEach((item, idx) => {
+                const svgId = `sheet_svg_${idx}`;
+                html += `
+                    <div class="barcode-label-card" data-code="${escapeHtml(item.barcode)}" data-svg-id="${svgId}">
+                        <div style="font-weight:800; font-size:0.9em; margin-bottom:2px;">${escapeHtml(item.title)}</div>
+                        <svg id="${svgId}"></svg>
+                        <div style="font-weight:700; font-size:0.9em; color:#059669;">₪${item.price.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            preview.innerHTML = html;
+
+            if (typeof JsBarcode !== 'undefined') {
+                preview.querySelectorAll('.barcode-label-card').forEach(card => {
+                    try {
+                        JsBarcode(`#${card.dataset.svgId}`, card.dataset.code, {
+                            format: "CODE128",
+                            width: 1.4,
+                            height: 36,
+                            displayValue: true,
+                            fontSize: 11,
+                            margin: 2
+                        });
+                    } catch (e) {}
+                });
+            }
+        }
+
+        function printCounterBarcodeSheetWindow() {
+            const content = document.getElementById('counterBarcodeSheetPreview').innerHTML;
+            const storeName = appData.settings.storeName || 'ת"ת ישיבת בית מדרש גבוה';
+            const win = window.open('', '_blank', 'width=900,height=700');
+            win.document.write('<html dir="rtl"><head><title>דף ברקודים לקופה</title><style>');
+            win.document.write('body { font-family: Arial, sans-serif; padding: 14px; }');
+            win.document.write('.barcode-sheet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }');
+            win.document.write('.barcode-label-card { border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; text-align: center; display: flex; flex-direction: column; align-items: center; page-break-inside: avoid; }');
+            win.document.write('</style></head><body>');
+            win.document.write(`<h2 style="text-align:center; margin-bottom:10px;">דף ברקודים לסריקה מהירה - ${escapeHtml(storeName)}</h2>`);
+            win.document.write(content);
+            win.document.write('</body></html>');
+            win.document.close();
+            win.onload = function() { win.print(); };
+        }
+
+        /* 5. סגירת חוב גמישה (מלא/חלקי, מזומן/אשראי) ופירוט חובות מרוכז לבחור */
+        let settleDebtContext = null; // { mode: 'receipt'|'person', receiptId, personKey, maxAmount, label }
+
+        function openSettleDebtModalForReceipt(receiptId) {
+            const r = appData.receipts.find(rec => rec.id === receiptId);
+            if (!r) return;
+            const rem = getRemainingDebtForReceipt(r);
+            settleDebtContext = {
+                mode: 'receipt',
+                receiptId: r.id,
+                maxAmount: rem,
+                label: `${r.customer} (קבלה #${r.id})`
+            };
+            document.getElementById('settleDebtInfoBox').innerHTML = `
+                <strong>לקוח:</strong> ${escapeHtml(r.customer)}<br>
+                <strong>קבלה:</strong> #${r.id} (${r.date})<br>
+                <strong>יתרת חוב פתוחה בעסקה זו:</strong> <span style="color:#dc2626; font-weight:800;">₪${rem.toFixed(2)}</span>
+            `;
+            document.getElementById('settleDebtAmountInput').value = rem.toFixed(2);
+            document.getElementById('settleDebtMethodSelect').value = 'cash';
+            document.getElementById('settleDebtModal').style.display = 'flex';
+        }
+
+        function openSettleDebtModalForPerson(encodedKey) {
+            const personKey = decodeURIComponent(encodedKey);
+            const [custName, info] = personKey.split('|');
+            const matchingReceipts = (appData.receipts || []).filter(r => {
+                if (!r.active) return false;
+                const rInfo = r.isYeshiva ? (r.yeshivaGrade || 'בן ישיבה') : (r.phone || 'חיצוני');
+                return r.customer.trim() === custName && rInfo === info && getRemainingDebtForReceipt(r) > 0.001;
+            });
+            const totalRem = matchingReceipts.reduce((s, r) => s + getRemainingDebtForReceipt(r), 0);
+            if (totalRem <= 0.001) return;
+
+            settleDebtContext = {
+                mode: 'person',
+                personKey: personKey,
+                maxAmount: Math.round(totalRem * 100) / 100,
+                label: `${custName} (${info})`
+            };
+            document.getElementById('settleDebtInfoBox').innerHTML = `
+                <strong>לקוח:</strong> ${escapeHtml(custName)} (${escapeHtml(info)})<br>
+                <strong>סה"כ חוב מצטבר בכל העסקאות:</strong> <span style="color:#dc2626; font-weight:800;">₪${totalRem.toFixed(2)}</span>
+            `;
+            document.getElementById('settleDebtAmountInput').value = totalRem.toFixed(2);
+            document.getElementById('settleDebtMethodSelect').value = 'cash';
+            document.getElementById('settleDebtModal').style.display = 'flex';
+        }
+
+        async function confirmSettleDebt() {
+            if (!settleDebtContext) return;
+            const payAmount = Math.round((parseFloat(document.getElementById('settleDebtAmountInput').value) || 0) * 100) / 100;
+            const method = document.getElementById('settleDebtMethodSelect').value;
+
+            if (payAmount <= 0) {
+                return showToast('נא להזין סכום חיובי לתשלום החוב', 'error');
+            }
+            if (payAmount > settleDebtContext.maxAmount + 0.01) {
+                return showToast(`הסכום שהוזן גבוה מיתרת החוב (₪${settleDebtContext.maxAmount.toFixed(2)})`, 'error');
+            }
+
+            let leftToAllocate = payAmount;
+            const methodHebrew = method === 'credit' ? 'אשראי' : 'מזומן';
+
+            if (settleDebtContext.mode === 'receipt') {
+                const r = appData.receipts.find(rec => rec.id === settleDebtContext.receiptId);
+                if (r) {
+                    const rem = getRemainingDebtForReceipt(r);
+                    const applied = Math.min(rem, leftToAllocate);
+                    r.debtPaidAmount = Math.round(((Number(r.debtPaidAmount) || 0) + applied) * 100) / 100;
+                    if (r.debtPaidAmount >= r.total - 0.01) {
+                        r.isDebtPaid = true;
+                        r.type = `${methodHebrew} (סגירת חוב)`;
+                    }
+                }
+            } else {
+                const [custName, info] = settleDebtContext.personKey.split('|');
+                const matchingReceipts = (appData.receipts || []).filter(r => {
+                    if (!r.active) return false;
+                    const rInfo = r.isYeshiva ? (r.yeshivaGrade || 'בן ישיבה') : (r.phone || 'חיצוני');
+                    return r.customer.trim() === custName && rInfo === info && getRemainingDebtForReceipt(r) > 0.001;
+                });
+                for (const r of matchingReceipts) {
+                    if (leftToAllocate <= 0.001) break;
+                    const rem = getRemainingDebtForReceipt(r);
+                    const applied = Math.min(rem, leftToAllocate);
+                    r.debtPaidAmount = Math.round(((Number(r.debtPaidAmount) || 0) + applied) * 100) / 100;
+                    leftToAllocate = Math.round((leftToAllocate - applied) * 100) / 100;
+                    if (r.debtPaidAmount >= r.total - 0.01) {
+                        r.isDebtPaid = true;
+                        r.type = `${methodHebrew} (סגירת חוב)`;
+                    }
+                }
+            }
+
+            if (!Array.isArray(appData.debtPayments)) appData.debtPayments = [];
+            appData.debtPayments.push({
+                id: Date.now(),
+                isoDate: new Date().toISOString().split('T')[0],
+                label: settleDebtContext.label,
+                amount: payAmount,
+                method: method
+            });
+
+            closeModal('settleDebtModal');
+            await saveCloudData();
+            renderCustomerReport();
+            renderDailySummary();
+            showToast(`נרשם תשלום חוב על סך ₪${payAmount.toFixed(2)} (${methodHebrew})!`, 'success');
+        }
+
+        let currentStudentDebtStatementText = '';
+
+        function openStudentDebtStatement(encodedKey) {
+            const personKey = decodeURIComponent(encodedKey);
+            const [custName, info] = personKey.split('|');
+            const matchingReceipts = (appData.receipts || []).filter(r => {
+                if (!r.active) return false;
+                const rInfo = r.isYeshiva ? (r.yeshivaGrade || 'בן ישיבה') : (r.phone || 'חיצוני');
+                return r.customer.trim() === custName && rInfo === info && getRemainingDebtForReceipt(r) > 0.001;
+            });
+
+            let totalDebt = 0;
+            let textLines = [
+                `*פירוט חובות פתוחים - ${appData.settings.storeName || 'ת"ת ישיבת בית מדרש גבוה'}*`,
+                `שם: ${custName} (${info})`,
+                `תאריך הפקה: ${new Date().toLocaleDateString('he-IL')}`,
+                '------------------------'
+            ];
+
+            let html = `<div style="margin-bottom:8px;"><strong>שם:</strong> ${escapeHtml(custName)} (${escapeHtml(info)})</div>`;
+            matchingReceipts.forEach(r => {
+                const rem = getRemainingDebtForReceipt(r);
+                totalDebt += rem;
+                const itemsStr = r.items.map(i => `${i.name} x${i.qty}`).join(', ');
+                textLines.push(`• ${r.dateOnly || r.date} (קבלה #${r.id}): ${itemsStr} — יתרה: ₪${rem.toFixed(2)}`);
+                html += `
+                    <div style="border:1px solid #cbd5e1; border-radius:8px; padding:8px; margin-bottom:6px; background:#f8fafc;">
+                        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                            <span>${r.date} (קבלה #${r.id})</span>
+                            <span style="color:#dc2626;">יתרת חוב: ₪${rem.toFixed(2)}</span>
+                        </div>
+                        <div style="font-size:0.88em; color:#475569; margin-top:3px;">פריטים: ${escapeHtml(itemsStr)}</div>
+                    </div>
+                `;
+            });
+
+            textLines.push('------------------------');
+            textLines.push(`*סה"כ יתרת חוב לתשלום: ₪${totalDebt.toFixed(2)}*`);
+            currentStudentDebtStatementText = textLines.join('
+');
+
+            html += `<div style="font-size:1.15em; font-weight:800; color:#dc2626; margin-top:10px; text-align:left;">סה"כ יתרת חוב לתשלום: ₪${totalDebt.toFixed(2)}</div>`;
+            document.getElementById('studentDebtStatementTitle').innerText = `פירוט חובות - ${custName}`;
+            document.getElementById('studentDebtStatementBody').innerHTML = html;
+            document.getElementById('studentDebtStatementModal').style.display = 'flex';
+        }
+
+        function copyStudentDebtStatement() {
+            navigator.clipboard.writeText(currentStudentDebtStatementText).then(() => {
+                showToast('פירוט החובות הועתק כטקסט!', 'success');
+            });
+        }
+
+        function printStudentDebtStatement() {
+            const content = document.getElementById('studentDebtStatementPrintArea').innerHTML;
+            const win = window.open('', '_blank', 'width=550,height=650');
+            win.document.write('<html dir="rtl"><body style="font-family:Arial; padding:20px;">' + content + '</body></html>');
+            win.document.close();
+            win.onload = function() { win.print(); };
+        }
+
+        /* 6. עריכת מחירים ומלאי גורפת בטבלה */
+        function renderBulkEditTable() {
+            const container = document.getElementById('bulkEditTableContainer');
+            const q = (document.getElementById('bulkEditSearchInput')?.value || '').trim().toLowerCase();
+            const list = getSortedProducts().filter(p => !q || p.name.toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
+
+            if (list.length === 0) {
+                container.innerHTML = '<p style="padding:12px;">לא נמצאו מוצרים.</p>';
+                return;
+            }
+
+            let html = `<table style="width:100%; border-collapse: collapse; text-align: right;">
+                <thead>
+                    <tr style="background:#f1f5f9; border-bottom:2px solid #cbd5e1;">
+                        <th style="padding:9px;">מוצר / מידה</th>
+                        <th style="padding:9px;">קטגוריה</th>
+                        <th style="padding:9px;">מחיר עלות (₪)</th>
+                        <th style="padding:9px;">מחיר מכירה (₪)</th>
+                        <th style="padding:9px;">יתרת מלאי</th>
+                    </tr>
+                </thead><tbody>`;
+
+            list.forEach(p => {
+                if (hasProductVariants(p)) {
+                    p.variants.forEach(v => {
+                        const vPrice = (v.price !== undefined && v.price !== null && v.price !== '') ? v.price : p.price;
+                        const vStock = hasStockValue(v.stock) ? v.stock : '';
+                        html += `<tr style="border-bottom:1px solid #e2e8f0;" data-be-prod="${p.id}" data-be-var="${v.id}">
+                            <td style="padding:8px; font-weight:bold;">${escapeHtml(p.name)} - <span style="color:#6b21a8;">${escapeHtml(v.name)}</span></td>
+                            <td style="padding:8px; color:#64748b;">${escapeHtml(p.category || 'כללי')}</td>
+                            <td style="padding:8px;"><input type="number" step="0.1" class="be-cost" value="${p.cost || 0}" style="width:85px; padding:5px; border:1px solid #cbd5e1; border-radius:6px;"></td>
+                            <td style="padding:8px;"><input type="number" step="0.1" class="be-price" value="${vPrice}" style="width:85px; padding:5px; border:1px solid #cbd5e1; border-radius:6px;"></td>
+                            <td style="padding:8px;"><input type="number" class="be-stock" placeholder="ללא מעקב" value="${vStock}" style="width:90px; padding:5px; border:1px solid #cbd5e1; border-radius:6px;"></td>
+                        </tr>`;
+                    });
+                } else {
+                    const pStock = hasStockValue(p.stock) ? p.stock : '';
+                    html += `<tr style="border-bottom:1px solid #e2e8f0;" data-be-prod="${p.id}" data-be-var="">
+                        <td style="padding:8px; font-weight:bold;">${escapeHtml(p.name)}</td>
+                        <td style="padding:8px; color:#64748b;">${escapeHtml(p.category || 'כללי')}</td>
+                        <td style="padding:8px;"><input type="number" step="0.1" class="be-cost" value="${p.cost || 0}" style="width:85px; padding:5px; border:1px solid #cbd5e1; border-radius:6px;"></td>
+                        <td style="padding:8px;"><input type="number" step="0.1" class="be-price" value="${p.price}" style="width:85px; padding:5px; border:1px solid #cbd5e1; border-radius:6px;"></td>
+                        <td style="padding:8px;"><input type="number" class="be-stock" placeholder="ללא מעקב" value="${pStock}" style="width:90px; padding:5px; border:1px solid #cbd5e1; border-radius:6px;"></td>
+                    </tr>`;
+                }
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        async function saveBulkEditChanges() {
+            const rows = document.querySelectorAll('#bulkEditTableContainer tr[data-be-prod]');
+            let changedCount = 0;
+
+            rows.forEach(row => {
+                const prodId = row.dataset.beProd;
+                const varId = row.dataset.beVar;
+                const p = appData.products.find(item => String(item.id) === String(prodId));
+                if (!p) return;
+
+                const newCost = parseFloat(row.querySelector('.be-cost').value) || 0;
+                const newPrice = parseFloat(row.querySelector('.be-price').value);
+                const rawStock = row.querySelector('.be-stock').value.trim();
+                const newStock = rawStock !== '' ? parseInt(rawStock) : null;
+
+                if (p.cost !== newCost) {
+                    p.cost = newCost;
+                    changedCount++;
+                }
+
+                if (varId && hasProductVariants(p)) {
+                    const v = p.variants.find(vr => String(vr.id) === String(varId));
+                    if (v) {
+                        const oldVPrice = (v.price !== undefined && v.price !== null && v.price !== '') ? parseFloat(v.price) : parseFloat(p.price);
+                        if (!isNaN(newPrice) && oldVPrice !== newPrice) {
+                            v.price = newPrice;
+                            changedCount++;
+                        }
+                        const oldVStock = hasStockValue(v.stock) ? parseInt(v.stock) : null;
+                        if (oldVStock !== newStock) {
+                            recordStockMovement({
+                                productName: `${p.name} - ${v.name}`,
+                                change: (newStock || 0) - (oldVStock || 0),
+                                newStock: newStock === null ? 'ללא מעקב' : newStock,
+                                reason: 'עריכה גורפת בטבלה'
+                            });
+                            v.stock = newStock;
+                            changedCount++;
+                        }
+                    }
+                    p.stock = getProductTotalStock(p);
+                } else {
+                    if (!isNaN(newPrice) && parseFloat(p.price) !== newPrice) {
+                        p.price = newPrice;
+                        changedCount++;
+                    }
+                    const oldPStock = hasStockValue(p.stock) ? parseInt(p.stock) : null;
+                    if (oldPStock !== newStock) {
+                        recordStockMovement({
+                            productName: p.name,
+                            change: (newStock || 0) - (oldPStock || 0),
+                            newStock: newStock === null ? 'ללא מעקב' : newStock,
+                            reason: 'עריכה גורפת בטבלה'
+                        });
+                        p.stock = newStock;
+                        changedCount++;
+                    }
+                }
+            });
+
+            await saveCloudData();
+            renderAdminProductsList();
+            renderAdminLowStockPanel();
+            renderProducts();
+            showToast(`השינויים נשמרו בהצלחה! (${changedCount} עדכונים בוצעו)`, 'success');
+        }
+
+        /* 7. קליטת סחורה מספק מסודרת */
+        let receivingItemsList = [];
+
+        function initReceivingTab() {
+            const supSelect = document.getElementById('receivingSupplierSelect');
+            const sortedSups = sortHebrewAlpha(appData.suppliers || [], s => s.name);
+            supSelect.innerHTML = `<option value="כללי">כללי / ללא ספק מוגדר</option>` +
+                sortedSups.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join('');
+
+            const picker = document.getElementById('receivingProductPicker');
+            const options = [];
+            getSortedProducts().forEach(p => {
+                if (hasProductVariants(p)) {
+                    p.variants.forEach(v => {
+                        options.push({
+                            key: `${p.id}_${v.id}`,
+                            label: `${p.name} - ${v.name}`
+                        });
+                    });
+                } else {
+                    options.push({
+                        key: `${p.id}_`,
+                        label: p.name
+                    });
+                }
+            });
+            picker.innerHTML = options.map(o => `<option value="${o.key}">${escapeHtml(o.label)}</option>`).join('');
+            renderReceivingItemsList();
+        }
+
+        function addItemToReceiving(prodId, varId = null, qtyToAdd = 1) {
+            const p = appData.products.find(item => String(item.id) === String(prodId));
+            if (!p) return;
+            let label = p.name;
+            if (varId && hasProductVariants(p)) {
+                const v = p.variants.find(vr => String(vr.id) === String(varId));
+                if (!v) return;
+                label = `${p.name} - ${v.name}`;
+            }
+
+            const key = `${p.id}_${varId || ''}`;
+            const existing = receivingItemsList.find(it => it.key === key);
+            if (existing) {
+                existing.qty += qtyToAdd;
+            } else {
+                receivingItemsList.push({
+                    key,
+                    productId: p.id,
+                    variantId: varId || null,
+                    label,
+                    qty: qtyToAdd,
+                    unitCost: parseFloat(p.cost) || 0
+                });
+            }
+            renderReceivingItemsList();
+        }
+
+        function handleReceivingBarcodeScan() {
+            const inp = document.getElementById('receivingBarcodeInput');
+            const code = inp.value.trim();
+            if (!code) return;
+
+            for (const p of getSortedProducts()) {
+                if (hasProductVariants(p)) {
+                    const v = p.variants.find(vr => parseBarcodeList(vr.barcodes).includes(code));
+                    if (v) {
+                        addItemToReceiving(p.id, v.id, 1);
+                        inp.value = '';
+                        showToast(`נוסף למשלוח: ${p.name} - ${v.name}`, 'success', 1400);
+                        return;
+                    }
+                } else if (parseBarcodeList(p.barcodes).includes(code)) {
+                    addItemToReceiving(p.id, null, 1);
+                    inp.value = '';
+                    showToast(`נוסף למשלוח: ${p.name}`, 'success', 1400);
+                    return;
+                }
+            }
+            showToast(`ברקוד לא נמצא: ${code}`, 'error');
+            inp.select();
+        }
+
+        function addSelectedProductToReceiving() {
+            const val = document.getElementById('receivingProductPicker').value;
+            if (!val) return;
+            const [prodId, varId] = val.split('_');
+            addItemToReceiving(prodId, varId || null, 1);
+        }
+
+        function updateReceivingRow(idx, field, val) {
+            if (!receivingItemsList[idx]) return;
+            if (field === 'qty') {
+                receivingItemsList[idx].qty = Math.max(1, parseInt(val) || 1);
+            } else if (field === 'cost') {
+                receivingItemsList[idx].unitCost = Math.max(0, parseFloat(val) || 0);
+            }
+            renderReceivingItemsList();
+        }
+
+        function removeReceivingRow(idx) {
+            receivingItemsList.splice(idx, 1);
+            renderReceivingItemsList();
+        }
+
+        function clearReceivingList() {
+            receivingItemsList = [];
+            renderReceivingItemsList();
+        }
+
+        function renderReceivingItemsList() {
+            const container = document.getElementById('receivingItemsContainer');
+            let totalUnits = 0;
+            let totalCost = 0;
+
+            if (receivingItemsList.length === 0) {
+                container.innerHTML = '<p style="color:#64748b; padding:10px;">רשימת הקליטה ריקה. סרוק ברקודים או הוסף מוצרים מהרשימה למעלה.</p>';
+                document.getElementById('receivingTotalUnits').innerText = '0';
+                document.getElementById('receivingTotalCost').innerText = '0.00';
+                return;
+            }
+
+            container.innerHTML = receivingItemsList.map((it, idx) => {
+                totalUnits += it.qty;
+                totalCost += it.qty * it.unitCost;
+                return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #e2e8f0; gap:8px; flex-wrap:wrap;">
+                        <strong style="flex:1; min-width:160px;">${escapeHtml(it.label)}</strong>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <label style="font-size:0.85em;">כמות:</label>
+                            <input type="number" min="1" value="${it.qty}" style="width:70px; padding:5px; text-align:center; font-weight:bold; border-radius:6px; border:1px solid #cbd5e1;" onchange="updateReceivingRow(${idx}, 'qty', this.value)">
+                            <label style="font-size:0.85em;">עלות ליח':</label>
+                            <input type="number" step="0.1" min="0" value="${it.unitCost}" style="width:80px; padding:5px; text-align:center; border-radius:6px; border:1px solid #cbd5e1;" onchange="updateReceivingRow(${idx}, 'cost', this.value)">
+                            <button type="button" class="btn btn-danger btn-tiny" onclick="removeReceivingRow(${idx})">×</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('receivingTotalUnits').innerText = totalUnits;
+            document.getElementById('receivingTotalCost').innerText = totalCost.toFixed(2);
+        }
+
+        async function commitGoodsReceiving() {
+            if (receivingItemsList.length === 0) {
+                return showToast('אין פריטים ברשימת הקליטה', 'warning');
+            }
+            const supplier = document.getElementById('receivingSupplierSelect').value || 'כללי';
+            const note = document.getElementById('receivingNoteInput').value.trim();
+
+            receivingItemsList.forEach(it => {
+                const p = appData.products.find(prod => String(prod.id) === String(it.productId));
+                if (!p) return;
+                p.cost = it.unitCost;
+                let newStockVal = 0;
+
+                if (it.variantId && hasProductVariants(p)) {
+                    const v = p.variants.find(vr => String(vr.id) === String(it.variantId));
+                    if (v) {
+                        v.stock = (hasStockValue(v.stock) ? (parseInt(v.stock) || 0) : 0) + it.qty;
+                        newStockVal = v.stock;
+                    }
+                    p.stock = getProductTotalStock(p);
+                } else {
+                    p.stock = (hasStockValue(p.stock) ? (parseInt(p.stock) || 0) : 0) + it.qty;
+                    newStockVal = p.stock;
+                }
+
+                recordStockMovement({
+                    productName: it.label,
+                    change: it.qty,
+                    newStock: newStockVal,
+                    reason: `קליטת משלוח מספק: ${supplier}${note ? ' (' + note + ')' : ''}`
+                });
+            });
+
+            receivingItemsList = [];
+            document.getElementById('receivingNoteInput').value = '';
+            await saveCloudData();
+            renderReceivingItemsList();
+            renderAdminProductsList();
+            renderAdminLowStockPanel();
+            renderProducts();
+            showToast('המשלוח נקלט בהצלחה ויתרות המלאי עודכנו!', 'success');
+        }
+
+        /* 8. יומן תנועות מלאי (היסטוריה) */
+        function recordStockMovement({ productName, change, newStock, reason }) {
+            if (!Array.isArray(appData.stockLogs)) appData.stockLogs = [];
+            const now = new Date();
+            appData.stockLogs.push({
+                id: Date.now() + Math.floor(Math.random() * 1000),
+                date: `${now.toLocaleDateString('he-IL')} ${now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`,
+                productName,
+                change,
+                newStock,
+                reason
+            });
+            if (appData.stockLogs.length > 500) {
+                appData.stockLogs = appData.stockLogs.slice(-500);
+            }
+        }
+
+        function renderStockLogTable() {
+            const container = document.getElementById('stockLogContainer');
+            const q = (document.getElementById('stockLogSearchInput')?.value || '').trim().toLowerCase();
+            let logs = (appData.stockLogs || []).slice().reverse();
+
+            if (q) {
+                logs = logs.filter(l =>
+                    String(l.productName || '').toLowerCase().includes(q) ||
+                    String(l.reason || '').toLowerCase().includes(q)
+                );
+            }
+
+            if (logs.length === 0) {
+                container.innerHTML = '<p style="padding:12px;">אין תנועות מלאי מתועדות עדיין.</p>';
+                return;
+            }
+
+            let html = `<table style="width:100%; border-collapse: collapse; text-align: right;">
+                <thead>
+                    <tr style="background:#f1f5f9; border-bottom:2px solid #cbd5e1;">
+                        <th style="padding:9px;">תאריך ושעה</th>
+                        <th style="padding:9px;">מוצר / מידה</th>
+                        <th style="padding:9px;">שינוי</th>
+                        <th style="padding:9px;">יתרה חדשה</th>
+                        <th style="padding:9px;">סיבה / מקור</th>
+                    </tr>
+                </thead><tbody>`;
+
+            logs.forEach(l => {
+                const chg = Number(l.change) || 0;
+                const chgStr = chg > 0 ? `+${chg}` : String(chg);
+                const chgColor = chg > 0 ? '#059669' : (chg < 0 ? '#dc2626' : '#64748b');
+                html += `<tr style="border-bottom:1px solid #e2e8f0;">
+                    <td style="padding:8px; font-size:0.9em; color:#475569;">${escapeHtml(l.date)}</td>
+                    <td style="padding:8px; font-weight:bold;">${escapeHtml(l.productName)}</td>
+                    <td style="padding:8px; font-weight:800; color:${chgColor};">${chgStr}</td>
+                    <td style="padding:8px;">${escapeHtml(l.newStock)}</td>
+                    <td style="padding:8px; font-size:0.92em;">${escapeHtml(l.reason)}</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        /* 9. הדפסת דוח סגירת קופה יומי (Z) למדפסת התרמית */
+        function openDailyZReportModal() {
+            const selectedDate = document.getElementById('dailySummaryDate').value || new Date().toISOString().split('T')[0];
+            const dayReceipts = (appData.receipts || []).filter(r => r.active && (r.isoDate === selectedDate || (r.date && r.date.includes(selectedDate.split('-').reverse().join('.')))));
+
+            let cashSales = 0, creditSales = 0, debtSales = 0;
+            dayReceipts.forEach(r => {
+                if (r.paymentMode === 'mixed' || (r.cashApplied > 0 && r.creditApplied > 0)) {
+                    cashSales += Number(r.cashApplied) || 0;
+                    creditSales += Number(r.creditApplied) || 0;
+                } else if (r.type.includes('מזומן')) {
+                    cashSales += r.total;
+                } else if (r.type.includes('אשראי')) {
+                    creditSales += r.total;
+                } else {
+                    const paidPart = Number(r.debtPaidAmount) || 0;
+                    debtSales += Math.max(0, r.total - paidPart);
+                }
+            });
+
+            let debtCashCollections = 0, debtCreditCollections = 0;
+            (appData.debtPayments || []).filter(dp => dp.isoDate === selectedDate).forEach(dp => {
+                if (dp.method === 'credit') debtCreditCollections += Number(dp.amount) || 0;
+                else debtCashCollections += Number(dp.amount) || 0;
+            });
+
+            const totalCashDrawer = cashSales + debtCashCollections;
+            const totalCredit = creditSales + debtCreditCollections;
+            const grandTotal = totalCashDrawer + totalCredit + debtSales;
+
+            document.getElementById('zStoreHeader').innerText = appData.settings.storeName || 'ת"ת ישיבת בית מדרש גבוה';
+            document.getElementById('zReportBody').innerHTML = `
+                <div>תאריך הדוח: <strong>${selectedDate.split('-').reverse().join('/')}</strong></div>
+                <div>מספר עסקאות פעילות: <strong>${dayReceipts.length}</strong></div>
+                <div style="border-top: 1px dotted #666; margin: 5px 0;"></div>
+                <div>מכירות במזומן: ₪${cashSales.toFixed(2)}</div>
+                <div>גביית חובות במזומן: ₪${debtCashCollections.toFixed(2)}</div>
+                <div style="font-weight:bold; font-size:13px; margin-top:2px;">סה"כ מזומן במגירה: ₪${totalCashDrawer.toFixed(2)}</div>
+                <div style="border-top: 1px dotted #666; margin: 5px 0;"></div>
+                <div>מכירות באשראי: ₪${creditSales.toFixed(2)}</div>
+                <div>גביית חובות באשראי: ₪${debtCreditCollections.toFixed(2)}</div>
+                <div style="font-weight:bold;">סה"כ אשראי: ₪${totalCredit.toFixed(2)}</div>
+                <div style="border-top: 1px dotted #666; margin: 5px 0;"></div>
+                <div>הקפות / חובות פתוחים: ₪${debtSales.toFixed(2)}</div>
+                <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+                <div style="font-weight:bold; font-size:14px;">סה"כ פדיון יומי: ₪${grandTotal.toFixed(2)}</div>
+            `;
+            document.getElementById('zPrintedAt').innerText = new Date().toLocaleString('he-IL');
+            document.getElementById('dailyZReportModal').style.display = 'flex';
+        }
+
+        function printThermalZReport() {
+            document.body.classList.add('printing-z');
+            window.print();
+            setTimeout(() => {
+                document.body.classList.remove('printing-z');
+            }, 500);
+        }
+
+        syncCloudData().then(() => resetInactivityTimer());
     </script>
 </body>
 </html>
