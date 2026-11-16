@@ -5967,10 +5967,9 @@
                 `;
             });
 
-            textLines.push('------------------------');
+textLines.push('------------------------');
             textLines.push(`*סה"כ יתרת חוב לתשלום: ₪${totalDebt.toFixed(2)}*`);
-            currentStudentDebtStatementText = textLines.join('
-');
+            currentStudentDebtStatementText = textLines.join('\n');
 
             html += `<div style="font-size:1.15em; font-weight:800; color:#dc2626; margin-top:10px; text-align:left;">סה"כ יתרת חוב לתשלום: ₪${totalDebt.toFixed(2)}</div>`;
             document.getElementById('studentDebtStatementTitle').innerText = `פירוט חובות - ${custName}`;
