@@ -3480,8 +3480,7 @@
                 const encodedLastName = encodeURIComponent(lastName);
                 const encodedGroup = encodeURIComponent('מכירת ביגוד');
                 document.getElementById('creditModalAmountDisplay').innerText = creditAmount.toFixed(2);
-                document.getElementById('creditIframe').src = `https://www.matara.pro/nedarimplus/online/?mosad=1000858&Amount=${creditAmount.toFixed(2)}&Name=${encodedBuyerName}&FirstName=${encodedFirstName}&LastName=${encodedLastName}&Groupe=${encodedGroup}`;
-                document.getElementById('creditIframeModal').style.display = 'flex';
+document.getElementById('creditIframe').src = `https://www.matara.pro/nedarimplus/online/?mosad=1000858&Amount=${creditAmount.toFixed(2)}&ClientName=${encodedBuyerName}&Name=${encodedBuyerName}&FirstName=${encodedFirstName}&LastName=${encodedLastName}&Groupe=${encodedGroup}`;                document.getElementById('creditIframeModal').style.display = 'flex';
             } else {
                 finalizeTransaction();
             }
