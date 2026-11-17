@@ -1664,6 +1664,7 @@
                     </label>
                     <button type="button" class="btn btn-info btn-large-action" onclick="printPurchaseOrder()">הדפס רשימה / הזמנה</button>
                     <button type="button" class="btn btn-success btn-large-action" onclick="copyPurchaseOrderAsText()">העתק כטקסט</button>
+                    <button type="button" class="btn btn-warning btn-large-action" onclick="exportSupplierReportExcel()">ייצוא דוח מכירות ומלאי לספק (Excel)</button>
                 </div>
                 <div id="purchaseOrderPreview" style="background: #f8fafc; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px;"></div>
             </div>
@@ -3480,7 +3481,8 @@
                 const encodedLastName = encodeURIComponent(lastName);
                 const encodedGroup = encodeURIComponent('מכירת ביגוד');
                 document.getElementById('creditModalAmountDisplay').innerText = creditAmount.toFixed(2);
-document.getElementById('creditIframe').src = `https://www.matara.pro/nedarimplus/online/?mosad=1000858&Amount=${creditAmount.toFixed(2)}&ClientName=${encodedBuyerName}&Name=${encodedBuyerName}&FirstName=${encodedFirstName}&LastName=${encodedLastName}&Groupe=${encodedGroup}`;                document.getElementById('creditIframeModal').style.display = 'flex';
+                document.getElementById('creditIframe').src = `https://www.matara.pro/nedarimplus/online/?mosad=1000858&Amount=${creditAmount.toFixed(2)}&ClientName=${encodedBuyerName}&Name=${encodedBuyerName}&FirstName=${encodedFirstName}&LastName=${encodedLastName}&Groupe=${encodedGroup}`;
+                document.getElementById('creditIframeModal').style.display = 'flex';
             } else {
                 finalizeTransaction();
             }
@@ -5530,6 +5532,143 @@ document.getElementById('creditIframe').src = `https://www.matara.pro/nedarimplu
             showToast('דוח יתרות מלאי יוצא לאקסל (ממוין לפי א-ב)!', 'success');
         }
 
+        function exportSupplierReportExcel() {
+            const sup = document.getElementById('orderSupplierFilter') ? document.getElementById('orderSupplierFilter').value : 'ALL';
+            let prods = getSortedProducts();
+            if (sup !== 'ALL') {
+                prods = prods.filter(p => p.supplier === sup);
+            }
+
+            if (prods.length === 0) {
+                return showToast('אין מוצרים המשויכים לספק שנבחר', 'warning');
+            }
+
+            // חישוב כמויות שנמכרו מתוך קבלות פעילות
+            const soldQtyByKey = {};
+            const soldQtyByName = {};
+            (appData.receipts || []).filter(r => r.active).forEach(r => {
+                (r.items || []).forEach(i => {
+                    if (i.isFreeItem) return;
+                    const pid = i.productId || i.id || '';
+                    const vid = i.variantId || '';
+                    const key = `${pid}__${vid}`;
+                    soldQtyByKey[key] = (soldQtyByKey[key] || 0) + (parseInt(i.qty) || 0);
+                    if (i.name) {
+                        soldQtyByName[i.name] = (soldQtyByName[i.name] || 0) + (parseInt(i.qty) || 0);
+                    }
+                });
+            });
+
+            const rows = [[
+                "ספק",
+                "שם מוצר",
+                "מידה",
+                "מחיר ספק / עלות ליחידה (₪)",
+                "כמות שנמכרה",
+                "סך לתשלום לספק על מכירות (₪)",
+                "יתרת מלאי נוכחית (נשאר)",
+                "שווי מלאי שנותר במחיר ספק (₪)"
+            ]];
+
+            let totalSoldQty = 0;
+            let totalSoldCostSum = 0;
+            let totalRemainingQty = 0;
+            let totalRemainingCostSum = 0;
+            let hasTrackedStock = false;
+
+            prods.forEach(p => {
+                if (p.hidden) return;
+                const supName = p.supplier || 'ללא ספק';
+
+                if (hasProductVariants(p)) {
+                    p.variants.forEach(v => {
+                        const unitCost = (v.cost !== undefined && v.cost !== null && v.cost !== '')
+                            ? (parseFloat(v.cost) || 0)
+                            : (parseFloat(p.cost) || 0);
+                        const key = `${p.id}__${v.id}`;
+                        const fallbackName = `${p.name} - מידה ${v.name}`;
+                        const soldQty = soldQtyByKey[key] !== undefined
+                            ? soldQtyByKey[key]
+                            : (soldQtyByName[fallbackName] || 0);
+
+                        const soldCostTotal = soldQty * unitCost;
+                        const tracked = hasStockValue(v.stock);
+                        const remStock = tracked ? (parseInt(v.stock) || 0) : null;
+                        const remCostTotal = tracked ? (remStock * unitCost) : 0;
+
+                        totalSoldQty += soldQty;
+                        totalSoldCostSum += soldCostTotal;
+                        if (tracked) {
+                            hasTrackedStock = true;
+                            totalRemainingQty += remStock;
+                            totalRemainingCostSum += remCostTotal;
+                        }
+
+                        rows.push([
+                            supName,
+                            p.name,
+                            v.name,
+                            unitCost.toFixed(2),
+                            soldQty,
+                            soldCostTotal.toFixed(2),
+                            tracked ? remStock : 'ללא מעקב',
+                            tracked ? remCostTotal.toFixed(2) : 'ללא מעקב'
+                        ]);
+                    });
+                } else {
+                    const unitCost = parseFloat(p.cost) || 0;
+                    const key = `${p.id}__`;
+                    const soldQty = soldQtyByKey[key] !== undefined
+                        ? soldQtyByKey[key]
+                        : (soldQtyByName[p.name] || 0);
+
+                    const soldCostTotal = soldQty * unitCost;
+                    const tracked = hasStockValue(p.stock);
+                    const remStock = tracked ? (parseInt(p.stock) || 0) : null;
+                    const remCostTotal = tracked ? (remStock * unitCost) : 0;
+
+                    totalSoldQty += soldQty;
+                    totalSoldCostSum += soldCostTotal;
+                    if (tracked) {
+                        hasTrackedStock = true;
+                        totalRemainingQty += remStock;
+                        totalRemainingCostSum += remCostTotal;
+                    }
+
+                    rows.push([
+                        supName,
+                        p.name,
+                        '-',
+                        unitCost.toFixed(2),
+                        soldQty,
+                        soldCostTotal.toFixed(2),
+                        tracked ? remStock : 'ללא מעקב',
+                        tracked ? remCostTotal.toFixed(2) : 'ללא מעקב'
+                    ]);
+                }
+            });
+
+            if (rows.length === 1) {
+                return showToast('אין מוצרים פעילים להצגה עבור ספק זה', 'warning');
+            }
+
+            rows.push([
+                "סה״כ",
+                sup === 'ALL' ? 'כל הספקים' : sup,
+                "",
+                "",
+                totalSoldQty,
+                totalSoldCostSum.toFixed(2),
+                hasTrackedStock ? totalRemainingQty : 'ללא מעקב',
+                hasTrackedStock ? totalRemainingCostSum.toFixed(2) : 'ללא מעקב'
+            ]);
+
+            const safeSupName = (sup === 'ALL' ? 'כל_הספקים' : sup).replace(/[\\/:*?"<>|]/g, '_');
+            const dateStr = new Date().toISOString().split('T')[0];
+            downloadCSV(`דוח_ספק_${safeSupName}_${dateStr}.csv`, rows);
+            showToast(`דוח מכירות ויתרות עבור "${sup === 'ALL' ? 'כל הספקים' : sup}" יוצא לאקסל!`, 'success');
+        }
+
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
         }
@@ -6838,9 +6977,7 @@ document.getElementById('creditIframe').src = `https://www.matara.pro/nedarimplu
 
 <script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async ></script>
 
-<!-- Injection By NetFree -->
-<script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
-<script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async ></script>
+
 
 <!-- Injection By NetFree -->
 <script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
@@ -6881,6 +7018,8 @@ document.getElementById('creditIframe').src = `https://www.matara.pro/nedarimplu
         disableBrowserAutofillAll();
 
     </script>
+</body>
+</html>
 
 <!-- Injection By NetFree -->
 <script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
